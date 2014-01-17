@@ -13,4 +13,22 @@
 #ifdef __OBJC__
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
+    #import <AFNetworking.h>
+    #import <UIKit+AFNetworking.h>
+    #import <FacebookSDK/FacebookSDK.h>
+    #import "LifespotsAPIClient.h"
+    #import "AppHelper.h"
+    #import "LifeSpotsConfig.h"
+    #import "UIScrollView+UzysCircularProgressPullToRefresh.h"
+    #import "UIPhotoGalleryView.h"
+    #import "UIPhotoItemView.h"
+    #import "UIPhotoGalleryViewController.h"
+#endif
+
+
+
+#ifdef DEBUG
+    #define DLog(x, ...) NSLog(@"%s %d: " x, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#else
+    #define DLog(x, ...)
 #endif
