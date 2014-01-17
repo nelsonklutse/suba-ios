@@ -1,0 +1,50 @@
+PODS:
+  - AAPullToRefresh (1.0.2)
+  - AFNetworking (2.0.3):
+    - AFNetworking/NSURLConnection
+    - AFNetworking/NSURLSession
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+    - AFNetworking/UIKit
+  - AFNetworking/NSURLConnection (2.0.3):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/NSURLSession (2.0.3):
+    - AFNetworking/NSURLConnection
+  - AFNetworking/Reachability (2.0.3)
+  - AFNetworking/Security (2.0.3)
+  - AFNetworking/Serialization (2.0.3)
+  - AFNetworking/UIKit (2.0.3):
+    - AFNetworking/NSURLConnection
+  - ALAssetsLibrary-CustomPhotoAlbum (1.1.4)
+  - CTAssetsPickerController (1.3.3)
+  - DCModalSegue (0.0.2)
+  - SDWebImage (3.5.2):
+    - SDWebImage/Core
+  - SDWebImage/Core (3.5.2)
+  - UIPhotoGallery (0.1.2):
+    - SDWebImage (~> 3.0)
+  - UzysCircularProgressPullToRefresh (1.0.4)
+
+DEPENDENCIES:
+  - AAPullToRefresh
+  - AFNetworking (~> 2.0)
+  - ALAssetsLibrary-CustomPhotoAlbum (~> 1.1.4)
+  - CTAssetsPickerController (~> 1.3.3)
+  - DCModalSegue (~> 0.0.2)
+  - UIPhotoGallery (~> 0.1.2)
+  - UzysCircularProgressPullToRefresh (~> 1.0.4)
+
+SPEC CHECKSUMS:
+  AAPullToRefresh: cb06c382ebbcdd2b396e9b1b564d33e7580e44c5
+  AFNetworking: e499052cbf3d743e9bb727bb37adb9dc2547ba15
+  ALAssetsLibrary-CustomPhotoAlbum: aed631c845bb5a950c3846780d282465309e16e0
+  CTAssetsPickerController: d65272a08dc2b1d48da6e839055c7288bd7d8b7d
+  DCModalSegue: dbec9bde298bdb92c4d15b2e4a10b6f43bc0977e
+  SDWebImage: fe7ce01ae4e0a884d168f59c9dd82d35baf8429e
+  UIPhotoGallery: f054e2dae658cf324b7b202d5c5f4b39457dce1c
+  UzysCircularProgressPullToRefresh: 6e8a0deaa881bd62615d50cb462c766c0d650f2f
+
+COCOAPODS: 0.28.0
