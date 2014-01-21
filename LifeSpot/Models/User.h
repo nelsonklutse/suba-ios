@@ -48,6 +48,7 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 + (void)fetchUserProfileInfoCompletion:(NSString *)userId completion:(ProfileInfoLoadedCompletionBlock)completion;
 - (void)fetchFavoriteLocationsCompletions:(FavoriteLocationsCompletionBlock)completion;
 - (void)addLocationToWatching:(Location *)location Completion:(AddLocationToWatchingCompletionBlock)completion;
+- (void)removeLocationFromWatching:(NSString *)locationName Completion:(AddLocationToWatchingCompletionBlock)completion;
 - (void)loadFriendsSpotsWithCompletion:(FriendSpotsCompletionBlock)completion;
 - (void)joinSpotCompletionCode:(NSString *)code completion:(SpotJoinedCompletionBlock)completion;
 

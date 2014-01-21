@@ -36,7 +36,7 @@ typedef void (^ExactFoursquareLocationFoundCompletionBlock) (id results,NSError 
 + (void)fetchNearbySpots:(NSDictionary *)location
          completionBlock:(NearbySpotsLoadedCompletionBlock)completion;
 
-- (void)showBestMatchingFoursquareVenueCompletion:(ExactFoursquareLocationFoundCompletionBlock)completion;
+- (void)showBestMatchingFoursquareVenueCriteria:(NSString *)searchType completion:(ExactFoursquareLocationFoundCompletionBlock)completion;
 
 -(NSString *)description;
 

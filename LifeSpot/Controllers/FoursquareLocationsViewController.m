@@ -226,7 +226,7 @@ static CLLocationManager *locationManager;
         }*/
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
+        DLog(@"Error: %@", error);
         [self showLoadingLocationsView:NO];
     }];
     

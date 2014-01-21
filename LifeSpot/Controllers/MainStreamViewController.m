@@ -110,7 +110,12 @@ static CLLocationManager *locationManager;
     
     self.placesBeingWatchedTableView.alpha = 0;
     self.allSpotsCollectionView.alpha = 0;
-    [self.nearbySpotsButton setSelected:YES];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
+       [self.nearbySpotsButton setSelected:YES];
+    });
+    
+    
     
     self.placesBeingWatchedLoadingView.hidden = YES;
     [self checkForLocation];
@@ -142,7 +147,7 @@ static CLLocationManager *locationManager;
     }];
     [self.placesBeingWatchedTableView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.placesBeingWatchedTableView.pullToRefreshView setBorderWidth:6];
-    
+    //[self.placesBeingWatchedTableView.pullToRefreshView setBorderColor:<#(UIColor *)#>]
     
     // Set up PullToRefresh for NearbySpots
     [self.nearbySpotsCollectionView addPullToRefreshActionHandler:^{
@@ -202,8 +207,14 @@ static CLLocationManager *locationManager;
             DLog(@"Error - %@",error);
         }else{
             NSArray *locationsInfo = [results objectForKey:@"watching"];
+            
+            NSSortDescriptor *prettyNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"prettyName" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:prettyNameDescriptor];
+            NSArray *sortedPlaces = [locationsInfo sortedArrayUsingDescriptors:sortDescriptors];
+            
+            
             if ([locationsInfo count] > 0) {
-                self.placesBeingWatched = [NSMutableArray arrayWithArray:locationsInfo];
+                self.placesBeingWatched = [NSMutableArray arrayWithArray:sortedPlaces];
                 
                 [self.placesBeingWatchedTableView reloadData];
             }
@@ -330,10 +341,15 @@ static CLLocationManager *locationManager;
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    PlacesWatchingCell *placeCell = [tableView dequeueReusableCellWithIdentifier:@"PlacesWatchingCell"];
+    PlacesWatchingCell *placeCell = [self.placesBeingWatchedTableView dequeueReusableCellWithIdentifier:@"PlacesWatchingCell"];
     
     placeCell.placeName.text = [self.placesBeingWatched[indexPath.row] objectForKey:@"prettyName"];
-    placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spots",[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"]];
+    if ([[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"] integerValue] == 1) {
+        placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spot",[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"]];
+    }else{
+       placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spots",[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"]];
+    }
+    
     
     return placeCell;
 }
@@ -342,17 +358,17 @@ static CLLocationManager *locationManager;
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     NSInteger numberOfRows = 0;
-    //DLog(@"%i spots",[self.allSpots count]);
+    
     if (self.allSpotsCollectionView.alpha == 1) {
         
         numberOfRows = (self.allSpots) ? [self.allSpots count] : numberOfRows;
-        DLog(@"It is the allSpots View so number of rows = %li",(long)numberOfRows);
+        //DLog(@"It is the allSpots View so number of rows = %li",(long)numberOfRows);
         
     }else if (self.nearbySpotsCollectionView.alpha == 1) {
         
-        numberOfRows = (self.nearbySpots) ? [self.nearbySpots count] : numberOfRows; 
-        //DLog(@"It is the nearbySpots View so number of rows = %li",(long)numberOfRows);
+        numberOfRows = (self.nearbySpots) ? [self.nearbySpots count] : numberOfRows;
     }
+    
     return numberOfRows;
 }
 
@@ -366,17 +382,18 @@ static CLLocationManager *locationManager;
     if (self.nearbySpotsCollectionView.alpha == 1) {
         
         cellIdentifier = @"NearbySpotCell";
+        personalSpotCell = [self.nearbySpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
         spotsToDisplay = self.nearbySpots;
         //DLog(@"Identifier set for nearby spotsCell");
         
     }else if (self.allSpotsCollectionView.alpha == 1){
         cellIdentifier = @"PersonalSpotCell";
         spotsToDisplay = self.allSpots;
-        
+        personalSpotCell = [self.allSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
         DLog(@"All Spots - %@",spotsToDisplay);
     }
     
-     personalSpotCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+    
    
     [[personalSpotCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
     

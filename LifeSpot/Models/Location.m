@@ -59,30 +59,31 @@
 
 + (void)searchFourquareWithSearchTerm:(NSString *)searchText completionBlock:(MatchingLocationsCompletionBlock)completion
 {
-        //NSString *near = searchText;
-        NSString *radius = @"1000";
-        NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
-        
-        AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
-        [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
-                                             @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
-                                             @"near" : searchText,
-                                             @"radius" : radius,
-                                             @"limit" : @"50",
-                                             @"v" : @"20131016",
-                                             @"intent" : @"browse"}
-             success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                 
-                 NSArray *locations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
-                 completion(locations,nil);
-             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                 completion(nil,error);
-             }];
+    DLog(@"Search text - %@",searchText);
+        NSString *radius = @"800";
+    NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
+    
+    AFHTTPRequestOperationManager *manager =[AFHTTPRequestOperationManager manager];
+    [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
+                                         @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
+                                         @"near" : searchText,
+                                         @"radius" : radius,
+                                         @"limit" : @"50",
+                                         @"v" : @"20140107"
+                                         }
+     
+         success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            // DLog(@"Response - %@",[responseObject debugDescription]);
+             // self.locations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
+             completion(responseObject,nil);
+         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+             completion(nil,error);
+         }];
 }
 
 
-- (void)showBestMatchingFoursquareVenueCompletion:(ExactFoursquareLocationFoundCompletionBlock)completion
-{
+- (void)showBestMatchingFoursquareVenueCriteria:(NSString *)searchType completion:(ExactFoursquareLocationFoundCompletionBlock)completion{
+    
     DLog(@"Latitiude - %@\nLongitude - %@",self.latitude,self.longitude);
     NSString *near = [NSString stringWithFormat:@"%@,%@",self.latitude,self.longitude];
     NSString *radius = @"1000";
@@ -92,7 +93,7 @@
     AFHTTPRequestOperationManager *manager =[AFHTTPRequestOperationManager manager];
     [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
                                          @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
-                                         @"ll" : near,
+                                         searchType : near,
                                          @"radius" : radius,
                                          @"limit" : @"50",
                                          @"v" : @"20140107"

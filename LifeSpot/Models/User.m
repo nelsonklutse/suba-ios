@@ -192,6 +192,20 @@
     }];
 }
 
+
+-(void)removeLocationFromWatching:(NSString *)locationName Completion:(AddLocationToWatchingCompletionBlock)completion
+{
+    NSDictionary *params = @{@"place": locationName,
+                             @"userId" : self.userID};
+    
+    [[LifespotsAPIClient sharedInstance] POST:@"user/location/unwatch" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
+
 -(void)loadFriendsSpotsWithCompletion:(FriendSpotsCompletionBlock)completion
 {
     [[LifespotsAPIClient sharedInstance] GET:@"user/friendspots" parameters:@{@"userId": self.userID} success:^(NSURLSessionDataTask *task, id responseObject) {

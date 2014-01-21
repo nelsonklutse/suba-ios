@@ -16,7 +16,7 @@
 #import <MessageUI/MessageUI.h>
 //#import ""
 
-@interface InvitesViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate>
+@interface InvitesViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UISearchBarDelegate,UISearchDisplayDelegate>
 
 @property (strong,nonatomic) NSMutableArray *subaUsers;
 @property (strong,nonatomic) NSMutableArray *invitedSubaUsers;
@@ -29,7 +29,7 @@
 @property (strong,nonatomic) NSMutableArray *facebookRecipients;
 
 
-@property (weak, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
+@property (retain, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *inviteBarButtonItem;
 @property (weak, nonatomic) IBOutlet UITableView *subaUsersTableView;
 @property (weak, nonatomic) IBOutlet UITableView *facebookFriendsTableView;
@@ -74,8 +74,16 @@
     self.fbUsersFilteredArray = [NSMutableArray arrayWithCapacity:[self.fbUsers count]];
     self.phoneContactsFilteredArray = [NSMutableArray arrayWithCapacity:[self.phoneContacts count]];
     
+    //self.invitesSearchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
+    //self.invitesSearchBar.showsCancelButton = YES;
+    //self.invitesSearchBar.delegate = self;
+    //self.subaUsersTableView.tableHeaderView = self.invitesSearchBar;
+    
     self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = YES;
 }
+
+
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -632,7 +640,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             firstName = [self.phoneContacts[indexPath.row] objectForKey:@"firstName"];
             lastName =  [self.phoneContacts[indexPath.row] objectForKey:@"lastName"];
             contactImage =  self.phoneContacts[indexPath.row][@"image"];
-            phoneNumber = [self.phoneContactsFilteredArray[indexPath.row] objectForKey:@"phoneNumber"];
+            phoneNumber = [self.phoneContacts[indexPath.row] objectForKey:@"phoneNumber"];
         }
         
         contactCell.contactImageView.image = contactImage;

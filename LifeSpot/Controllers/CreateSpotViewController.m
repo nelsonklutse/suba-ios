@@ -99,7 +99,7 @@ static CLLocationManager *locationManager;
 
 
 -(void)foursquareVenueMatchingCurrentLocation:(Location *)currentLocation{
-    [currentLocation showBestMatchingFoursquareVenueCompletion:^(id results, NSError *error) {
+    [currentLocation showBestMatchingFoursquareVenueCriteria:@"ll" completion:^(id results, NSError *error) {
         
         if (!error) {
             self.otherVenues = [[results objectForKey:@"response"] objectForKey:@"venues"];

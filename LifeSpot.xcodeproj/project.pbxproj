@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		2A463D691885728E00549C7B /* PhotoStreamViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D681885728E00549C7B /* PhotoStreamViewController.m */; };
 		2A463D6C1885777600549C7B /* PhotoStreamCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D6B1885777600549C7B /* PhotoStreamCell.m */; };
+		2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */; };
+		2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */; };
+		2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */; };
+		2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */; };
 		2AB0FA50187AD276000AB276 /* ICETutorialController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4D187AD276000AB276 /* ICETutorialController.m */; };
 		2AB0FA51187AD276000AB276 /* ICETutorialPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4F187AD276000AB276 /* ICETutorialPage.m */; };
 		2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA56187AD3BE000AB276 /* SignUpViewController.m */; };
@@ -33,6 +37,9 @@
 		2AB0FA90187C3DAF000AB276 /* MainStreamViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA8F187C3DAF000AB276 /* MainStreamViewController.m */; };
 		2AB0FA93187D68A1000AB276 /* FoursquareVenueCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA92187D68A1000AB276 /* FoursquareVenueCell.m */; };
 		2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA95187F1BD9000AB276 /* PlacesWatchingCell.m */; };
+		2ABA8123188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ABA8121188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m */; };
+		2ABA8126188DD99500A5E8B7 /* ProfileSpotCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ABA8124188DD99500A5E8B7 /* ProfileSpotCell.m */; };
+		2ABA812C188DDF2400A5E8B7 /* PhotosCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ABA812B188DDF2400A5E8B7 /* PhotosCell.m */; };
 		2ACAE5E518869A530076A665 /* AlbumSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5E418869A530076A665 /* AlbumSettingsViewController.m */; };
 		2ACAE5E81886F4830076A665 /* AlbumMembersCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5E71886F4830076A665 /* AlbumMembersCell.m */; };
 		2ACAE5EB1886F4A00076A665 /* SMSContactsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5EA1886F4A00076A665 /* SMSContactsCell.m */; };
@@ -111,6 +118,14 @@
 		2A463D681885728E00549C7B /* PhotoStreamViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhotoStreamViewController.m; sourceTree = "<group>"; };
 		2A463D6A1885777600549C7B /* PhotoStreamCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotoStreamCell.h; sourceTree = "<group>"; };
 		2A463D6B1885777600549C7B /* PhotoStreamCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhotoStreamCell.m; sourceTree = "<group>"; };
+		2A5E3A731889B32C003F4933 /* ExplorePlacesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesViewController.h; sourceTree = "<group>"; };
+		2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesViewController.m; sourceTree = "<group>"; };
+		2A5E3A761889BD1E003F4933 /* ExplorePlacesCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesCell.h; sourceTree = "<group>"; };
+		2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesCell.m; sourceTree = "<group>"; };
+		2A7A27C3188D3DED000A2A45 /* UserSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserSettingsViewController.h; sourceTree = "<group>"; };
+		2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserSettingsViewController.m; sourceTree = "<group>"; };
+		2A7A27C6188D5C0E000A2A45 /* SearchBarCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchBarCell.h; sourceTree = "<group>"; };
+		2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SearchBarCell.m; sourceTree = "<group>"; };
 		2AB0FA4C187AD276000AB276 /* ICETutorialController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialController.h; sourceTree = "<group>"; };
 		2AB0FA4D187AD276000AB276 /* ICETutorialController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ICETutorialController.m; sourceTree = "<group>"; };
 		2AB0FA4E187AD276000AB276 /* ICETutorialPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialPage.h; sourceTree = "<group>"; };
@@ -154,6 +169,12 @@
 		2AB0FA92187D68A1000AB276 /* FoursquareVenueCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FoursquareVenueCell.m; sourceTree = "<group>"; };
 		2AB0FA94187F1BD9000AB276 /* PlacesWatchingCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlacesWatchingCell.h; sourceTree = "<group>"; };
 		2AB0FA95187F1BD9000AB276 /* PlacesWatchingCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlacesWatchingCell.m; sourceTree = "<group>"; };
+		2ABA8121188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileSpotsHeaderView.m; sourceTree = "<group>"; };
+		2ABA8122188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileSpotsHeaderView.h; sourceTree = "<group>"; };
+		2ABA8124188DD99500A5E8B7 /* ProfileSpotCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileSpotCell.m; sourceTree = "<group>"; };
+		2ABA8125188DD99500A5E8B7 /* ProfileSpotCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileSpotCell.h; sourceTree = "<group>"; };
+		2ABA812A188DDF2400A5E8B7 /* PhotosCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotosCell.h; sourceTree = "<group>"; };
+		2ABA812B188DDF2400A5E8B7 /* PhotosCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhotosCell.m; sourceTree = "<group>"; };
 		2ACAE5E318869A530076A665 /* AlbumSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlbumSettingsViewController.h; sourceTree = "<group>"; };
 		2ACAE5E418869A530076A665 /* AlbumSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlbumSettingsViewController.m; sourceTree = "<group>"; };
 		2ACAE5E61886F4830076A665 /* AlbumMembersCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlbumMembersCell.h; sourceTree = "<group>"; };
@@ -310,6 +331,10 @@
 				2ACAE5F6188705F90076A665 /* InvitesViewController.m */,
 				2ACAE5F818870CF80076A665 /* UserProfileViewController.h */,
 				2ACAE5F918870CF80076A665 /* UserProfileViewController.m */,
+				2A5E3A731889B32C003F4933 /* ExplorePlacesViewController.h */,
+				2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */,
+				2A7A27C3188D3DED000A2A45 /* UserSettingsViewController.h */,
+				2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -334,6 +359,10 @@
 		2AB0FA54187AD286000AB276 /* CustomViews */ = {
 			isa = PBXGroup;
 			children = (
+				2ABA8124188DD99500A5E8B7 /* ProfileSpotCell.m */,
+				2ABA8125188DD99500A5E8B7 /* ProfileSpotCell.h */,
+				2ABA8121188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m */,
+				2ABA8122188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.h */,
 				2AB0FA91187D68A1000AB276 /* FoursquareVenueCell.h */,
 				2AB0FA92187D68A1000AB276 /* FoursquareVenueCell.m */,
 				2AB0FA94187F1BD9000AB276 /* PlacesWatchingCell.h */,
@@ -350,6 +379,12 @@
 				2ACAE5ED1886F4B70076A665 /* SubaUsersInviteCell.m */,
 				2ACAE5EF1886F4C90076A665 /* FacebookUsersCell.h */,
 				2ACAE5F01886F4C90076A665 /* FacebookUsersCell.m */,
+				2A5E3A761889BD1E003F4933 /* ExplorePlacesCell.h */,
+				2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */,
+				2A7A27C6188D5C0E000A2A45 /* SearchBarCell.h */,
+				2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */,
+				2ABA812A188DDF2400A5E8B7 /* PhotosCell.h */,
+				2ABA812B188DDF2400A5E8B7 /* PhotosCell.m */,
 			);
 			path = CustomViews;
 			sourceTree = "<group>";
@@ -702,7 +737,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */,
+				2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */,
 				2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */,
+				2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */,
 				2ACAE5EB1886F4A00076A665 /* SMSContactsCell.m in Sources */,
 				2AB0FA6F187AD96C000AB276 /* Photo.m in Sources */,
 				2AB0FA76187AD9EE000AB276 /* LifespotsAPIClient.m in Sources */,
@@ -726,11 +763,16 @@
 				2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */,
 				2AB0FA7A187B302B000AB276 /* LoginViewController.m in Sources */,
 				2ADE847C188237FE001C2515 /* TFScroller.m in Sources */,
+				2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */,
 				2AB0FA6C187AD96C000AB276 /* Location.m in Sources */,
 				2AB0FA6D187AD96C000AB276 /* Spot.m in Sources */,
 				2AB0FA6E187AD96C000AB276 /* User.m in Sources */,
+				2ABA812C188DDF2400A5E8B7 /* PhotosCell.m in Sources */,
+				2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */,
 				2A463D691885728E00549C7B /* PhotoStreamViewController.m in Sources */,
+				2ABA8123188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m in Sources */,
 				2AB0FA61187AD911000AB276 /* S3PhotoFetcher.m in Sources */,
+				2ABA8126188DD99500A5E8B7 /* ProfileSpotCell.m in Sources */,
 				2AB0FA8D187C39AD000AB276 /* CreateSpotViewController.m in Sources */,
 				2AB0FA51187AD276000AB276 /* ICETutorialPage.m in Sources */,
 				89E3DC7218604E9D00D193F4 /* main.m in Sources */,

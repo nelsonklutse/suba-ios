@@ -59,9 +59,10 @@
 {
     
     //Navbar customization
-    
-    
-    UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f) green:(77.0f/255.0f) blue:(20.0f/255.0f) alpha:1];
+    UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                               green:(77.0f/255.0f)
+                                                blue:(20.0f/255.0f)
+                                               alpha:1];
     
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
     
@@ -72,7 +73,6 @@
                                       
                                       NSForegroundColorAttributeName, nil];
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
-    
     
     //End of Navbar Customization
     
@@ -96,6 +96,7 @@
     ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@"Share"
                                                             description:@"The Louvre's Museum Pyramide"
                                                             pictureName:@"5.png"];
+    
     
     // Set the common style for SubTitles and Description (can be overrided on each page).
     ICETutorialLabelStyle *subStyle = [[ICETutorialLabelStyle alloc] init];
