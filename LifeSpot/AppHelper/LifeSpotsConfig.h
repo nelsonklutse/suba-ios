@@ -69,6 +69,6 @@
 #define kUserDidLogInNotification @"kUserDidLogInNotification"
 #define kUserUpdatedProfileInfoNotification @"kUserInfoWasUpdated"
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
-
+#define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
 
 #endif

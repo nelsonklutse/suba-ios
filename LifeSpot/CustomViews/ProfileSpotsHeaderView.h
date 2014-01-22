@@ -11,8 +11,8 @@
 @interface ProfileSpotsHeaderView : UICollectionReusableView
 
 //@property(weak,nonatomic) IBOutlet UIImageView *bgImage;
-@property(weak,nonatomic) IBOutlet UILabel *spotTitle;
-@property (weak, nonatomic) IBOutlet UIImageView *locIcon;
-@property (weak, nonatomic) IBOutlet UILabel *spotVenue;
+@property(weak,nonatomic) IBOutlet UILabel *spotName;
+@property (weak, nonatomic) IBOutlet UIImageView *locationIcon;
+@property (weak, nonatomic) IBOutlet UILabel *spotLocation;
 
 @end

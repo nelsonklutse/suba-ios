@@ -72,6 +72,14 @@
     }];
 }
 
++(void)fetchSpotImagesUsingSpotId:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
+{
+    [[LifespotsAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
 
 +(void)updateSpotInfo:(NSDictionary *)info completion:(SpotInfoChangedCompletion)completion
 {

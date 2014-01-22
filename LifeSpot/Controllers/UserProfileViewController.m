@@ -11,15 +11,18 @@
 #import "ProfileSpotCell.h"
 #import "ProfileSpotsHeaderView.h"
 #import "PhotosCell.h"
+#import "PhotoStreamViewController.h"
 
 @interface UserProfileViewController ()<UICollectionViewDataSource,UICollectionViewDelegate>
 @property (weak, nonatomic) IBOutlet UICollectionView *userSpotsCollectionView;
 
 @property (strong,nonatomic) NSArray *userSpots;
 @property (strong,nonatomic) NSDictionary *userProfileInfo;
+//@property (strong,nonatomic) NSString *spotID;
 
 - (void)loadSpotsCreated:(NSString *)userId;
 - (void)fetchUserInfo:(NSString *)userId;
+- (void)galleryTappedAtIndex:(NSNotification *)aNotification;
 @end
 
 @implementation UserProfileViewController
@@ -30,7 +33,41 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
+    
+    NSString *userId = [User currentlyActiveUser].userID;
+    [self loadSpotsCreated:userId];
+     [self fetchUserInfo:userId];
+    
+    //self.userSpotsCollectionView.frame = [[UIScreen mainScreen] bounds];
+    
 }
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoCellTappedAtIndexNotification object:nil];
+}
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter]
+     removeObserver:self
+     name:kPhotoCellTappedAtIndexNotification
+     object:nil];
+}
+
+
+-(void)galleryTappedAtIndex:(NSNotification *)aNotification
+{
+    
+    NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
+    NSArray *photos = notifInfo[@"photoURLs"];
+    DLog(@"Notification Info - %@",notifInfo);
+    [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:photos];
+}
+
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -79,6 +116,9 @@
             DLog(@"Error -  %@",error);
         }else{
             self.userProfileInfo = (NSDictionary *)results;
+            [self.userSpotsCollectionView reloadData];
+            
+            //DLog(@"UserInfo - %@",self.userProfileInfo);
         }
     }];
 
@@ -99,16 +139,22 @@
         numberOfItems = 1;
     }else{
         numberOfItems = (self.userSpots) ? [self.userSpots count] : numberOfItems;
-        //numberOfItems = photos;
     }
     
     return numberOfItems;
 }
 
+
+- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout insetForSectionAtIndex:(NSInteger)section {
+    return UIEdgeInsetsMake(0, 0, 0, 0);
+}
+
+
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *cellIdentifier = nil;
     if (indexPath.section == 0) {
+        DLog(@"Its section - %i",indexPath.section);
         // It is the profile view
         cellIdentifier = @"USER_INFO_CELL";
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
@@ -121,9 +167,12 @@
             self.navigationItem.title = [NSString stringWithFormat:@"@%@",userName];
             userInfoCell.numberOfSpotsLabel.text = numberOfSpots;
             userInfoCell.spotsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Spot" : @"Spots";
+            
             if (profilePhotoURL) {
                 [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL];
             }
+            
+            userInfoCell.userProfileImage.layer.borderColor = [UIColor whiteColor].CGColor;
             
         }
         
@@ -132,9 +181,47 @@
         
         
     }else if (indexPath.section == 1){
+        //DLog(@"Its section - %i",indexPath.section);
+        
         cellIdentifier = @"USER_CREATED_SPOTS_CELL";
         PhotosCell *photosCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
         
+        [[photosCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        
+        NSString *photos = self.userSpots[indexPath.row][@"photos"];
+        photosCell.spotName.text = self.userSpots[indexPath.row][@"spotName"];
+        photosCell.spotVenue.text = self.userSpots[indexPath.row][@"venue"];
+        if ([photos integerValue] > 0) {  // If there are photos to display
+            
+            NSDictionary *dataToGallery = @{@"images": self.userSpots[indexPath.row][@"photoURLs"],
+                                            @"spotId" :self.userSpots[indexPath.row][@"spotId"],
+                                            @"spotName" : self.userSpots[indexPath.row][@"spotName"],
+                                            @"photos" : @([photos integerValue])};
+            
+            [photosCell prepareForGallery:dataToGallery index:indexPath];
+            
+            if ([photosCell.photoGallery superview]) {
+                [photosCell.photoGallery removeFromSuperview];
+            }
+            photosCell.photoGalleryView.backgroundColor = [UIColor clearColor];
+            [photosCell.photoGalleryView addSubview:photosCell.photoGallery];
+            
+            //DLog(@"Gallery subviews at index - %i is %@",indexPath.item,[[photosCell.photoGalleryView subviews] debugDescription]);
+            
+        }else{
+            
+            UIImageView *noPhotosImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, photosCell.photoGalleryView.frame.size.width, photosCell.photoGalleryView.frame.size.height)];
+            
+            noPhotosImageView.image = [UIImage imageNamed:@"noPhoto"];
+            noPhotosImageView.contentMode = UIViewContentModeScaleAspectFit;
+            
+            if ([noPhotosImageView superview]) {
+                //DLog(@"View has no subviews coz there are no photos");
+                [noPhotosImageView removeFromSuperview];
+            }
+            [photosCell.photoGalleryView addSubview:noPhotosImageView];
+        }
+
         
         return photosCell;
     }
@@ -143,32 +230,76 @@
 }
 
 
--(UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
+
+/*-(UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
 {
     ProfileSpotsHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"PROFILE_SPOTS_HEADER_VIEW" forIndexPath:indexPath];
     
-    NSString *title = self.userSpots[indexPath.section][@"spotName"];
-    NSString *spotVenue = self.userSpots[indexPath.section][@"venue"];
-    if (![spotVenue isEqualToString:@"NONE"]) {
-        headerView.locIcon.hidden = NO;
-        headerView.spotVenue.hidden = NO;
-        headerView.spotVenue.text = spotVenue;
-    }else{
-        headerView.locIcon.hidden = YES;
-        headerView.spotVenue.hidden = YES;
+    if (indexPath.section == 1) {
+        if (kind == UICollectionElementKindSectionHeader) {
+            
+            NSString *title = self.userSpots[indexPath.item][@"spotName"];
+            NSString *spotVenue = self.userSpots[indexPath.item][@"venue"];
+            if (![spotVenue isEqualToString:@"NONE"]) {
+                headerView.locationIcon.hidden = NO;
+                headerView.spotLocation.hidden = NO;
+                headerView.spotLocation.text = spotVenue;
+            }else{
+                headerView.locationIcon.hidden = YES;
+                headerView.spotLocation.hidden = YES;
+            }
+            headerView.spotName.text = title;
+            headerView.spotLocation.text = spotVenue;
+            DLog(@"Spot title - %@\nSpot venue - %@",title,spotVenue);
+        }
     }
-    headerView.spotTitle.text = title;
+    
     return headerView;
     
 }
+
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
+{
+    if(section == 0)
+    {
+        return CGSizeZero;
+    }
+    
+    return CGSizeMake(320, 40);
+}*/
 
 
 #pragma mark - CollectionView Delegate
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     //NSLog(@"UserSpot details - %@",[self.userSpots[indexPath.section] description]);
-    [self performSegueWithIdentifier:@"PROFILE_TO_SPOTVIEW_SEGUE" sender:self.userSpots[indexPath.section]];
+    if ([self.userSpots[indexPath.item][@"photos"] integerValue] == 0 ) {
+        //DLog(@"No photos so lets segue");
+        NSString *spotID = self.userSpots[indexPath.item][@"spotId"];
+        NSString *spotName = self.userSpots[indexPath.item][@"spotName"];
+        NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
+        NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+        [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
+
+    }
     
+    
+}
+
+
+#pragma mark - Segue Methods
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"FromUserSpotsToPhotosStreamSegue"]){
+        if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]) {
+            PhotoStreamViewController *photosVC = segue.destinationViewController;
+            //photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"images"]];
+            photosVC.spotName = sender[@"spotName"];
+            photosVC.spotID = sender[@"spotId"];
+            photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
+        }
+    }
 }
 
 @end

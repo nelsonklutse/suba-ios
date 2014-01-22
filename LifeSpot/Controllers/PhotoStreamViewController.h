@@ -20,7 +20,9 @@ typedef enum{
 
 
 @interface PhotoStreamViewController : UIViewController
+
 @property (strong,nonatomic) NSMutableArray *photos;
 @property (strong,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSString *spotID;
+@property NSInteger numberOfPhotos;
 @end

@@ -7,13 +7,13 @@
 //
 
 #import "PersonalSpotCell.h"
-#import "MainStreamViewController.h"
-#import "S3PhotoFetcher.h"
+//#import "MainStreamViewController.h"
+//#import "S3PhotoFetcher.h"
 
 @interface PersonalSpotCell()<TFScrollerDelegate,UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 @property (strong,nonatomic) NSArray *gImages;
 @property int galleryIndex;
-@property (retain,nonatomic) MainStreamViewController *mainStreamVC;
+//@property (retain,nonatomic) MainStreamViewController *mainStreamVC;
 @end
 
 @implementation PersonalSpotCell
@@ -31,8 +31,7 @@
         // Initialization code
         //self.photoGalleryView.backgroundColor = [UIColor clearColor];
     }
-    //[self setGImages:@[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"]];
-     self.mainStreamVC = [[UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]] instantiateViewControllerWithIdentifier:@"MAINSTREAM_VC"];
+    
     return self;
 }
 

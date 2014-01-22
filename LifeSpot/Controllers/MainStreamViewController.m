@@ -390,7 +390,7 @@ static CLLocationManager *locationManager;
         cellIdentifier = @"PersonalSpotCell";
         spotsToDisplay = self.allSpots;
         personalSpotCell = [self.allSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-        DLog(@"All Spots - %@",spotsToDisplay);
+        //DLog(@"All Spots - %@",spotsToDisplay);
     }
     
     
@@ -440,6 +440,30 @@ static CLLocationManager *locationManager;
     return personalSpotCell;
 }
 
+
+#pragma mark - CollectionView Delegate
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSInteger numberOfPhotos = 0;
+    NSArray *spotsToDisplay = nil;
+    
+    if(self.allSpotsCollectionView.alpha == 1){
+        spotsToDisplay = self.allSpots;
+    }else if (self.nearbySpotsCollectionView.alpha == 1) {
+        spotsToDisplay = self.nearbySpots;
+    }
+    
+     numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+    DLog(@"Number of photos = %i",numberOfPhotos);
+    if (numberOfPhotos == 0) {
+        NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
+        NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
+        NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+        NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+        [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+    }
+    
+}
 
 
 #pragma mark - Location Manager Delegate
@@ -497,10 +521,21 @@ static CLLocationManager *locationManager;
     if ([segue.identifier isEqualToString:@"PhotosStreamSegue"]) {
         if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]) {
             PhotoStreamViewController *photosVC = segue.destinationViewController;
-            photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender];
-            photosVC.spotName = sender[0][@"spot"];
-            photosVC.spotID = sender[0][@"spotId"];
+
+            if ([sender isKindOfClass:[NSArray class]]) {
+                photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender];
+                photosVC.spotName = sender[0][@"spot"];
+                photosVC.spotID = sender[0][@"spotId"];
+                photosVC.numberOfPhotos = 1;
+            }else if([sender isKindOfClass:[NSDictionary class]]){
+                photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
+                photosVC.spotName = sender[@"spotName"];
+                photosVC.spotID = sender[@"spotId"];
+            }
+            
         }
+        
+    
     }
 }
 

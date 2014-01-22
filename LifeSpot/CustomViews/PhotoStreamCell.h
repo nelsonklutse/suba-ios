@@ -19,5 +19,5 @@
 @property (weak, nonatomic) IBOutlet UIButton *likePhotoImage;
 @property (weak, nonatomic) IBOutlet UILabel *pictureTakerName;
 
-//- (void)showLoadingPictureIndicator:(BOOL)flag;
+//- (void)showLoadingPictureIndicator:(BOOL)flag; 
 @end

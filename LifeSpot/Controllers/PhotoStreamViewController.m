@@ -16,16 +16,19 @@
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
 #import "Photo.h"
 #import "User.h"
+#import "Spot.h"
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 
 @interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate>
 
+@property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
 
+@property (weak, nonatomic) IBOutlet UIView *noPhotosView;
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
 - (IBAction)sharePhoto:(UIButton *)sender;
@@ -43,6 +46,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
           completon:(PhotoResizedCompletion)completion;
 - (void)showPhotoOptions;
 - (void)showMembers;
+- (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
+- (void)loadSpotImages:(NSString *)spotId;
 @end
 
 @implementation PhotoStreamViewController
@@ -51,7 +56,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
-    self.navigationItem.title = self.spotName;
+    self.noPhotosView.hidden = YES;
+    
+    self.navigationItem.title = (self.spotName) ? self.spotName : @"Spot";
     UIBarButtonItem *membersButton = [[UIBarButtonItem alloc]
                                    initWithTitle:@""
                                    style:UIBarButtonItemStyleBordered
@@ -62,7 +69,50 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
    
     //self.navigationItem.rightBarButtonItem
     self.library = [[ALAssetsLibrary alloc] init];
+    
+    if (!self.photos && self.numberOfPhotos > 0) {
+        // We are coming from a place where spotName is not set so lets load spot info
+        [self loadSpotImages:self.spotID];
+    }
+    
+    if(self.numberOfPhotos == 0){
+        self.noPhotosView.hidden = NO;
+        self.photoCollectionView.hidden = YES;
+    }
 }
+
+         
+-(void)loadSpotImages:(NSString *)spotId
+{
+   [Spot fetchSpotImagesUsingSpotId:spotId completion:^(id results, NSError *error) {
+       if (!error){
+           self.photos = [results objectForKey:@"spotPhotos"];
+           if ([self.photos count] > 0) {
+               [self.photoCollectionView reloadData];
+           }
+           
+       }else{
+           DLog(@"Error - %@",error);
+       }
+   }];
+}
+
+-(void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId
+{
+    [Spot fetchSpotInfo:spotId User:userId completion:^(id results, NSError *error) {
+        if (error) {
+            DLog(@"Error - %@",error);
+        }else{
+            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                self.spotInfo = (NSDictionary *)results;
+                //[self updateSpotView:self.spotInfo];
+                [self.photoCollectionView reloadData];
+            }
+            
+        }
+    }];
+}
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -81,6 +131,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
    static NSString *cellIdentifier = @"PhotoStreamCell";
     PhotoStreamCell *photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+    
+    //DLog(@"Photos - %@",self.photos[indexPath.row]);
     NSString *photoURLstring = self.photos[indexPath.row][@"s3name"];
     
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
@@ -107,17 +159,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                                   flag:NO];
     }];
     
-    
-    
-    
-    
     return photoCardCell;
-    
 }
+
 
 -(void)showMembers{
     [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
 }
+
 
 - (IBAction)sharePhoto:(UIButton *)sender{
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
@@ -130,6 +179,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                     delegate:nil];
     }
 }
+
+
 
 - (IBAction)likePicture:(UIButton *)sender {
 }
@@ -415,16 +466,12 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
             // Check for when we are getting a nil data parameter back
             NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
             if (error) {
-                NSLog(@"Error serializing %@", error);
+                DLog(@"Error serializing %@", error);
             }else{
-                //NSLog(@"photoInfo - %@",[photoInfo debugDescription]);
-                /*NSUInteger photoId = [photoInfo[@"photoId"] integerValue];
-                NSString *s3Name = photoInfo[@"s3Name"];
-                NSDate *timeStamp = photoInfo[@"timestamp"];
-                NSInteger likes = [photoInfo[@"likes"] integerValue];*/
                 
+                self.noPhotosView.hidden = YES;
+                self.photoCollectionView.hidden = NO;
                 [self.photos insertObject:photoInfo atIndex:0];
-                //Photo *photo = [Photo photoWithURL:s3Name TimeStamp:timeStamp Likes:likes Id:photoId Image:NULL];
                 [self upDateCollectionViewWithCapturedPhoto:photoInfo];
             }
     });
