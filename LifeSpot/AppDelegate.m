@@ -82,19 +82,19 @@
     
     // Init the pages texts, and pictures.
     ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@"Create"
-                                                            description:@"Champs-Elysées by night"
+                                                            description:@"Create a stream and add your location"
                                                             pictureName:@"1.png"];
-    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@"Special Moments"
-                                                            description:@"The Eiffel Tower with\n cloudy weather"
+    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@"Join"
+                                                            description:@"Or join an already existing one"
                                                             pictureName:@"2.png"];
-    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Never miss a photo"
-                                                            description:@"An other famous street of Paris"
+    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Invite"
+                                                            description:@"Invite via Suba,Facebook or SMS"
                                                             pictureName:@"3.png"];
     ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@"Capture"
-                                                            description:@"The Eiffel Tower with a better weather"
+                                                            description:@"Capture moments in your stream"
                                                             pictureName:@"4.png"];
     ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@"Share"
-                                                            description:@"The Louvre's Museum Pyramide"
+                                                            description:@"Share your stream on social media."
                                                             pictureName:@"5.png"];
     
     

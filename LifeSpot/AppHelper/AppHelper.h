@@ -8,10 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
-
 typedef void (^UserAuthenticatedCompletion) (id results,NSError *error);
 typedef void (^UserNameCheckerCompletion) (id results,NSError *error);
 typedef void (^UserLoggedInCompletion) (id results,NSError *error);
+typedef void (^NotificationCompletion) ();
 
 @interface AppHelper : NSObject
 
@@ -49,7 +49,10 @@ typedef void (^UserLoggedInCompletion) (id results,NSError *error);
 + (void)setLastName:(NSString *)lastName;
 + (void)setEmail:(NSString *)email;
 + (void)setUserName:(NSString *)userName;
-
++ (void)showNotificationWithMessage:(NSString *)msg
+                               type:(NSString *)type
+                   inViewController:(UIViewController *)vc
+                    completionBlock:(NotificationCompletion)completion;
 
 
 #pragma mark - Convenience Methods

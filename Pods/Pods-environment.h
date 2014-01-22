@@ -60,11 +60,23 @@
 #define COCOAPODS_VERSION_MINOR_ALAssetsLibrary_CustomPhotoAlbum 1
 #define COCOAPODS_VERSION_PATCH_ALAssetsLibrary_CustomPhotoAlbum 4
 
+// CSNotificationView
+#define COCOAPODS_POD_AVAILABLE_CSNotificationView
+#define COCOAPODS_VERSION_MAJOR_CSNotificationView 0
+#define COCOAPODS_VERSION_MINOR_CSNotificationView 3
+#define COCOAPODS_VERSION_PATCH_CSNotificationView 3
+
 // CTAssetsPickerController
 #define COCOAPODS_POD_AVAILABLE_CTAssetsPickerController
 #define COCOAPODS_VERSION_MAJOR_CTAssetsPickerController 1
 #define COCOAPODS_VERSION_MINOR_CTAssetsPickerController 3
 #define COCOAPODS_VERSION_PATCH_CTAssetsPickerController 3
+
+// CXAlertView
+#define COCOAPODS_POD_AVAILABLE_CXAlertView
+#define COCOAPODS_VERSION_MAJOR_CXAlertView 1
+#define COCOAPODS_VERSION_MINOR_CXAlertView 0
+#define COCOAPODS_VERSION_PATCH_CXAlertView 1
 
 // DCModalSegue
 #define COCOAPODS_POD_AVAILABLE_DCModalSegue

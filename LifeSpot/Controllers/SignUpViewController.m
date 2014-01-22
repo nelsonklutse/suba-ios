@@ -152,7 +152,7 @@ bool isUserNameAvailable = NO;
             }else{
                 UIAlertView *alertView = [[UIAlertView alloc]
                                           initWithTitle:@"Email check"
-                                          message:@"We could not verfiy your email address format"
+                                          message:@"We could not verfiy your email address format.Please check again"
                                           delegate:nil
                                           cancelButtonTitle:@"I'll check"
                                           otherButtonTitles:nil];
@@ -179,7 +179,7 @@ bool isUserNameAvailable = NO;
     
     if (textField == self.passwordField) {
         if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]){
-            DLog(@"SignUp Button enabled");
+            //DLog(@"SignUp Button enabled");
             self.signUpButton.enabled = YES;
         }
     }
@@ -200,13 +200,13 @@ bool isUserNameAvailable = NO;
             
             if ([results[STATUS] isEqualToString:ALRIGHT]){
                 isUserNameAvailable = YES;
-                DLog(@"%@ is available - %i",self.userNameField.text,isUserNameAvailable);
                 
             }else{
-                [AppHelper showAlert:@"Username not Available"
-                             message:@"This username has already been taken.Please chose a different one"
-                             buttons:@[@"OK"]
-                            delegate:nil];
+                [AppHelper
+                 showNotificationWithMessage:@"This username has already been taken.Please chose a different one"
+                                        type:kSUBANOTIFICATION_ERROR
+                            inViewController:self
+                             completionBlock:nil];
             }
         }else{
             DLog(@"Error - %@",error);

@@ -705,7 +705,7 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <collectionView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" minimumZoomScale="0.0" maximumZoomScale="0.0" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="KeS-nG-a5X">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="419"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="455"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <color key="tintColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
@@ -727,7 +727,7 @@
                                                     <rect key="frame" x="0.0" y="0.0" width="320" height="180"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
-                                                        <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="OAw-uu-pdQ">
+                                                        <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="OAw-uu-pdQ">
                                                             <rect key="frame" x="120" y="42" width="80" height="80"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <userDefinedRuntimeAttributes>
@@ -769,6 +769,7 @@
                                                         </label>
                                                     </subviews>
                                                     <color key="backgroundColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                                                    <color key="tintColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
                                                 </view>
                                             </subviews>
                                             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -1610,16 +1611,16 @@
                         <viewControllerLayoutGuide type="bottom" id="cWr-O7-Vy4"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="cVG-Fo-eGg">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="519"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="455"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="yva-xf-Wpo">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="519"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="455"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <prototypes>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" textLabel="KMa-c8-7Au" style="IBUITableViewCellStyleDefault" id="tbN-la-dnl">
-                                        <rect key="frame" x="0.0" y="86" width="320" height="44"/>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="SETTINGS_CELL" textLabel="KMa-c8-7Au" style="IBUITableViewCellStyleDefault" id="tbN-la-dnl">
+                                        <rect key="frame" x="0.0" y="22" width="320" height="44"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="tbN-la-dnl" id="h28-C6-Ujg">
                                             <rect key="frame" x="0.0" y="0.0" width="320" height="43"/>
@@ -1634,106 +1635,293 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
+                                        <color key="backgroundColor" cocoaTouchSystemColor="groupTableViewBackgroundColor"/>
+                                        <color key="tintColor" red="0.98039215690000003" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
                                     </tableViewCell>
                                 </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="OJF-gP-p5T" id="iZu-Vn-tRz"/>
+                                    <outlet property="delegate" destination="OJF-gP-p5T" id="pZ5-w6-A5b"/>
+                                </connections>
                             </tableView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
                     <navigationItem key="navigationItem" title="Main Settings" id="pbY-9Y-R1C"/>
+                    <connections>
+                        <outlet property="appSettingsTableView" destination="yva-xf-Wpo" id="qpF-4p-Jt2"/>
+                        <segue destination="Ekh-o5-K00" kind="push" identifier="EDIT_PROFILE_SEGUE" id="Mmp-qw-jIm"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="hkJ-bI-61o" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3933" y="704"/>
+            <point key="canvasLocation" x="3540" y="3"/>
         </scene>
-        <!--View Controller-->
+        <!--Profile Settings View Controller - Profile-->
         <scene sceneID="UsT-IT-X1O">
             <objects>
-                <viewController id="Ekh-o5-K00" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="USER_INFO_SETTINGS" useStoryboardIdentifierAsRestorationIdentifier="YES" id="Ekh-o5-K00" customClass="ProfileSettingsViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="rBw-OD-xs8"/>
                         <viewControllerLayoutGuide type="bottom" id="2yc-tG-84k"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="iJu-WV-AVW">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                    <view key="view" contentMode="scaleToFill" id="iJu-WV-AVW" customClass="UIControl">
+                        <rect key="frame" x="0.0" y="64" width="320" height="455"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <navigationBar contentMode="scaleToFill" fixedFrame="YES" translucent="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QHV-7L-IkY">
-                                <rect key="frame" x="0.0" y="19" width="320" height="44"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
-                                <items>
-                                    <navigationItem title="Profile settings" id="Rqf-1t-DxW">
-                                        <barButtonItem key="rightBarButtonItem" systemItem="done" id="ZAo-d7-K1n"/>
-                                    </navigationItem>
-                                </items>
-                            </navigationBar>
-                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Lv5-1w-Gtr">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="20"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="backgroundColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
-                            </view>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="blurBg" translatesAutoresizingMaskIntoConstraints="NO" id="fWg-31-YST">
-                                <rect key="frame" x="0.0" y="63" width="320" height="505"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="455"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="Ndg-EC-IFe">
-                                <rect key="frame" x="120" y="89" width="80" height="80"/>
+                            <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="Ndg-EC-IFe">
+                                <rect key="frame" x="120" y="39" width="80" height="80"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="40"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
                             </imageView>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eYS-pg-Zht">
-                                <rect key="frame" x="120" y="89" width="80" height="80"/>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eYS-pg-Zht" userLabel="Change Profile Picture Button">
+                                <rect key="frame" x="120" y="37" width="80" height="80"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <connections>
+                                    <action selector="changeProfilePhotoTapped:" destination="Ekh-o5-K00" eventType="touchUpInside" id="tG3-9Z-PKG"/>
+                                </connections>
                             </button>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Tap to change" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Efj-K0-ASY">
-                                <rect key="frame" x="104" y="170" width="112" height="21"/>
+                                <rect key="frame" x="104" y="127" width="112" height="21"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue-Light" family="Helvetica Neue" pointSize="9"/>
                                 <color key="textColor" red="0.79041255190000004" green="0.818359375" blue="0.77258842709999997" alpha="1" colorSpace="calibratedRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="Eric Franklin" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="jPh-am-puw">
-                                <rect key="frame" x="35" y="199" width="250" height="30"/>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="fullName" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="jPh-am-puw" userLabel="FullName TextField">
+                                <rect key="frame" x="35" y="159" width="250" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="textColor" red="0.79041255190000004" green="0.818359375" blue="0.77258842709999997" alpha="1" colorSpace="calibratedRGB"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Ekh-o5-K00" id="rXf-kt-dIF"/>
+                                </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="kwesihackman" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="bPL-Rw-QOE">
-                                <rect key="frame" x="35" y="237" width="250" height="30"/>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="username" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="bPL-Rw-QOE" userLabel="Username TextField">
+                                <rect key="frame" x="35" y="197" width="250" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="textColor" red="0.79041255190000004" green="0.818359375" blue="0.77258842709999997" alpha="1" colorSpace="calibratedRGB"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
-                            </textField>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="kwesihackman@gmail.com" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="gyJ-S0-CGU">
-                                <rect key="frame" x="35" y="269" width="250" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <color key="textColor" red="0.79041255190000004" green="0.818359375" blue="0.77258842709999997" alpha="1" colorSpace="calibratedRGB"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Ekh-o5-K00" id="jJt-6d-cHQ"/>
+                                </connections>
                             </textField>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="edit_user" translatesAutoresizingMaskIntoConstraints="NO" id="ure-Fa-gXr">
-                                <rect key="frame" x="7" y="204" width="20" height="20"/>
+                                <rect key="frame" x="7" y="164" width="20" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="edit_user" translatesAutoresizingMaskIntoConstraints="NO" id="8na-RR-dxa">
-                                <rect key="frame" x="7" y="242" width="20" height="20"/>
+                                <rect key="frame" x="7" y="202" width="20" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="email" translatesAutoresizingMaskIntoConstraints="NO" id="WrU-tJ-CZi">
-                                <rect key="frame" x="7" y="277" width="20" height="14"/>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="D7s-Kh-ry2">
+                                <rect key="frame" x="288" y="202" width="20" height="20"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                            </imageView>
+                            </activityIndicatorView>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="EYR-qG-TTB">
+                                <rect key="frame" x="42" y="307" width="236" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="Change Password">
+                                    <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                </state>
+                                <connections>
+                                    <segue destination="dp2-Ub-NNd" kind="custom" identifier="CHANGE_PASSWORD_SEGUE" customClass="DCModalSegue" id="Whb-Fh-A0a"/>
+                                </connections>
+                            </button>
+                            <view hidden="YES" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="caQ-1C-OX8" userLabel="Saving Changes View">
+                                <rect key="frame" x="128" y="195" width="60" height="60"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="PG3-vU-6Dn">
+                                        <rect key="frame" x="12" y="11" width="37" height="37"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <color key="color" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    </activityIndicatorView>
+                                </subviews>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="10"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <connections>
+                            <action selector="dismissKeypad:" destination="Ekh-o5-K00" eventType="touchUpInside" id="Ehx-IH-d3W"/>
+                        </connections>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <navigationItem key="navigationItem" title="Profile" id="n4t-HK-2pH">
+                        <barButtonItem key="rightBarButtonItem" enabled="NO" systemItem="done" id="u06-sR-Ukb">
+                            <connections>
+                                <action selector="updateUsrDetails:" destination="Ekh-o5-K00" id="lFV-eJ-BV4"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="changeProfilePhotoButton" destination="eYS-pg-Zht" id="BLD-y9-eEu"/>
+                        <outlet property="profilePictureView" destination="Ndg-EC-IFe" id="66p-jT-yjm"/>
+                        <outlet property="savingUserChangesIndicatorView" destination="PG3-vU-6Dn" id="DD8-lS-aF4"/>
+                        <outlet property="savingUserChangesView" destination="caQ-1C-OX8" id="Uco-Ja-Uei"/>
+                        <outlet property="userChangesDoneBarButtonItem" destination="u06-sR-Ukb" id="U5z-0q-CMl"/>
+                        <outlet property="usernameCheck" destination="D7s-Kh-ry2" id="UMi-sr-lzh"/>
+                        <outlet property="usrFullNameField" destination="jPh-am-puw" id="BVk-6v-GFh"/>
+                        <outlet property="usrNameField" destination="bPL-Rw-QOE" id="cga-yn-naf"/>
+                        <segue destination="Zkc-k2-6wG" kind="unwind" identifier="UNWIND_TO_USER_SETTINGS_SEGUE" unwindAction="unwindToUserSettings:" id="PNV-Ly-4Ke"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="pwa-aN-r6T" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="Zkc-k2-6wG" userLabel="Exit" sceneMemberID="exit"/>
+            </objects>
+            <point key="canvasLocation" x="3952" y="11"/>
+        </scene>
+        <!--Password Change View Controller-->
+        <scene sceneID="q1n-fk-EYQ">
+            <objects>
+                <viewController storyboardIdentifier="PASSWORD_CHANGE_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="dp2-Ub-NNd" customClass="PasswordChangeViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="irp-In-2YS"/>
+                        <viewControllerLayoutGuide type="bottom" id="q5S-mW-LUD"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Apr-Ed-thd">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5a2-Vb-Wfb" userLabel="Status Bar View">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="20"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                                <color key="tintColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                            </view>
+                            <view hidden="YES" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bcv-cE-Es9" userLabel="Saving Changes View">
+                                <rect key="frame" x="130" y="254" width="60" height="60"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" hidesWhenStopped="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="VSy-Z0-JyT">
+                                        <rect key="frame" x="12" y="11" width="37" height="37"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <color key="color" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                    </activityIndicatorView>
+                                </subviews>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="10"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                            </view>
+                            <navigationBar contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="p4E-d5-Lrd">
+                                <rect key="frame" x="0.0" y="20" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <items>
+                                    <navigationItem title="Password" id="FEw-X1-EzB">
+                                        <barButtonItem key="leftBarButtonItem" title="Item" systemItem="cancel" id="abr-sj-PC4">
+                                            <connections>
+                                                <segue destination="5ee-nE-F0Y" kind="unwind" unwindAction="modalDonePresenting:" id="nvi-LE-GoJ"/>
+                                            </connections>
+                                        </barButtonItem>
+                                        <barButtonItem key="rightBarButtonItem" enabled="NO" systemItem="done" id="Od1-xV-LlR">
+                                            <connections>
+                                                <action selector="savePasswordAction:" destination="dp2-Ub-NNd" id="ejr-9A-BFn"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
+                                </items>
+                            </navigationBar>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3eH-v7-nCK" userLabel="LockIconView">
+                                <rect key="frame" x="0.0" y="111" width="40" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="lock" translatesAutoresizingMaskIntoConstraints="NO" id="nqs-Pl-2iz">
+                                        <rect key="frame" x="10" y="5" width="20" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </imageView>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                            </view>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="Current Password" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="KIP-pR-3q0">
+                                <rect key="frame" x="40" y="111" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" returnKeyType="next" secureTextEntry="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="dp2-Ub-NNd" id="XmU-P0-jGH"/>
+                                </connections>
+                            </textField>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cVK-sG-BR0" userLabel="LockIconView">
+                                <rect key="frame" x="0.0" y="170" width="40" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="lock" translatesAutoresizingMaskIntoConstraints="NO" id="2Ob-ej-Tg1">
+                                        <rect key="frame" x="10" y="5" width="20" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </imageView>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                            </view>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="New Password" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="fmh-5G-J9y">
+                                <rect key="frame" x="40" y="170" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" returnKeyType="next" secureTextEntry="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="dp2-Ub-NNd" id="aQ3-qp-7xv"/>
+                                </connections>
+                            </textField>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="65J-w2-nSo" userLabel="LockIconView">
+                                <rect key="frame" x="0.0" y="210" width="40" height="32"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="lock" translatesAutoresizingMaskIntoConstraints="NO" id="aex-jM-0wi">
+                                        <rect key="frame" x="10" y="5" width="20" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </imageView>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                            </view>
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="New Password,again" minimumFontSize="17" background="textfieldBg" translatesAutoresizingMaskIntoConstraints="NO" id="O9s-24-cJt">
+                                <rect key="frame" x="40" y="210" width="280" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="no" returnKeyType="done" secureTextEntry="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="dp2-Ub-NNd" id="Cue-7n-it5"/>
+                                </connections>
+                            </textField>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <connections>
+                        <outlet property="changingPasswordIndicator" destination="VSy-Z0-JyT" id="YgM-mF-evU"/>
+                        <outlet property="confirmedPasswordField" destination="O9s-24-cJt" id="yaT-5s-LRN"/>
+                        <outlet property="currentPasswordField" destination="KIP-pR-3q0" id="BKY-P9-Dtv"/>
+                        <outlet property="nwPasswordField" destination="fmh-5G-J9y" id="cBq-Ag-DFW"/>
+                        <outlet property="savePasswordBarButton" destination="Od1-xV-LlR" id="1JV-Gh-bfD"/>
+                        <outlet property="savingChangesView" destination="bcv-cE-Es9" id="B3s-gq-Zpx"/>
+                        <segue destination="5ee-nE-F0Y" kind="unwind" identifier="UNWIND_TO_PROFILE_SETTINGS_SEGUE" unwindAction="unWindToProfileSettings:" id="txY-rc-rcb"/>
+                    </connections>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="pwa-aN-r6T" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kVU-3f-T4p" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="5ee-nE-F0Y" userLabel="Exit" sceneMemberID="exit"/>
             </objects>
-            <point key="canvasLocation" x="4331" y="704"/>
+            <point key="canvasLocation" x="4335" y="11"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="3YH-K2-KRr">

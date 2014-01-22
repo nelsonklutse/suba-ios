@@ -227,6 +227,10 @@
         [userDefaults setValue:prefs[LAST_NAME] forKey:LAST_NAME];
     }
     
+    if ([prefs objectForKey:PROFILE_PHOTO_URL]) {
+        [userDefaults setValue:prefs[PROFILE_PHOTO_URL] forKey:PROFILE_PHOTO_URL];
+    }
+    
     if ([prefs objectForKey:FACEBOOK_ID]) {
         [userDefaults setValue:prefs[@"id"] forKey:FACEBOOK_ID];
     }
@@ -388,6 +392,36 @@
     }else [indicator stopAnimating]; 
 }
 
+
++(void)showNotificationWithMessage:(NSString *)msg type:(NSString *)type inViewController:(UIViewController *)vc completionBlock:(NotificationCompletion)completion
+{
+    UIColor *tintColor = [UIColor colorWithRed:0.8 green:0.000 blue:0.2 alpha:1];
+    
+    if ([type isEqualToString:kSUBANOTIFICATION_SUCCESS]){
+        tintColor = [UIColor colorWithRed:0.00 green:0.8 blue:0.2 alpha:1];
+    }
+    
+    /*CSNotificationView *note = [[CSNotificationView alloc] initWithParentViewController:vc];
+    note.showingActivity = YES;
+    note.image = nil;
+    note.tintColor = [UIColor colorWithRed:0.8 green:0.000 blue:0.2 alpha:1];
+    
+    if ([type isEqualToString:kSUBANOTIFICATION_SUCCESS]){
+        note.tintColor = [UIColor colorWithRed:0.00 green:0.8 blue:0.2 alpha:1];
+    }
+    [note setVisible:YES animated:YES completion:nil];
+    
+    [note dismissWithStyle:CSNotificationViewStyleError message:msg
+                  duration:kCSNotificationViewDefaultShowDuration animated:YES];*/
+
+    
+    [CSNotificationView showInViewController:vc
+     tintColor: tintColor
+     image:nil
+     message:msg
+     duration:1.8f];
+
+}
 
 @end
 

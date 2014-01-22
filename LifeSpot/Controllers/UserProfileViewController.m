@@ -38,6 +38,7 @@
     [self loadSpotsCreated:userId];
      [self fetchUserInfo:userId];
     
+    
     //self.userSpotsCollectionView.frame = [[UIScreen mainScreen] bounds];
     
 }

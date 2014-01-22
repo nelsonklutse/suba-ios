@@ -23,6 +23,7 @@
     #import "UIPhotoGalleryView.h"
     #import "UIPhotoItemView.h"
     #import "UIPhotoGalleryViewController.h"
+    #import <CSNotificationView.h>
 #endif
 
 

@@ -62,6 +62,7 @@
                                 
                                 if (!error) {
                                     if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                                        //DLog(@"")
                                         [AppHelper savePreferences:results];
                                         [self performSegueWithIdentifier:@"FromLoginPersonalSpotsTab" sender:nil];
                                     }else{

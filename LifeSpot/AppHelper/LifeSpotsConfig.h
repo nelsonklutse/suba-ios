@@ -60,6 +60,9 @@
 #define ARC4RANDOM_MAX  0x100000000
 #define sANYONE @"ANYONE"
 #define sONLY_MEMBERS @"ONLY_MEMBERS"
+#define kSUBANOTIFICATION_ERROR @"kNotficationError"
+#define kSUBANOTIFICATION_SUCCESS @"kNotficationSuccess"
+
 
 // Notifications
 #define kFBInfoWasFetchedNotification @"FbUserInfoNotification"

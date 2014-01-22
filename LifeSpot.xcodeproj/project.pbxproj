@@ -60,6 +60,8 @@
 		2ADE847418819E20001C2515 /* grad_14.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2ADE846B18819E1F001C2515 /* grad_14.jpg */; };
 		2ADE847B188237FE001C2515 /* MagazineTeaserView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ADE8477188237FE001C2515 /* MagazineTeaserView.m */; };
 		2ADE847C188237FE001C2515 /* TFScroller.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ADE847A188237FE001C2515 /* TFScroller.m */; };
+		2AEBB62A188FC69400EAA879 /* PasswordChangeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */; };
+		2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */; };
 		8940C5FF18631C5000FD1780 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FC18631C5000FD1780 /* AppIcon.png */; };
 		8940C60018631C5000FD1780 /* SettingsIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FD18631C5000FD1780 /* SettingsIcon.png */; };
 		8940C60118631C5000FD1780 /* Spotlight.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FE18631C5000FD1780 /* Spotlight.png */; };
@@ -206,6 +208,10 @@
 		2ADE8477188237FE001C2515 /* MagazineTeaserView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MagazineTeaserView.m; sourceTree = "<group>"; };
 		2ADE8479188237FE001C2515 /* TFScroller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TFScroller.h; sourceTree = "<group>"; };
 		2ADE847A188237FE001C2515 /* TFScroller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TFScroller.m; sourceTree = "<group>"; };
+		2AEBB628188FC69400EAA879 /* PasswordChangeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasswordChangeViewController.h; sourceTree = "<group>"; };
+		2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasswordChangeViewController.m; sourceTree = "<group>"; };
+		2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileSettingsViewController.m; sourceTree = "<group>"; };
+		2AEBB62C188FCA7300EAA879 /* ProfileSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileSettingsViewController.h; sourceTree = "<group>"; };
 		811E7F3518D646779B2C69BA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		8940C5FC18631C5000FD1780 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
 		8940C5FD18631C5000FD1780 /* SettingsIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SettingsIcon.png; sourceTree = "<group>"; };
@@ -311,6 +317,10 @@
 		2AB0FA52187AD286000AB276 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */,
+				2AEBB62C188FCA7300EAA879 /* ProfileSettingsViewController.h */,
+				2AEBB628188FC69400EAA879 /* PasswordChangeViewController.h */,
+				2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */,
 				2AB0FA88187C372A000AB276 /* FoursquareLocationsViewController.m */,
 				2AB0FA89187C372A000AB276 /* FoursquareLocationsViewController.h */,
 				2AB0FA55187AD3BE000AB276 /* SignUpViewController.h */,
@@ -752,6 +762,7 @@
 				2AB0FA8A187C372A000AB276 /* FoursquareLocationsViewController.m in Sources */,
 				2ACAE5E518869A530076A665 /* AlbumSettingsViewController.m in Sources */,
 				2ACAE5EE1886F4B70076A665 /* SubaUsersInviteCell.m in Sources */,
+				2AEBB62A188FC69400EAA879 /* PasswordChangeViewController.m in Sources */,
 				2A463D6C1885777600549C7B /* PhotoStreamCell.m in Sources */,
 				2AB0FA77187AD9EE000AB276 /* LSPushProviderAPIClient.m in Sources */,
 				2AB0FA70187AD96C000AB276 /* Privacy.m in Sources */,
@@ -761,6 +772,7 @@
 				2ACAE5F4188705E40076A665 /* AlbumMembersViewController.m in Sources */,
 				2ADE846118802BEF001C2515 /* PersonalSpotCell.m in Sources */,
 				2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */,
+				2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */,
 				2AB0FA7A187B302B000AB276 /* LoginViewController.m in Sources */,
 				2ADE847C188237FE001C2515 /* TFScroller.m in Sources */,
 				2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */,

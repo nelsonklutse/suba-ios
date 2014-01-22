@@ -53,7 +53,7 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 - (void)joinSpotCompletionCode:(NSString *)code completion:(SpotJoinedCompletionBlock)completion;
 
 - (void)followUser:(NSString *)beingFollowed completion:(FollowUserCompletion)completion;
-- (void)changePass:(NSString *)pass;
+-(void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion;
 - (void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion;
 + (void)allUsers:(GeneralCompletion)completion;
 

@@ -19,7 +19,9 @@ PODS:
   - AFNetworking/UIKit (2.0.3):
     - AFNetworking/NSURLConnection
   - ALAssetsLibrary-CustomPhotoAlbum (1.1.4)
+  - CSNotificationView (0.3.3)
   - CTAssetsPickerController (1.3.3)
+  - CXAlertView (1.0.1)
   - DCModalSegue (0.0.2)
   - SDWebImage (3.5.2):
     - SDWebImage/Core
@@ -32,7 +34,9 @@ DEPENDENCIES:
   - AAPullToRefresh
   - AFNetworking (~> 2.0)
   - ALAssetsLibrary-CustomPhotoAlbum (~> 1.1.4)
+  - CSNotificationView (~> 0.3.3)
   - CTAssetsPickerController (~> 1.3.3)
+  - CXAlertView (~> 1.0.1)
   - DCModalSegue (~> 0.0.2)
   - UIPhotoGallery (~> 0.1.2)
   - UzysCircularProgressPullToRefresh (~> 1.0.4)
@@ -41,7 +45,9 @@ SPEC CHECKSUMS:
   AAPullToRefresh: cb06c382ebbcdd2b396e9b1b564d33e7580e44c5
   AFNetworking: e499052cbf3d743e9bb727bb37adb9dc2547ba15
   ALAssetsLibrary-CustomPhotoAlbum: aed631c845bb5a950c3846780d282465309e16e0
+  CSNotificationView: f14352657afe7255be9fb2446eb99d5914b97b5d
   CTAssetsPickerController: d65272a08dc2b1d48da6e839055c7288bd7d8b7d
+  CXAlertView: 59e8305700c59a27730c636765cb76311d311b88
   DCModalSegue: dbec9bde298bdb92c4d15b2e4a10b6f43bc0977e
   SDWebImage: fe7ce01ae4e0a884d168f59c9dd82d35baf8429e
   UIPhotoGallery: f054e2dae658cf324b7b202d5c5f4b39457dce1c

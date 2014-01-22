@@ -141,6 +141,16 @@
 
 - (void)updateProfileInfo:(NSDictionary *)userInfo completion:(UserProfileInfoUpdatedCompletion)completion
 {
+    if([userInfo[@"imageData"] isEqualToString:@""]){
+        [[LifespotsAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+            
+    } success:^(NSURLSessionDataTask *task, id responseObject){
+            completion(responseObject,nil);
+        } failure:^(NSURLSessionDataTask *task, NSError *error){
+            completion(nil,error);
+        }];
+        
+    }else{
     [[LifespotsAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         
         [formData appendPartWithFileData:userInfo[@"imageData"] name:@"profilePicture" fileName:userInfo[@"picName"] mimeType:@"image/jpeg"];
@@ -150,6 +160,7 @@
     } failure:^(NSURLSessionDataTask *task, NSError *error){
         completion(nil,error);
     }];
+  }
 }
 
 
@@ -257,14 +268,17 @@
     }];
 }
 
--(void)changePass:(NSString *)pass
+-(void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion
 {
     [[LifespotsAPIClient sharedInstance]
-                        POST:@"user/account/p"
+                        POST:@"user/account/changepass"
      
-     parameters:@{@"userId" : self.userID,@"pass": pass}
-                        success:nil
-                        failure:nil];
+     parameters:@{@"userId": self.userID,@"oldPassword": oldPass ,@"newPassword" : newPass}
+                        success:^(NSURLSessionDataTask *task, id responseObject) {
+                            completion(responseObject,nil);
+                        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                            completion(nil,error);
+           }];
 }
 
 
