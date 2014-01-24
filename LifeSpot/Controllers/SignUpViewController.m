@@ -235,4 +235,32 @@ bool isUserNameAvailable = NO;
   }
 }
 
+
+
+/*#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    DLog(@"encode");
+    [coder encodeObject:self.emailField.text forKey:UserEmailKey];
+    
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    DLog(@"decode");
+    self.emailField.text = [coder decodeObjectForKey:UserEmailKey];
+    
+    
+}
+
+-(void)applicationFinishedRestoringState
+{
+    // Inflate view from freezed state
+}
+*/
+
+
 @end

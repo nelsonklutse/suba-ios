@@ -32,14 +32,15 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
         __sharedInstance = [[LifespotsAPIClient alloc]
                             initWithBaseURL:[NSURL URLWithString:LifeSpotsAPIBaseURLString]
                        sessionConfiguration:configuration];
-      AFNetworkReachabilityManager *reachManger = [__sharedInstance reachabilityManager];
+        
+      /*AFNetworkReachabilityManager *reachManger = [__sharedInstance reachabilityManager];
         [reachManger setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
             switch (status) {
                 case AFNetworkReachabilityStatusNotReachable:
                 case AFNetworkReachabilityStatusUnknown:
                     DLog(@"No Internet");
-                    [AppHelper showAlert:@"No internet" message:@"We could not detect an internet connection"
-                                 buttons:@[@"I'll check"] delegate:nil];
+                    
+                    [AppHelper showNotificationWithMessage:@"No Internet" type:kSUBANOTIFICATION_ERROR inViewController:self completionBlock:nil];
                     
                     break;
                 case AFNetworkReachabilityStatusReachableViaWiFi:
@@ -48,7 +49,7 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
                 default:
                     break;
             }
-        }];
+        }];*/
         
     });
     

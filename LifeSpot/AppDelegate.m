@@ -116,8 +116,10 @@
     
     UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
     self.rootNavController = [mainStoryboard instantiateInitialViewController];
-    self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"MainTutorialVC"];
-    if (self.viewController) {
+    
+    if (!self.viewController) {
+        DLog(@"");
+        self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"MAIN_TUTORIAL_VC"];
         
         self.viewController.autoScrollEnabled = YES;
         self.viewController.autoScrollLooping = YES;
@@ -136,15 +138,15 @@
     
     // Set button 1 action.
     [self.viewController setButton1Block:^(UIButton *button){
-        DLog(@"Facebook Button pressed.");
+        //DLog(@"Facebook Button pressed.");
         [weakSelf openFBSession]; 
     }];
     
     // Set button 2 action, stop the scrolling.
    
     [self.viewController setButton2Block:^(UIButton *button){
-        DLog(@"Button 2 pressed.");
-        DLog(@"Auto-scrolling stopped.");
+        //DLog(@"Button 2 pressed.");
+        //DLog(@"Auto-scrolling stopped.");
         
         [weakSelf.viewController stopScrolling];
     }];
@@ -179,8 +181,9 @@
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
     
     [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:YES];
-
-    //application.applicationIconBadgeNumber = 0;
+    
+    
+    [self monitorNetworkChanges];
     
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
@@ -203,10 +206,34 @@
 {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidLogInNotification object:nil];
+    
 }
+
+
+
+-(void)applicationDidEnterBackground:(UIApplication *)application
+{
+    [self unmonitorNetworkChanges];
+}
+
+-(void)applicationWillEnterForeground:(UIApplication *)application
+{
+    [self monitorNetworkChanges];
+}
+
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    
+    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidLogInNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        
+        
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+        
+    }];
+    
     [FBAppEvents activateApp];
     
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
@@ -358,6 +385,54 @@
     }];
  
 }
+
+
+- (void)monitorNetworkChanges{
+    LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
+    
+    NSOperationQueue *opQueue = apiClient.operationQueue;
+    
+    [apiClient.reachabilityManager startMonitoring];
+    
+    [apiClient.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+        switch (status) {
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+                DLog(@"There is internet coz status - %d",status);
+                [opQueue setSuspended:NO];
+                break;
+            case AFNetworkReachabilityStatusNotReachable:
+            default:
+            
+                DLog(@"There is no internet coz status - %d",status);
+                
+                [opQueue setSuspended:YES];
+                break;
+        }
+    }];
+}
+
+
+- (void)unmonitorNetworkChanges
+{
+    LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
+    [apiClient.reachabilityManager stopMonitoring];
+}
+
+
+
+/*#pragma mark - State Preservation and Restoration
+-(BOOL)application:(UIApplication *)application shouldSaveApplicationState:(NSCoder *)coder
+{
+    return YES;
+}
+
+-(BOOL)application:(UIApplication *)application shouldRestoreApplicationState:(NSCoder *)coder
+{
+    return YES;
+}*/
+
+
 
 @end
 

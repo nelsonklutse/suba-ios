@@ -168,7 +168,8 @@ static CLLocationManager *locationManager;
     
 }
 
--(void)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue{
+-(IBAction)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue
+{
     FoursquareLocationsViewController *foursquareVC = segue.sourceViewController;
     self.venueForCurrentLocation = (foursquareVC.currentLocationSelected == nil) ? self.venueForCurrentLocation : foursquareVC.currentLocationSelected;
     

@@ -42,14 +42,7 @@ mTextView,mDelegate;*/
         // Initialization code.
 		mWidth  = pWidth;
 		mHeight = pHeight;
-		//NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-//		[center addObserver:self
-//				   selector:@selector(remove:)
-//					   name:UIApplicationDidReceiveMemoryWarningNotification
-//					 object:nil];
-		
-		
-        [self setBackgroundColor:[UIColor clearColor]];
+            [self setBackgroundColor:[UIColor clearColor]];
 		self.opaque = TRUE;
 		self.mImage = pImage;
     }

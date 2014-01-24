@@ -275,13 +275,17 @@
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     //NSLog(@"UserSpot details - %@",[self.userSpots[indexPath.section] description]);
-    if ([self.userSpots[indexPath.item][@"photos"] integerValue] == 0 ) {
-        //DLog(@"No photos so lets segue");
-        NSString *spotID = self.userSpots[indexPath.item][@"spotId"];
-        NSString *spotName = self.userSpots[indexPath.item][@"spotName"];
-        NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
-        NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
-        [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
+    
+    if (indexPath.section == 1) {
+        if ([self.userSpots[indexPath.item][@"photos"] integerValue] == 0 ) {
+            //DLog(@"No photos so lets segue");
+            NSString *spotID = self.userSpots[indexPath.item][@"spotId"];
+            NSString *spotName = self.userSpots[indexPath.item][@"spotName"];
+            NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
+            NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+            [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
+            
+        }
 
     }
     

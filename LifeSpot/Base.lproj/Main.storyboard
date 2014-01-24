@@ -7,7 +7,7 @@
         <!--Tutorial Controller-->
         <scene sceneID="ufC-wZ-h7g">
             <objects>
-                <viewController storyboardIdentifier="MainTutorialVC" useStoryboardIdentifierAsRestorationIdentifier="YES" id="vXZ-lx-hvc" customClass="ICETutorialController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="MAIN_TUTORIAL_VC" useStoryboardIdentifierAsRestorationIdentifier="YES" id="vXZ-lx-hvc" customClass="ICETutorialController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="KdW-uc-GT7"/>
                         <viewControllerLayoutGuide type="bottom" id="UGx-dL-AOU"/>
@@ -148,7 +148,7 @@
         <!--Sign Up View Controller - Sign Up-->
         <scene sceneID="fiC-FU-d9Y">
             <objects>
-                <viewController storyboardIdentifier="LSSignUpVC" useStoryboardIdentifierAsRestorationIdentifier="YES" id="1gA-Pi-VbV" customClass="SignUpViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="SignUpVC" useStoryboardIdentifierAsRestorationIdentifier="YES" id="1gA-Pi-VbV" customClass="SignUpViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="VAm-qq-121"/>
                         <viewControllerLayoutGuide type="bottom" id="tpr-D0-kqz"/>
@@ -161,7 +161,7 @@
                                 <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </imageView>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="email" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="yKn-v6-ayH">
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" restorationIdentifier="SignUpEmailField" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="email" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="yKn-v6-ayH">
                                 <rect key="frame" x="35" y="29" width="250" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
@@ -171,7 +171,7 @@
                                     <outlet property="delegate" destination="1gA-Pi-VbV" id="0Js-4E-Nx2"/>
                                 </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="username" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="CEW-fc-UTV">
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" restorationIdentifier="SignUpUserNameField" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="username" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="CEW-fc-UTV">
                                 <rect key="frame" x="35" y="67" width="250" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
@@ -181,7 +181,7 @@
                                     <outlet property="delegate" destination="1gA-Pi-VbV" id="gVo-Ps-nHn"/>
                                 </connections>
                             </textField>
-                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="password" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="mRc-Ih-uVI">
+                            <textField opaque="NO" clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" restorationIdentifier="SignUpPasswordField" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="password" minimumFontSize="17" background="textfieldBg" clearButtonMode="whileEditing" translatesAutoresizingMaskIntoConstraints="NO" id="mRc-Ih-uVI">
                                 <rect key="frame" x="35" y="105" width="250" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
@@ -385,7 +385,8 @@
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <state key="selected" backgroundImage="seg">
+                                        <state key="selected" backgroundImage="segmented-control-selected">
+                                            <color key="titleColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
                                             <color key="titleShadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                         </state>
                                         <connections>
@@ -399,7 +400,9 @@
                                             <color key="titleColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
-                                        <state key="selected" backgroundImage="seg"/>
+                                        <state key="selected" backgroundImage="segmented-control-selected">
+                                            <color key="titleColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                                        </state>
                                         <connections>
                                             <action selector="allSpotsButtonSelected:" destination="Cxa-8j-Bty" eventType="touchUpInside" id="xmY-xi-jsa"/>
                                         </connections>
@@ -407,7 +410,7 @@
                                     <button opaque="NO" contentMode="scaleAspectFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="coI-ug-LF8" userLabel="Nearby Spots Button">
                                         <rect key="frame" x="129" y="1" width="62" height="62"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <state key="normal" image="nearbyButton">
+                                        <state key="normal" backgroundImage="nearbyButton">
                                             <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                         </state>
                                         <state key="selected" backgroundImage="nearby_inactive">
@@ -695,7 +698,7 @@
         <!--User Profile View Controller - Profile-->
         <scene sceneID="OZb-jw-xEc">
             <objects>
-                <viewController id="cUX-Sx-MQx" customClass="UserProfileViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="USERPROFILE_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="cUX-Sx-MQx" customClass="UserProfileViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="pzo-Ou-tv2"/>
                         <viewControllerLayoutGuide type="bottom" id="Uh4-DK-SWx"/>
@@ -960,7 +963,7 @@
         <!--Photo Stream View Controller-->
         <scene sceneID="AxS-8S-t7N">
             <objects>
-                <viewController extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" id="GAg-Ib-pcf" customClass="PhotoStreamViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="PHOTOSTREAM_SCENE" extendedLayoutIncludesOpaqueBars="YES" hidesBottomBarWhenPushed="YES" useStoryboardIdentifierAsRestorationIdentifier="YES" id="GAg-Ib-pcf" customClass="PhotoStreamViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="Un6-FH-4c1"/>
                         <viewControllerLayoutGuide type="bottom" id="ZGI-oT-rCO"/>
@@ -1205,7 +1208,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="yGA-6C-xCN" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1772" y="70"/>
+            <point key="canvasLocation" x="1719" y="32"/>
         </scene>
         <!--View Controller-->
         <scene sceneID="7YC-Zr-zGD">
@@ -1283,12 +1286,12 @@
                     </connections>
                 </searchDisplayController>
             </objects>
-            <point key="canvasLocation" x="2747" y="1434"/>
+            <point key="canvasLocation" x="2598" y="1437"/>
         </scene>
         <!--Invites View Controller-->
         <scene sceneID="Vls-rT-c0b">
             <objects>
-                <viewController id="lK1-nX-Rif" customClass="InvitesViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="INVITES_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="lK1-nX-Rif" customClass="InvitesViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="TIP-KP-Orn"/>
                         <viewControllerLayoutGuide type="bottom" id="SNx-fA-M9v"/>
@@ -1586,7 +1589,7 @@
         <!--View Controller - Activity-->
         <scene sceneID="Mvl-Kf-1Ni">
             <objects>
-                <viewController id="uvu-kp-85L" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ACTIVITY_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="uvu-kp-85L" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="ISW-0u-NJx"/>
                         <viewControllerLayoutGuide type="bottom" id="px9-U4-WGt"/>
@@ -1600,12 +1603,244 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="oQu-Ae-9kA" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3449" y="706"/>
+            <point key="canvasLocation" x="3113" y="1419"/>
+        </scene>
+        <!--Terms View Controller - Terms-->
+        <scene sceneID="XgY-zz-m9H">
+            <objects>
+                <viewController storyboardIdentifier="TERMS_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="C3F-W4-vZv" customClass="TermsViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Z7g-R2-THu"/>
+                        <viewControllerLayoutGuide type="bottom" id="XOk-N4-u3I"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="tZI-gu-L7k">
+                        <rect key="frame" x="0.0" y="64" width="320" height="455"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <webView contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Htl-q2-0tE">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="455"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <dataDetectorType key="dataDetectorTypes"/>
+                                <connections>
+                                    <outlet property="delegate" destination="C3F-W4-vZv" id="WIf-EG-owH"/>
+                                </connections>
+                            </webView>
+                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" fixedFrame="YES" progressViewStyle="bar" translatesAutoresizingMaskIntoConstraints="NO" id="wZ4-ZZ-bZb">
+                                <rect key="frame" x="0.0" y="453" width="320" height="3"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="progressTintColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                                <color key="trackTintColor" red="0.42745098040000001" green="0.51764705879999995" blue="0.70588235290000001" alpha="1" colorSpace="calibratedRGB"/>
+                            </progressView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <navigationItem key="navigationItem" title="Terms" id="axj-eN-k9Z"/>
+                    <connections>
+                        <outlet property="pageLoadProgressView" destination="wZ4-ZZ-bZb" id="ke8-f1-KCW"/>
+                        <outlet property="viewWeb" destination="Htl-q2-0tE" id="9YX-s9-IwA"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="5yK-VT-glp" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3483" y="801"/>
+        </scene>
+        <!--Invite Friends View Controller - Invite Friends-->
+        <scene sceneID="UvQ-Hm-5fc">
+            <objects>
+                <viewController storyboardIdentifier="INVITE_TO_SUBA_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="h7I-M1-Lmh" customClass="InviteFriendsViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="kP9-42-WLn"/>
+                        <viewControllerLayoutGuide type="bottom" id="av3-rY-A0l"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="072-bN-NlH">
+                        <rect key="frame" x="0.0" y="64" width="320" height="455"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <subviews>
+                            <view clipsSubviews="YES" contentMode="scaleToFill" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BEU-Wr-ePI" userLabel="Facebook Connect">
+                                <rect key="frame" x="55" y="235" width="210" height="50"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <button contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yhk-Lv-E6O">
+                                        <rect key="frame" x="0.0" y="0.0" width="210" height="50"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <fontDescription key="fontDescription" name="HelveticaNeue-Bold" family="Helvetica Neue" pointSize="15"/>
+                                        <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                        <state key="normal" title="Connect To Facebook">
+                                            <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="connectToFacebook:" destination="h7I-M1-Lmh" eventType="touchUpInside" id="RUB-hb-0BH"/>
+                                        </connections>
+                                    </button>
+                                    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" hidesWhenStopped="YES" style="white" translatesAutoresizingMaskIntoConstraints="NO" id="TCs-8a-cLM">
+                                        <rect key="frame" x="187" y="16" width="20" height="20"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                    </activityIndicatorView>
+                                </subviews>
+                                <color key="backgroundColor" red="0.23137254900000001" green="0.34901960780000002" blue="0.59607843140000005" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="bottom" secondItem="TCs-8a-cLM" secondAttribute="bottom" constant="14" id="4Gk-oA-InV"/>
+                                    <constraint firstItem="yhk-Lv-E6O" firstAttribute="leading" secondItem="BEU-Wr-ePI" secondAttribute="leading" id="TjD-Bk-8Rh"/>
+                                    <constraint firstAttribute="trailing" secondItem="TCs-8a-cLM" secondAttribute="trailing" constant="3" id="e8K-N2-SJr"/>
+                                    <constraint firstAttribute="trailing" secondItem="yhk-Lv-E6O" secondAttribute="trailing" id="eux-e1-pZz"/>
+                                    <constraint firstItem="yhk-Lv-E6O" firstAttribute="top" secondItem="BEU-Wr-ePI" secondAttribute="top" id="iFG-ij-g14"/>
+                                    <constraint firstAttribute="bottom" secondItem="yhk-Lv-E6O" secondAttribute="bottom" id="y5E-Ml-MGt"/>
+                                    <constraint firstItem="TCs-8a-cLM" firstAttribute="top" secondItem="BEU-Wr-ePI" secondAttribute="top" constant="16" id="zJb-rx-hgF"/>
+                                </constraints>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="20"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                            </view>
+                            <tableView clipsSubviews="YES" alpha="0.0" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsMultipleSelection="YES" rowHeight="60" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="ihR-g5-6wn" userLabel="Facebook User Table View">
+                                <rect key="frame" x="0.0" y="84" width="320" height="370"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <prototypes>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="FacebookInviteFriendCell" rowHeight="60" id="dTf-K1-3VN" customClass="FacebookUsersCell">
+                                        <rect key="frame" x="0.0" y="22" width="320" height="60"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="dTf-K1-3VN" id="sqD-gH-Aht">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="59"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="CjA-kA-xMq">
+                                                    <rect key="frame" x="10" y="10" width="40" height="40"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <userDefinedRuntimeAttributes>
+                                                        <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                            <integer key="value" value="20"/>
+                                                        </userDefinedRuntimeAttribute>
+                                                    </userDefinedRuntimeAttributes>
+                                                </imageView>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="facebook name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kzB-dd-blE">
+                                                    <rect key="frame" x="65" y="18" width="250" height="25"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="fbFriendImageView" destination="CjA-kA-xMq" id="9LU-Fx-QRh"/>
+                                            <outlet property="fbfbFrienduserName" destination="kzB-dd-blE" id="hIy-nY-Gw0"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="h7I-M1-Lmh" id="SHr-gJ-48N"/>
+                                    <outlet property="delegate" destination="h7I-M1-Lmh" id="uPK-AB-6BR"/>
+                                </connections>
+                            </tableView>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" allowsMultipleSelection="YES" rowHeight="60" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="yWc-WA-ILM" userLabel="Phone Contacts Table View">
+                                <rect key="frame" x="0.0" y="84" width="320" height="370"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <prototypes>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="PhoneContactsCell" rowHeight="60" id="UfH-Fn-uf0" userLabel="Phone Contacts Cell - PhoneContactsCell" customClass="SMSContactsCell">
+                                        <rect key="frame" x="0.0" y="22" width="320" height="60"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="UfH-Fn-uf0" id="8L6-V4-kLI">
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="59"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="anonymousUser" translatesAutoresizingMaskIntoConstraints="NO" id="Gsn-b3-5Z2">
+                                                    <rect key="frame" x="10" y="10" width="40" height="40"/>
+                                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                                    <userDefinedRuntimeAttributes>
+                                                        <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                            <integer key="value" value="20"/>
+                                                        </userDefinedRuntimeAttribute>
+                                                    </userDefinedRuntimeAttributes>
+                                                </imageView>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="contact name" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Fh3-uP-IsM" userLabel="Contact Name Label - Label">
+                                                    <rect key="frame" x="65" y="10" width="214" height="21"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="phone number" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="hL8-MP-kXU" userLabel="Phone Number Label - Label">
+                                                    <rect key="frame" x="65" y="32" width="200" height="21"/>
+                                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="contactImageView" destination="Gsn-b3-5Z2" id="8p5-W7-Vgz"/>
+                                            <outlet property="contactNameLabel" destination="Fh3-uP-IsM" id="fVl-te-cmS"/>
+                                            <outlet property="phoneNumberLabel" destination="hL8-MP-kXU" id="hoD-MP-CLM"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                                <connections>
+                                    <outlet property="dataSource" destination="h7I-M1-Lmh" id="raR-jH-bgd"/>
+                                    <outlet property="delegate" destination="h7I-M1-Lmh" id="xpK-7g-9Gw"/>
+                                </connections>
+                            </tableView>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HBl-zu-lb5" userLabel="Segmented Control View">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="40"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <subviews>
+                                    <segmentedControl opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="bottom" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="4dh-K6-jFB">
+                                        <rect key="frame" x="20" y="5" width="280" height="29"/>
+                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                        <segments>
+                                            <segment title="Contacts"/>
+                                            <segment title="Facebook"/>
+                                        </segments>
+                                        <color key="tintColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                        <connections>
+                                            <action selector="inviteSegmentSelected:" destination="h7I-M1-Lmh" eventType="valueChanged" id="MPj-n2-nJY"/>
+                                        </connections>
+                                    </segmentedControl>
+                                </subviews>
+                                <color key="backgroundColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                            </view>
+                            <searchBar contentMode="redraw" fixedFrame="YES" placeholder="Search" translatesAutoresizingMaskIntoConstraints="NO" id="qd0-wH-Eg5">
+                                <rect key="frame" x="0.0" y="40" width="320" height="44"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                                <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="h7I-M1-Lmh" id="YiT-b0-fg8"/>
+                                </connections>
+                            </searchBar>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                    </view>
+                    <extendedEdge key="edgesForExtendedLayout"/>
+                    <navigationItem key="navigationItem" title="Invite Friends" id="LeY-L9-rCt">
+                        <barButtonItem key="rightBarButtonItem" enabled="NO" title="Invite" id="A3e-IT-Q6X">
+                            <connections>
+                                <action selector="inviteUsers:" destination="h7I-M1-Lmh" id="OIR-ia-LlK"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <connections>
+                        <outlet property="facebookFriendsTableView" destination="ihR-g5-6wn" id="a89-AV-yn1"/>
+                        <outlet property="fbConnectIndicator" destination="TCs-8a-cLM" id="cRP-CR-rAz"/>
+                        <outlet property="fbConnectView" destination="BEU-Wr-ePI" id="lqk-fS-FgV"/>
+                        <outlet property="inviteBarButtonItem" destination="A3e-IT-Q6X" id="W7K-fR-sau"/>
+                        <outlet property="inviteContactsSegmentedControl" destination="4dh-K6-jFB" id="Vxf-Q2-qi3"/>
+                        <outlet property="invitesSearchBar" destination="qd0-wH-Eg5" id="X6t-BN-hiU"/>
+                        <outlet property="phoneContactsTableView" destination="yWc-WA-ILM" id="f2f-6E-xrY"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="hcO-fh-ScW" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3979" y="720"/>
         </scene>
         <!--User Settings View Controller - Main Settings-->
         <scene sceneID="exd-dc-y65">
             <objects>
-                <viewController id="OJF-gP-p5T" customClass="UserSettingsViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="USER_SETTINGS_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="OJF-gP-p5T" customClass="UserSettingsViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="xxl-dk-vOp"/>
                         <viewControllerLayoutGuide type="bottom" id="cWr-O7-Vy4"/>
@@ -1652,6 +1887,9 @@
                     <connections>
                         <outlet property="appSettingsTableView" destination="yva-xf-Wpo" id="qpF-4p-Jt2"/>
                         <segue destination="Ekh-o5-K00" kind="push" identifier="EDIT_PROFILE_SEGUE" id="Mmp-qw-jIm"/>
+                        <segue destination="h7I-M1-Lmh" kind="push" identifier="INVITE_FRIENDS_TO_SUBA_SEGUE" id="ty1-rp-OCc"/>
+                        <segue destination="h7I-M1-Lmh" kind="push" id="Txq-yV-9ey"/>
+                        <segue destination="C3F-W4-vZv" kind="push" identifier="TERMS_SEGUE" id="UdW-Dg-Aej"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="hkJ-bI-61o" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -1926,7 +2164,7 @@
         <!--Navigation Controller-->
         <scene sceneID="3YH-K2-KRr">
             <objects>
-                <navigationController storyboardIdentifier="RootNavigationController" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="u3a-sF-594" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="ROOT_NAV_VC" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="u3a-sF-594" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" translucent="NO" id="rQ5-Tq-rUb">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
@@ -1962,12 +2200,12 @@
                 </tabBarController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="J8p-Sn-UVb" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="685" y="623"/>
+            <point key="canvasLocation" x="609" y="222"/>
         </scene>
         <!--Navigation Controller - Spots-->
         <scene sceneID="dak-hZ-ofK">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="Vhf-wx-vuK" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="MAINSTREAM_NAV" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="Vhf-wx-vuK" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Spots" image="home" id="rao-hh-8sR"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" translucent="NO" id="zs8-8c-1c3">
@@ -1986,7 +2224,7 @@
         <!--Navigation Controller - Explore-->
         <scene sceneID="rMN-jK-0Mt">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="RKV-uB-pW3" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="EXPLORE_PLACES_NAV" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="RKV-uB-pW3" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Explore" image="globe" id="0kh-Gl-mPc"/>
                     <toolbarItems/>
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
@@ -2154,12 +2392,12 @@
                                     <navigationItem title="Choose Location" id="Tbc-1n-Sbz">
                                         <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="q9k-Fa-nrf">
                                             <connections>
-                                                <segue destination="r0F-ND-NZO" kind="unwind" unwindAction="unWindToSpotSettingsFromCancel:" id="HvK-zc-8O8"/>
+                                                <segue destination="r0F-ND-NZO" kind="unwind" unwindAction="unWindToCreateSpotFromCancel:" id="Reb-3S-yc1"/>
                                             </connections>
                                         </barButtonItem>
                                         <barButtonItem key="rightBarButtonItem" title="Item" systemItem="done" id="orb-ZV-aI6">
                                             <connections>
-                                                <segue destination="r0F-ND-NZO" kind="unwind" unwindAction="unWindToSpotSettingsFromDone:" id="NW4-oG-woD"/>
+                                                <segue destination="r0F-ND-NZO" kind="unwind" unwindAction="unWindToCreateSpotFromDone:" id="si4-8m-nX0"/>
                                             </connections>
                                         </barButtonItem>
                                     </navigationItem>
@@ -2170,7 +2408,7 @@
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <prototypes>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="VenueCell" rowHeight="60" id="E0A-MR-HPQ" customClass="FoursquareVenueCell">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="VenueCell" rowHeight="60" id="E0A-MR-HPQ" customClass="FoursquareVenueCell">
                                         <rect key="frame" x="0.0" y="22" width="320" height="60"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="E0A-MR-HPQ" id="GKr-pi-OFT">
@@ -2207,6 +2445,11 @@
                                     <outlet property="delegate" destination="sEC-dl-CrO" id="oej-LS-jqZ"/>
                                 </connections>
                             </tableView>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MzJ-8D-7cK">
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="20"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
@@ -2222,7 +2465,7 @@
         <!--Navigation Controller - You-->
         <scene sceneID="bQB-Nc-NOF">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="hkn-vm-Wdh" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="USERPROFILE_NAV" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="hkn-vm-Wdh" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="You" image="profile" id="Om5-cu-WT4"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" translucent="NO" id="Yo6-vT-CVq">
@@ -2241,7 +2484,7 @@
         <!--Navigation Controller - Activity-->
         <scene sceneID="yAz-ul-BCy">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="PC8-Yx-ONF" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="ACTIVITY_NAV" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="PC8-Yx-ONF" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Activity" image="activity" id="eaN-tY-YYD"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" translucent="NO" id="uHh-yw-ple">
@@ -2260,7 +2503,7 @@
         <!--Album Settings View Controller-->
         <scene sceneID="cRJ-z5-3h1">
             <objects>
-                <viewController id="Hkh-Zw-8I5" customClass="AlbumSettingsViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ALBUM_SETTINGS_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="Hkh-Zw-8I5" customClass="AlbumSettingsViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="VSi-DH-i1c"/>
                         <viewControllerLayoutGuide type="bottom" id="dxK-R1-XNY"/>
@@ -2461,7 +2704,7 @@
         <!--Album Members View Controller - Album Members-->
         <scene sceneID="ZHy-L2-PEp">
             <objects>
-                <viewController id="vnY-n4-wUf" customClass="AlbumMembersViewController" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="ALBUM_MEMBERS_SCENE" useStoryboardIdentifierAsRestorationIdentifier="YES" id="vnY-n4-wUf" customClass="AlbumMembersViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="A1I-xw-OIQ"/>
                         <viewControllerLayoutGuide type="bottom" id="NVh-GO-h54"/>
@@ -2560,8 +2803,8 @@
         <image name="nearby_inactive" width="62" height="62"/>
         <image name="noPhoto" width="320" height="151"/>
         <image name="profile" width="32" height="32"/>
-        <image name="seg" width="307" height="30"/>
         <image name="segButton" width="300" height="30"/>
+        <image name="segmented-control-selected" width="29" height="29"/>
         <image name="settings" width="25" height="25"/>
         <image name="spotSettings" width="40" height="40"/>
         <image name="spotShare" width="30" height="39"/>
@@ -2574,9 +2817,10 @@
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="1Xo-xE-dep"/>
         <segue reference="LtU-On-NTU"/>
+        <segue reference="1Xo-xE-dep"/>
         <segue reference="Gtx-2d-XD2"/>
+        <segue reference="ty1-rp-OCc"/>
         <segue reference="fGf-Rf-DIc"/>
     </inferredMetricsTieBreakers>
 </document>

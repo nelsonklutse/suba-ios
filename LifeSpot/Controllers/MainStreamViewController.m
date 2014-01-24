@@ -77,6 +77,12 @@ static CLLocationManager *locationManager;
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:YES];
+            [self.nearbySpotsButton setSelected:NO];
+            [self.allSpotsButton setSelected:NO];
+        });
     }];
     
     if (!self.placesBeingWatched) {
@@ -88,13 +94,26 @@ static CLLocationManager *locationManager;
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.nearbySpotsCollectionView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:NO];
+            [self.nearbySpotsButton setSelected:YES];
+            [self.allSpotsButton setSelected:NO];
+        });
     }];
+    
 }
 
 - (IBAction)allSpotsButtonSelected:(UIButton *)sender {
     [UIView animateWithDuration:0.5 animations:^{
         self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.allSpotsCollectionView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:NO];
+            [self.nearbySpotsButton setSelected:NO];
+            [self.allSpotsButton setSelected:YES];
+        });
     }];
     
     if (!self.allSpots) {
@@ -132,6 +151,8 @@ static CLLocationManager *locationManager;
     }
     
     self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
+    
+    
     
 }
 

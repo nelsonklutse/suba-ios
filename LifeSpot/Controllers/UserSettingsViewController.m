@@ -10,6 +10,7 @@
 #import "ProfileSettingsViewController.h"
 //#import "PushNotificationsViewController.h"
 //#import "InviteFriendsViewController.h"
+#import "TermsViewController.h"
 #import <MessageUI/MessageUI.h>
 
 @interface UserSettingsViewController ()<MFMailComposeViewControllerDelegate>
@@ -138,8 +139,8 @@
             [self performSegueWithIdentifier:@"PUSH_NOTIFICATIONS_SEGUE" sender:cell.textLabel.text];
         }else{
             // First section 3rd cell
-            UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
-            [self performSegueWithIdentifier:@"INVITE_PEOPLE_SEGUE" sender:cell.textLabel.text];
+            //UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
+            [self performSegueWithIdentifier:@"INVITE_FRIENDS_TO_SUBA_SEGUE" sender:nil];
         }
     }else if (indexPath.section == 1){
         if (indexPath.row == 1) {
@@ -147,7 +148,12 @@
             [self sendFeedback:[AppHelper userEmail]];
         }
         
-    }else if (indexPath.section == 3){
+        
+        
+    }else if (indexPath.section == 2){
+        [self performSegueWithIdentifier:@"TERMS_SEGUE" sender:@(indexPath.row)];
+    }
+    else if (indexPath.section == 3){
         if (indexPath.row == 0) {
             // Log the user out
             [self logout];
@@ -167,9 +173,18 @@
     }else if ([segue.identifier isEqualToString:@"PUSH_NOTIFICATIONS_SEGUE"]){
         //PushNotificationsViewController *pushNVC = segue.destinationViewController;
         //pushNVC.navigationItem.title = (NSString *)sender;
-    }else if ([segue.identifier isEqualToString:@"INVITE_PEOPLE_SEGUE"]){
-        //InviteFriendsViewController *friendsVC = segue.destinationViewController;
-        //friendsVC.navigationItem.title = @"Invite People";
+    }else if([segue.identifier isEqualToString:@"TERMS_SEGUE"]){
+        NSURL *url = nil;
+        TermsViewController *tVC = segue.destinationViewController;
+        
+        if ([sender integerValue] == 0) {
+            url = [NSURL URLWithString:@"http://www.subaapp.com/privacy.html"];
+        }else{
+            url = [NSURL URLWithString:@"http://www.subaapp.com/terms.html"];
+        }
+        DLog(@"Sender - %@\nurl - %@",sender,url);
+        tVC.urlToLoad = url;
+        
     }
     
 }
@@ -180,9 +195,9 @@
     [AppHelper logout];
     // Move to the main view controller
     UINavigationController *rvc = (UINavigationController *)[[[UIApplication sharedApplication] keyWindow] rootViewController];
-    NSLog(@"Class- %@",[[[[UIApplication sharedApplication] keyWindow] rootViewController] class]);
+    DLog(@"Class- %@",[[[[UIApplication sharedApplication] keyWindow] rootViewController] class]);
     
-    //[self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
     [rvc popToRootViewControllerAnimated:YES];
 }
 

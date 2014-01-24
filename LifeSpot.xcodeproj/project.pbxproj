@@ -62,6 +62,8 @@
 		2ADE847C188237FE001C2515 /* TFScroller.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ADE847A188237FE001C2515 /* TFScroller.m */; };
 		2AEBB62A188FC69400EAA879 /* PasswordChangeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */; };
 		2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */; };
+		2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */; };
+		2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB6321890FE1600EAA879 /* TermsViewController.m */; };
 		8940C5FF18631C5000FD1780 /* AppIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FC18631C5000FD1780 /* AppIcon.png */; };
 		8940C60018631C5000FD1780 /* SettingsIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FD18631C5000FD1780 /* SettingsIcon.png */; };
 		8940C60118631C5000FD1780 /* Spotlight.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FE18631C5000FD1780 /* Spotlight.png */; };
@@ -212,6 +214,10 @@
 		2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasswordChangeViewController.m; sourceTree = "<group>"; };
 		2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileSettingsViewController.m; sourceTree = "<group>"; };
 		2AEBB62C188FCA7300EAA879 /* ProfileSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileSettingsViewController.h; sourceTree = "<group>"; };
+		2AEBB62E1890DC2300EAA879 /* InviteFriendsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InviteFriendsViewController.h; sourceTree = "<group>"; };
+		2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InviteFriendsViewController.m; sourceTree = "<group>"; };
+		2AEBB6311890FE1600EAA879 /* TermsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TermsViewController.h; sourceTree = "<group>"; };
+		2AEBB6321890FE1600EAA879 /* TermsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TermsViewController.m; sourceTree = "<group>"; };
 		811E7F3518D646779B2C69BA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		8940C5FC18631C5000FD1780 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
 		8940C5FD18631C5000FD1780 /* SettingsIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SettingsIcon.png; sourceTree = "<group>"; };
@@ -345,6 +351,10 @@
 				2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */,
 				2A7A27C3188D3DED000A2A45 /* UserSettingsViewController.h */,
 				2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */,
+				2AEBB62E1890DC2300EAA879 /* InviteFriendsViewController.h */,
+				2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */,
+				2AEBB6311890FE1600EAA879 /* TermsViewController.h */,
+				2AEBB6321890FE1600EAA879 /* TermsViewController.m */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -746,6 +756,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */,
 				2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */,
 				2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */,
 				2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */,
@@ -759,6 +770,7 @@
 				2ACAE5F7188705F90076A665 /* InvitesViewController.m in Sources */,
 				2ACAE5F11886F4C90076A665 /* FacebookUsersCell.m in Sources */,
 				2AB0FA90187C3DAF000AB276 /* MainStreamViewController.m in Sources */,
+				2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */,
 				2AB0FA8A187C372A000AB276 /* FoursquareLocationsViewController.m in Sources */,
 				2ACAE5E518869A530076A665 /* AlbumSettingsViewController.m in Sources */,
 				2ACAE5EE1886F4B70076A665 /* SubaUsersInviteCell.m in Sources */,

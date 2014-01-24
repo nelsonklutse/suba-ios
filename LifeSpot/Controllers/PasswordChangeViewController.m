@@ -151,7 +151,7 @@ typedef void (^PasswordSavedCompletion) ();
             [AppHelper showLoadingDataView:self.savingChangesView indicator:self.changingPasswordIndicator flag:NO];
         }];
     }else{
-        [AppHelper showNotificationWithMessage:@"Passwords do not match" type:kSUBANOTIFICATION_ERROR inViewController:self completionBlock:nil];
+        [AppHelper showNotificationWithMessage:@"New passwords do not match" type:kSUBANOTIFICATION_ERROR inViewController:self completionBlock:nil];
         
         return;
     }

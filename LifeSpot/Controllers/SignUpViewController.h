@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
+
+#define UserEmailKey @"UserEmailKey"
+
+
 @interface SignUpViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UITextField *emailField;
