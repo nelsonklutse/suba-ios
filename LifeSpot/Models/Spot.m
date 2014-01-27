@@ -62,7 +62,7 @@
 
 +(void)fetchSpotInfo:(NSString *)spotId User:(NSString *)userId completion:(SpotInfoLoadedCompletion)completion
 {
-    DLog(@"SpotId - %@\nUserId - %@",spotId,userId);
+    //DLog(@"SpotId - %@\nUserId - %@",spotId,userId);
     [[LifespotsAPIClient sharedInstance] GET:@"spot/info"
                                   parameters:@{@"spotId":spotId, @"userId":userId}
                                      success:^(NSURLSessionDataTask *task, id responseObject) {

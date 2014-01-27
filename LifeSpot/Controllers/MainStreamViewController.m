@@ -13,6 +13,12 @@
 #import "PersonalSpotCell.h"
 #import "User.h"
 #import "Location.h"
+#import "AlbumSettingsViewController.h"
+
+typedef enum{
+    kCollectionViewUpdateInsert = 0,
+    kCollectionViewUpdateDelete
+}ColectionViewUpdateType;
 
 
 @interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate>
@@ -48,9 +54,10 @@
 - (void)fetchNearbySpots:(NSDictionary *)latLng;
 - (void)showPlacesBeingWatchedView:(BOOL)flag;
 - (void)updateData;
-- (void)updateCollectionView:(NSArray *)spots withUpdate:(NSArray *)updates;
+- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)indexPaths updateType:(ColectionViewUpdateType)updateType;
 - (void)checkForLocation;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
+- (void)networkChanged:(NSNotification *)aNotification;
 @end
 
 @implementation MainStreamViewController
@@ -59,7 +66,27 @@ static CLLocationManager *locationManager;
 #pragma mark - Unwind Segues
 -(IBAction)unWindToSpots:(UIStoryboardSegue *)segue
 {
+    if ([segue.identifier isEqualToString:@"LEAVE_STREAM_SEGUE"]) {
+        //Show notification
+        AlbumSettingsViewController *aVC = segue.sourceViewController;
+        NSString *albumName = aVC.spotName;
+        
+        UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                                   green:(77.0f/255.0f)
+                                                    blue:(20.0f/255.0f)
+                                                   alpha:1];
+        
+        [CSNotificationView showInViewController:self
+                                       tintColor: tintColor
+                                           image:nil
+                                         message:[NSString stringWithFormat:@"You are no longer a member of the album%@",albumName]
+                                        duration:5.0f];
+        
+    }
     
+    //Register remote notification types
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
+
 }
 
 -(IBAction)unWindToAllSpotsWithCreatedSpot:(UIStoryboardSegue *)segue
@@ -73,54 +100,8 @@ static CLLocationManager *locationManager;
     
 }
 
-- (IBAction)placesButtonSelected:(UIButton *)sender {
-    [UIView animateWithDuration:0.5 animations:^{
-        self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
-        self.placesBeingWatchedTableView.alpha = 1;
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-            [self.placesBeingWatchedButton setSelected:YES];
-            [self.nearbySpotsButton setSelected:NO];
-            [self.allSpotsButton setSelected:NO];
-        });
-    }];
-    
-    if (!self.placesBeingWatched) {
-        [self fetchUserFavoriteLocations];
-    }
-}
 
-- (IBAction)nearbySpotsButtonSelected:(UIButton *)sender{
-    [UIView animateWithDuration:0.5 animations:^{
-        self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
-        self.nearbySpotsCollectionView.alpha = 1;
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-            [self.placesBeingWatchedButton setSelected:NO];
-            [self.nearbySpotsButton setSelected:YES];
-            [self.allSpotsButton setSelected:NO];
-        });
-    }];
-    
-}
-
-- (IBAction)allSpotsButtonSelected:(UIButton *)sender {
-    [UIView animateWithDuration:0.5 animations:^{
-        self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
-        self.allSpotsCollectionView.alpha = 1;
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-            [self.placesBeingWatchedButton setSelected:NO];
-            [self.nearbySpotsButton setSelected:NO];
-            [self.allSpotsButton setSelected:YES];
-        });
-    }];
-    
-    if (!self.allSpots) {
-        [self fetchUserSpots];
-    }
-}
-
+#pragma mark - View life cycle
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -189,6 +170,9 @@ static CLLocationManager *locationManager;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoGalleryTappedAtIndexNotification object:nil];
     
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkChanged:) name:AFNetworkingReachabilityDidChangeNotification object:nil];
+    
+    
 }
 
 
@@ -200,8 +184,61 @@ static CLLocationManager *locationManager;
                 removeObserver:self
                           name:kPhotoGalleryTappedAtIndexNotification
                         object:nil];
+    
+    [[NSNotificationCenter defaultCenter]
+     removeObserver:self
+     name:AFNetworkingReachabilityDidChangeNotification
+     object:nil];
 }
 
+
+- (IBAction)placesButtonSelected:(UIButton *)sender {
+    [UIView animateWithDuration:0.5 animations:^{
+        self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
+        self.placesBeingWatchedTableView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:YES];
+            [self.nearbySpotsButton setSelected:NO];
+            [self.allSpotsButton setSelected:NO];
+        });
+    }];
+    
+    if (!self.placesBeingWatched) {
+        [self fetchUserFavoriteLocations];
+    }
+}
+
+- (IBAction)nearbySpotsButtonSelected:(UIButton *)sender{
+    [UIView animateWithDuration:0.5 animations:^{
+        self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
+        self.nearbySpotsCollectionView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:NO];
+            [self.nearbySpotsButton setSelected:YES];
+            [self.allSpotsButton setSelected:NO];
+        });
+    }];
+    
+}
+
+- (IBAction)allSpotsButtonSelected:(UIButton *)sender {
+    [UIView animateWithDuration:0.5 animations:^{
+        self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
+        self.allSpotsCollectionView.alpha = 1;
+        
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+            [self.placesBeingWatchedButton setSelected:NO];
+            [self.nearbySpotsButton setSelected:NO];
+            [self.allSpotsButton setSelected:YES];
+        });
+    }];
+    
+    if (!self.allSpots) {
+        [self fetchUserSpots];
+    }
+}
 
 - (void)didReceiveMemoryWarning
 {
@@ -212,8 +249,46 @@ static CLLocationManager *locationManager;
 #pragma mark - Helper methods
 -(void)addSpotToAllSpotsStream:(NSDictionary *)spotDetails
 {
+   // Check which segment is selected
+    // If spot was created with a location and nearby is selected, add it
+    DLog(@"Spot that was created details - %@",spotDetails);
+    
+    if (![spotDetails[@"venue"] isEqualToString:@"NONE"]) {
+        // Spot was created with a location so we add it to nearby spots
+        if (self.nearbySpots && self.nearbySpotsCollectionView.alpha == 1) {
+            [self.nearbySpots insertObject:spotDetails atIndex:0];
+            [self updateCollectionView:self.nearbySpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+        }
+    }
+    
+    if (self.allSpots && self.allSpotsCollectionView.alpha == 1){
+        [self.allSpots insertObject:spotDetails atIndex:0];
+        [self updateCollectionView:self.allSpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+    }
+    
+    if ([self.allSpots count] == 0) {
+        self.allSpots = [NSMutableArray arrayWithObject:spotDetails];
+        [self updateCollectionView:self.allSpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+        
+    }
     
 }
+
+
+- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSDictionary *)updates updateType:(ColectionViewUpdateType)updateType
+{
+    if (updateType == kCollectionViewUpdateInsert) {
+        [collectionView performBatchUpdates:^{
+            [collectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]];
+        } completion:^(BOOL finished) {
+            [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
+        }];
+    }else if(updateType == kCollectionViewUpdateDelete){
+        
+    }
+    
+}
+
 
 -(void)fetchUserFavoriteLocations
 {
@@ -259,13 +334,19 @@ static CLLocationManager *locationManager;
                 NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                 NSArray *sortedSpots = [spots sortedArrayUsingDescriptors:sortDescriptors];
                 
-                if (!self.allSpots) { // If allspots is nil
+                if ([sortedSpots count] > 0) {
+                    
+                    DLog(@"User spots info - %@",sortedSpots[0]);
+                    //if (!self.allSpots){ // If allspots is nil
                     self.allSpots = [NSMutableArray arrayWithArray:sortedSpots];
                     [self.allSpotsCollectionView reloadData];
-                }else{
+                    
+                    // }else{
                     // Change to Perform Batch updates l8er
-                    [self.allSpotsCollectionView reloadData];
+                    //  [self.allSpotsCollectionView reloadData];
+                    //}
                 }
+                
             }
         }
     }];
@@ -291,13 +372,13 @@ static CLLocationManager *locationManager;
                     NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
                     
                     //DLog(@"Nearby spots - %@",self.nearbySpots);
-                    if (!self.nearbySpots) {
+                    //if (!self.nearbySpots) {
                         self.nearbySpots = [NSMutableArray arrayWithArray:sortedSpots];
                         [self.nearbySpotsCollectionView reloadData];
-                    }else{
+                   // }else{
                         // Change to Perform Batch updates l8er
-                        [self.nearbySpotsCollectionView reloadData];
-                    }
+                      //  [self.nearbySpotsCollectionView reloadData];
+                   // }
                     
                 }
             }
@@ -306,12 +387,6 @@ static CLLocationManager *locationManager;
 }
     
     
-
--(void)updateCollectionView:(NSArray *)spots withUpdate:(NSArray *)updates
-{
-    
-}
-
 
 
 -(void)showPlacesBeingWatchedView:(BOOL)flag
@@ -423,7 +498,7 @@ static CLLocationManager *locationManager;
     personalSpotCell.userNameLabel.text = (spotsToDisplay[indexPath.row][@"creatorName"] != NULL)?spotsToDisplay[indexPath.row][@"creatorName"] : @"";
    
     NSString *imageSrc = spotsToDisplay[indexPath.row][@"creatorPhoto"];
-    [personalSpotCell.userNameView setImageWithURL:[NSURL URLWithString:imageSrc]];
+    [personalSpotCell.userNameView setImageWithURL:[NSURL URLWithString:imageSrc] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     personalSpotCell.spotNameLabel.text = spotsToDisplay[indexPath.row][@"spotName"];
     personalSpotCell.spotVenueLabel.text = spotsToDisplay[indexPath.row][@"venue"];
     
@@ -559,5 +634,15 @@ static CLLocationManager *locationManager;
     
     }
 }
+
+
+#pragma mark - Network changes
+- (void)networkChanged:(NSNotification *)aNotification
+{
+     NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
+    DLog(@"Network status : %@",notifInfo[AFNetworkingReachabilityNotificationStatusItem]);
+}
+
+
 
 @end

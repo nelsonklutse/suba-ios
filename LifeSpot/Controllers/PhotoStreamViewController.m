@@ -72,6 +72,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     if (!self.photos && self.numberOfPhotos > 0) {
         // We are coming from a place where spotName is not set so lets load spot info
+        DLog(@"Loading spot info");
         [self loadSpotImages:self.spotID];
     }
     
@@ -137,7 +138,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
-        [photoCardCell.pictureTakerView setImageWithURL:[NSURL URLWithString:pictureTakerPhotoURL]];
+        [photoCardCell.pictureTakerView setImageWithURL:[NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     }
     
     photoCardCell.pictureTakerName.text = self.photos[indexPath.row][@"pictureTaker"];
@@ -468,10 +469,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
             if (error) {
                 DLog(@"Error serializing %@", error);
             }else{
-                
+                DLog(@"PhotoInfo - %@",photoInfo);
                 self.noPhotosView.hidden = YES;
                 self.photoCollectionView.hidden = NO;
-                [self.photos insertObject:photoInfo atIndex:0];
+                if (!self.photos) {
+                    
+                    self.photos = [NSMutableArray arrayWithObject:photoInfo];
+                }else [self.photos insertObject:photoInfo atIndex:0];
+                
                 [self upDateCollectionViewWithCapturedPhoto:photoInfo];
             }
     });

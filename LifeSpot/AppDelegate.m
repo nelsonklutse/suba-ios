@@ -8,6 +8,7 @@
 
 #import "AppDelegate.h"
 #import "ICETutorialController.h"
+#import "SignUpViewController.h"
 
 @implementation AppDelegate
 
@@ -55,8 +56,12 @@
 }
 
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+-(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    DLog();
+    // Override point for customization after application launch.
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
     
     //Navbar customization
     UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f)
@@ -75,10 +80,7 @@
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
     
     //End of Navbar Customization
-    
-    
-    // Override point for customization after application launch.
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+
     
     // Init the pages texts, and pictures.
     ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@"Create"
@@ -118,7 +120,7 @@
     self.rootNavController = [mainStoryboard instantiateInitialViewController];
     
     if (!self.viewController) {
-        DLog(@"");
+        DLog(@"No VC present");
         self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"MAIN_TUTORIAL_VC"];
         
         self.viewController.autoScrollEnabled = YES;
@@ -126,36 +128,49 @@
         self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
         
         [self.viewController setPages:tutorialLayers];
-        //UIImageView *logoImageView = (UIImageView *)[self.viewController.view viewWithTag:10];
-        //logoImageView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"background-gradient.png"]];
+        
+        
+        // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
+        [self.viewController setCommonPageSubTitleStyle:subStyle];
+        [self.viewController setCommonPageDescriptionStyle:descStyle];
+        
+        __unsafe_unretained typeof(self) weakSelf = self;
+        
+        // Set button 1 action.
+        [self.viewController setButton1Block:^(UIButton *button){
+            //DLog(@"Facebook Button pressed.");
+            [weakSelf openFBSession];
+        }];
+        
+        // Set button 2 action, stop the scrolling.
+        
+        [self.viewController setButton2Block:^(UIButton *button){
+            //DLog(@"Button 2 pressed.");
+            //DLog(@"Auto-scrolling stopped.");
+            
+            [weakSelf.viewController stopScrolling];
+        }];
+        
+        // Run it.
+        [self.viewController startScrolling];
+        
+        [self.rootNavController setViewControllers:@[self.viewController]];
+        self.window.rootViewController = self.rootNavController;
+        
+        [self.window makeKeyAndVisible];
     }
     
-    // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
-    [self.viewController setCommonPageSubTitleStyle:subStyle];
-    [self.viewController setCommonPageDescriptionStyle:descStyle];
     
-     __unsafe_unretained typeof(self) weakSelf = self;
+    return YES;
+}
+
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
     
-    // Set button 1 action.
-    [self.viewController setButton1Block:^(UIButton *button){
-        //DLog(@"Facebook Button pressed.");
-        [weakSelf openFBSession]; 
-    }];
     
-    // Set button 2 action, stop the scrolling.
-   
-    [self.viewController setButton2Block:^(UIButton *button){
-        //DLog(@"Button 2 pressed.");
-        //DLog(@"Auto-scrolling stopped.");
-        
-        [weakSelf.viewController stopScrolling];
-    }];
     
-    // Run it.
-    [self.viewController startScrolling];
     
-    [self.rootNavController setViewControllers:@[self.viewController]];
-    self.window.rootViewController = self.rootNavController;
     //[self.window makeKeyAndVisible];
     
     [[FBSession activeSession] closeAndClearTokenInformation];
@@ -191,7 +206,7 @@
     }
     
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidLogInNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
        
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
@@ -207,13 +222,13 @@
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidLogInNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidSignUpNotification object:nil];
     
 }
 
 
 
--(void)applicationDidEnterBackground:(UIApplication *)application
+/*-(void)applicationDidEnterBackground:(UIApplication *)application
 {
     [self unmonitorNetworkChanges];
 }
@@ -221,13 +236,13 @@
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
     [self monitorNetworkChanges];
-}
+}*/
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidLogInNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
         
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
@@ -276,7 +291,7 @@
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     
-    //[FBSession.activeSession close];
+    [FBSession.activeSession close];
     
 }
 
@@ -390,12 +405,12 @@
 - (void)monitorNetworkChanges{
     LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
     
-    NSOperationQueue *opQueue = apiClient.operationQueue;
+    //NSOperationQueue *opQueue = apiClient.operationQueue;
     
     [apiClient.reachabilityManager startMonitoring];
     
     [apiClient.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        switch (status) {
+        /*switch (status) {
             case AFNetworkReachabilityStatusReachableViaWWAN:
             case AFNetworkReachabilityStatusReachableViaWiFi:
                 DLog(@"There is internet coz status - %d",status);
@@ -408,7 +423,10 @@
                 
                 [opQueue setSuspended:YES];
                 break;
-        }
+        }*/
+        DLog(@"network reachability chaged");
+        NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+        [notificationCenter postNotificationName:AFNetworkingReachabilityDidChangeNotification object:nil userInfo:@{ AFNetworkingReachabilityNotificationStatusItem: @(status) }];
     }];
 }
 
@@ -424,14 +442,34 @@
 /*#pragma mark - State Preservation and Restoration
 -(BOOL)application:(UIApplication *)application shouldSaveApplicationState:(NSCoder *)coder
 {
+    DLog();
     return YES;
 }
 
 -(BOOL)application:(UIApplication *)application shouldRestoreApplicationState:(NSCoder *)coder
 {
+    DLog();
     return YES;
-}*/
+}
 
+
+- (UIViewController *)application:(UIApplication *)application viewControllerWithRestorationIdentifierPath:(NSArray *)identifierComponents coder:(NSCoder *)coder
+{
+    DLog(@"View Controller s identifier path - %@",identifierComponents);
+    UIViewController *viewController = nil;
+    NSString *identifier = [identifierComponents lastObject];
+    
+    DLog(@"Last identifier on stack - %@",identifier);
+    
+    //if ([identifier isEqualToString:@"SignUpVC"]) {
+        UIStoryboard *storyboard = [coder decodeObjectForKey:UIStateRestorationViewControllerStoryboardKey];
+        if (storyboard != nil) {
+            viewController = [storyboard instantiateViewControllerWithIdentifier:identifier];
+        }
+  //  }
+    
+    return viewController;
+}*/
 
 
 @end

@@ -84,7 +84,9 @@ static CLLocationManager *locationManager;
 
 }
 
-- (IBAction)showNearbyLocations:(id)sender {
+- (IBAction)showNearbyLocations:(id)sender
+{
+    
 }
 
 -(void)askLocationPermission

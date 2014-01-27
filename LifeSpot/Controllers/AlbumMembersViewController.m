@@ -8,11 +8,14 @@
 
 #import "AlbumMembersViewController.h"
 #import "AlbumMembersCell.h"
+#import "UserProfileViewController.h"
+#import "InvitesViewController.h"
 #import "Spot.h"
 
 @interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *memberTableView;
 @property (strong,nonatomic) NSArray *members;
+@property (strong,nonatomic) NSDictionary *spotInfo;
 
 - (void)loadAlbumMembers:(NSString *)spotId;
 - (void)updateMembersData;
@@ -55,6 +58,7 @@
     
     [Spot fetchSpotInfo:spotId User:[AppHelper userID] completion:^(id results, NSError *error) {
         DLog(@"Results - %@",results);
+        self.spotInfo = results;
         self.members = results[@"members"];
         [self.memberTableView reloadData];
     }];
@@ -115,10 +119,27 @@
     AlbumMembersCell *cell = (AlbumMembersCell *)[tableView cellForRowAtIndexPath:indexPath];
     cell.selectionStyle = UITableViewCellEditingStyleNone;
     NSString *userId = self.members[indexPath.row][@"id"];
-    DLog(@"UserID of Participant - %@",userId);
+    //DLog(@"UserID of Participant - %@",userId);
     
     [self performSegueWithIdentifier:@"PARTICIPANTS_PROFILE_SEGUE" sender:userId];
 }
+
+
+#pragma mark - Segue
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"PARTICIPANTS_PROFILE_SEGUE"]) {
+        UserProfileViewController *uVC = segue.destinationViewController;
+        uVC.userId = sender;
+    }
+    
+    if ([segue.identifier isEqualToString:@"InviteFriendsSegue"]) {
+        InvitesViewController *iVC = segue.destinationViewController;
+        iVC.spotToInviteUserTo = self.spotInfo;
+    }
+}
+
+
 
 
 @end

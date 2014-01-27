@@ -8,6 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
+#define EmailOrUserNameKey @"EmailOrUserNameKey"
+
+
 @interface LoginViewController : UIViewController <UITextFieldDelegate>
 
 @property (weak, nonatomic) IBOutlet UITextField *userNameField;

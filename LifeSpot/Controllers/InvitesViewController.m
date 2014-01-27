@@ -110,10 +110,10 @@
         [[LSPushProviderAPIClient sharedInstance] POST:
          @"invitedtoalbum" parameters:params constructingBodyWithBlock:nil success:^(NSURLSessionDataTask *task, id responseObject) {
              
-             //NSLog(@"Server response - %@",responseObject);
+             NSLog(@"Server response - %@",responseObject);
          } failure:^(NSURLSessionDataTask *task, NSError *error){
              //
-             // NSLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
+              NSLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
              
          }];
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
@@ -689,6 +689,8 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     return indexPath;
 }
 
+
+
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     self.inviteBarButtonItem.enabled = YES;
     
@@ -703,6 +705,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             recipientSelectedId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
         }
         [self.invitedSubaUsers addObject:recipientSelectedId];
+        DLog(@"Invited suba users - %@",self.invitedSubaUsers);
         
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
         

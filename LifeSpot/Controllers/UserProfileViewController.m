@@ -34,7 +34,7 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
     
-    NSString *userId = [User currentlyActiveUser].userID;
+    NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
     [self loadSpotsCreated:userId];
      [self fetchUserInfo:userId];
     

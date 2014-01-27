@@ -51,7 +51,7 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 - (void)removeLocationFromWatching:(NSString *)locationName Completion:(AddLocationToWatchingCompletionBlock)completion;
 - (void)loadFriendsSpotsWithCompletion:(FriendSpotsCompletionBlock)completion;
 - (void)joinSpotCompletionCode:(NSString *)code completion:(SpotJoinedCompletionBlock)completion;
-
+- (void)leaveSpot:(NSString *)spotId completion:(GeneralCompletion)completion;
 - (void)followUser:(NSString *)beingFollowed completion:(FollowUserCompletion)completion;
 -(void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion;
 - (void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion;

@@ -247,6 +247,28 @@
 }
 
 
+-(void)leaveSpot:(NSString *)spotId completion:(GeneralCompletion)completion
+{    [[LifespotsAPIClient sharedInstance] POST:@"spot/leave"
+                                   parameters:@{ @"userId":self.userID, @"albumId":spotId}
+                                      success:^(NSURLSessionDataTask *task, id responseObject){
+                                          
+                                          if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
+                                              
+                                              [AppHelper updateNumberOfAlbums:(-1)];
+                                              
+                                              completion(responseObject,nil);
+                                          }
+                                          
+                                      } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                          completion(nil,error);
+                                          
+                                      }];
+    
+}
+
+
+
+
 -(void)followUser:(NSString *)beingFollowed completion:(FollowUserCompletion)completion
 {
     NSDictionary *params = @{@"beingFollowedId" : beingFollowed, @"followerId" : self.userID};

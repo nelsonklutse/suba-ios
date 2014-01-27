@@ -13,7 +13,7 @@
 #import "User.h"
 
 
-@interface AlbumSettingsViewController ()<UITextFieldDelegate,UITextViewDelegate>
+@interface AlbumSettingsViewController ()<UITextFieldDelegate,UITextViewDelegate,UIAlertViewDelegate>
 
 
 @property (copy,nonatomic) NSString *spotKey;
@@ -98,11 +98,11 @@
 {
     [Spot fetchSpotInfo:self.spotID User:[User currentlyActiveUser].userID
              completion:^(id results, NSError *error) {
-                 DLog(@"Spot Info - %@",results);
+                 //DLog(@"Spot Info - %@",results);
                  if (!error) {
                      if ([results[STATUS] isEqualToString:ALRIGHT]) {
                          self.spotInfo = (NSDictionary *)results;
-                         self.spotNameField.text = self.spotInfo[@"spotName"];
+                         self.spotName =  self.spotNameField.text = self.spotInfo[@"spotName"];
                          
                         self.spotKeyField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
                          ? @"N/A" : self.spotInfo[@"spotCode"];
@@ -242,6 +242,11 @@
 
 - (IBAction)leaveAlbumAction:(UIButton *)sender
 {
+    // This is a destructive action. Prompt the user later before finally deleting the album
+    
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Album" message:@"Are you sure you want to leave this album" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"I'm sure", nil];
+    
+    [alert show];
     
 }
 
@@ -275,4 +280,33 @@
         self.saveAlbumSettingsBarItem.enabled = YES;
     }
 }
+
+
+
+#pragma mark - AlertView Delegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    //DLog(@"button index - %ld",(long)buttonIndex);
+    if (buttonIndex == 1) {
+        // User surely wants to leave the album
+       // DLog(@"User surely wants to leave the album");
+        [[User currentlyActiveUser] leaveSpot:self.spotID completion:^(id results, NSError *error) {
+            DLog(@"And back");
+            if (!error) {
+                if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                    [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                }
+            }
+        }];
+        
+
+        
+    }
+    
+}
+
+
+
+
+
 @end

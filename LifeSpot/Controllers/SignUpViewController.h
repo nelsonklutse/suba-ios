@@ -10,6 +10,7 @@
 
 
 #define UserEmailKey @"UserEmailKey"
+#define UserNameKey  @"UserNameKey"
 
 
 @interface SignUpViewController : UIViewController

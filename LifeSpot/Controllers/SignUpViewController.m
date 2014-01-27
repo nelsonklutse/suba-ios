@@ -237,30 +237,36 @@ bool isUserNameAvailable = NO;
 
 
 
-/*#pragma mark - State Preservation and Restoration
+#pragma mark - State Preservation and Restoration
 -(void)encodeRestorableStateWithCoder:(NSCoder *)coder
 {
     [super encodeRestorableStateWithCoder:coder];
-    DLog(@"encode");
-    [coder encodeObject:self.emailField.text forKey:UserEmailKey];
     
+    DLog(@"encode");
+    self.email = self.emailField.text;
+    self.userName = self.userNameField.text;
+    [coder encodeObject:self.email forKey:UserEmailKey];
+    [coder encodeObject:self.userName forKey:UserNameKey];
 }
 
 
 -(void)decodeRestorableStateWithCoder:(NSCoder *)coder
 {
     [super decodeRestorableStateWithCoder:coder];
-    DLog(@"decode");
-    self.emailField.text = [coder decodeObjectForKey:UserEmailKey];
     
+    DLog(@"decode");
+    self.email = [coder decodeObjectForKey:UserEmailKey];
+    self.userName = [coder decodeObjectForKey:UserNameKey];
     
 }
 
 -(void)applicationFinishedRestoringState
 {
     // Inflate view from freezed state
+    self.emailField.text = self.email;
+    self.userNameField.text = self.userName;
 }
-*/
+
 
 
 @end

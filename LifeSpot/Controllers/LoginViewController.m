@@ -111,6 +111,34 @@
 
 
 
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    DLog(@"encode");
+    
+    self.userName = self.userNameField.text;
+    [coder encodeObject:self.userName forKey:EmailOrUserNameKey];
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    DLog(@"decode");
+    
+    self.userName = [coder decodeObjectForKey:EmailOrUserNameKey];
+    
+}
+
+-(void)applicationFinishedRestoringState
+{
+    // Inflate view from freezed state
+    self.userNameField.text = self.userName;
+}
+
 
 
 @end

@@ -320,7 +320,7 @@
     
     DLog(@"Profile photo URL - %@",[AppHelper profilePhotoURL]);
     
-    if ([[AppHelper firstName] length] == 0) {
+    if ([[AppHelper firstName] length] == 0){
         self.usrFullNameField.placeholder = @"Full Name";
     }else{
         self.fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];

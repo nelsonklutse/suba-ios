@@ -69,7 +69,7 @@
 #define kUserInfoWasFetchedNotification @"UserInfoNotification"
 #define kCameraActiveWasTappedNotification @"CameraWasTappedNotification"
 #define kUserDidLoadPersonalSpotsNotification @"PersonalSpotDidLoadNotification"
-#define kUserDidLogInNotification @"kUserDidLogInNotification"
+#define kUserDidSignUpNotification @"kUserDidLogInNotification"
 #define kUserUpdatedProfileInfoNotification @"kUserInfoWasUpdated"
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
