@@ -469,7 +469,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
             if (error) {
                 DLog(@"Error serializing %@", error);
             }else{
-                DLog(@"PhotoInfo - %@",photoInfo);
+                //DLog(@"PhotoInfo - %@",photoInfo);
+                [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                 self.noPhotosView.hidden = YES;
                 self.photoCollectionView.hidden = NO;
                 if (!self.photos) {

@@ -24,5 +24,5 @@
 @property (weak, nonatomic) IBOutlet UILabel *photosLabel;
 
 
-- (void)prepareForGallery:(NSArray *)allSpots index:(NSIndexPath*)indexPath;
+- (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath*)indexPath;
 @end

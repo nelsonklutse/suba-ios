@@ -21,11 +21,12 @@ typedef enum{
 }ColectionViewUpdateType;
 
 
-@interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate>
+@interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
 
 @property (strong,nonatomic) NSMutableArray *placesBeingWatched;
 @property (strong,nonatomic) NSMutableArray *nearbySpots;
 @property (strong,nonatomic) NSMutableArray *allSpots;
+@property (strong,nonatomic) NSDictionary *currentSelectedSpot;
 @property (strong,nonatomic) NSIndexPath *currentIndexPath;
 @property (strong,nonatomic) NSArray *images;
 @property (retain,nonatomic) CLLocation *currentLocation;
@@ -48,6 +49,7 @@ typedef enum{
 - (IBAction)nearbySpotsButtonSelected:(UIButton *)sender;
 - (IBAction)allSpotsButtonSelected:(UIButton *)sender;
 
+- (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data;
 - (void)addSpotToAllSpotsStream:(NSDictionary *)spotDetails;
 - (void)fetchUserFavoriteLocations;
 - (void)fetchUserSpots;
@@ -70,6 +72,25 @@ static CLLocationManager *locationManager;
         //Show notification
         AlbumSettingsViewController *aVC = segue.sourceViewController;
         NSString *albumName = aVC.spotName;
+        NSString *spotId = aVC.spotID;
+        DLog(@"SpotId - %@",spotId);
+         int counter = 0;
+        for (NSDictionary *spotToRemove in self.allSpots){
+            
+            if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
+                
+                DLog(@"Spot to remove - %@",spotToRemove);
+                [self.allSpots removeObject:spotToRemove];
+                //NSUInteger indexOfSpot = [self.allSpots indexOfObject:spotToRemove];
+                DLog(@"Index to be deleted - %d",counter);
+                [self updateCollectionView:self.allSpotsCollectionView
+                                withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0] ]
+                                updateType:kCollectionViewUpdateDelete];
+                break;
+                
+            }
+            counter += 1;
+        }
         
         UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
                                                    green:(77.0f/255.0f)
@@ -79,13 +100,14 @@ static CLLocationManager *locationManager;
         [CSNotificationView showInViewController:self
                                        tintColor: tintColor
                                            image:nil
-                                         message:[NSString stringWithFormat:@"You are no longer a member of the album%@",albumName]
+                                         message:[NSString stringWithFormat:
+                                                  @"You are no longer a member of the album %@",albumName]
                                         duration:5.0f];
+        
+        
         
     }
     
-    //Register remote notification types
-    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
 
 }
 
@@ -126,14 +148,17 @@ static CLLocationManager *locationManager;
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
         
-        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude}];
+        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [User currentlyActiveUser].userID}];
     }else{
         [self showPlacesBeingWatchedView:YES];
     }
     
     self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
     
+    //Register remote notification types
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateData) name:kUserReloadStreamNotification object:nil];
     
 }
 
@@ -163,6 +188,8 @@ static CLLocationManager *locationManager;
     [self.allSpotsCollectionView addPullToRefreshActionHandler:^{
         [weakSelf updateData];
     }];
+    
+    
     [self.allSpotsCollectionView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.allSpotsCollectionView.pullToRefreshView setBorderWidth:6];
     
@@ -172,6 +199,7 @@ static CLLocationManager *locationManager;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkChanged:) name:AFNetworkingReachabilityDidChangeNotification object:nil];
     
+
     
 }
 
@@ -190,6 +218,7 @@ static CLLocationManager *locationManager;
      name:AFNetworkingReachabilityDidChangeNotification
      object:nil];
 }
+
 
 
 - (IBAction)placesButtonSelected:(UIButton *)sender {
@@ -257,34 +286,43 @@ static CLLocationManager *locationManager;
         // Spot was created with a location so we add it to nearby spots
         if (self.nearbySpots && self.nearbySpotsCollectionView.alpha == 1) {
             [self.nearbySpots insertObject:spotDetails atIndex:0];
-            [self updateCollectionView:self.nearbySpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+            [self updateCollectionView:self.nearbySpotsCollectionView
+                            withUpdate:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]
+                            updateType:kCollectionViewUpdateInsert];
         }
     }
     
     if (self.allSpots && self.allSpotsCollectionView.alpha == 1){
         [self.allSpots insertObject:spotDetails atIndex:0];
-        [self updateCollectionView:self.allSpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+        [self updateCollectionView:self.allSpotsCollectionView
+                        withUpdate:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]
+                        updateType:kCollectionViewUpdateInsert];
     }
     
     if ([self.allSpots count] == 0) {
         self.allSpots = [NSMutableArray arrayWithObject:spotDetails];
-        [self updateCollectionView:self.allSpotsCollectionView withUpdate:spotDetails updateType:kCollectionViewUpdateInsert];
+        [self updateCollectionView:self.allSpotsCollectionView
+                        withUpdate:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]
+                        updateType:kCollectionViewUpdateInsert];
         
     }
     
 }
 
 
-- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSDictionary *)updates updateType:(ColectionViewUpdateType)updateType
+- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates updateType:(ColectionViewUpdateType)updateType
 {
     if (updateType == kCollectionViewUpdateInsert) {
         [collectionView performBatchUpdates:^{
-            [collectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]];
+            [collectionView insertItemsAtIndexPaths:updates];
         } completion:^(BOOL finished) {
             [collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionTop animated:YES];
         }];
     }else if(updateType == kCollectionViewUpdateDelete){
-        
+       [collectionView performBatchUpdates:^{
+           DLog(@"Deleted item at index path");
+           [collectionView deleteItemsAtIndexPaths:updates];
+       } completion:nil];
     }
     
 }
@@ -318,6 +356,8 @@ static CLLocationManager *locationManager;
     }];
 }
 
+
+
 -(void)fetchUserSpots{
     // Show Activity Indicator
     [self showPlacesBeingWatchedView:YES];
@@ -336,7 +376,7 @@ static CLLocationManager *locationManager;
                 
                 if ([sortedSpots count] > 0) {
                     
-                    DLog(@"User spots info - %@",sortedSpots[0]);
+                    //DLog(@"User spots info - %@",sortedSpots[0]);
                     //if (!self.allSpots){ // If allspots is nil
                     self.allSpots = [NSMutableArray arrayWithArray:sortedSpots];
                     [self.allSpotsCollectionView reloadData];
@@ -371,7 +411,7 @@ static CLLocationManager *locationManager;
                     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                     NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
                     
-                    //DLog(@"Nearby spots - %@",self.nearbySpots);
+                    DLog(@"Nearby spots - %@",self.nearbySpots);
                     //if (!self.nearbySpots) {
                         self.nearbySpots = [NSMutableArray arrayWithArray:sortedSpots];
                         [self.nearbySpotsCollectionView reloadData];
@@ -387,7 +427,24 @@ static CLLocationManager *locationManager;
 }
     
     
-
+- (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data
+{
+    [[User currentlyActiveUser] joinSpotCompletionCode:spotCode completion:^(id results, NSError *error){
+        if (!error) {
+            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                
+                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:data];
+                [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                // Add a notification to tell Mainstream to reload its data
+                
+            }else{
+                DLog(@"Error - %@",results[STATUS]);
+            }
+        }else{
+            DLog(@"Error - %@",error);
+        }
+    }];
+}
 
 -(void)showPlacesBeingWatchedView:(BOOL)flag
 {
@@ -402,11 +459,49 @@ static CLLocationManager *locationManager;
 {
     
     NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
-    NSArray *photos = notifInfo[@"photoURLs"];
-    //DLog(@"Notification Info - %@",photos);
-    [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
-}
+    NSArray *photos = notifInfo[@"spotInfo"][@"photoURLs"];
+    if (self.allSpotsCollectionView.alpha == 1) {
+        [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+    }else{
+    self.currentSelectedSpot = notifInfo[@"spotInfo"];
+    DLog(@"Notification Info - %@",notifInfo);
+    NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
+    NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
+    NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
+    NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
 
+    DLog(@"Is user Member - %@",isMember);
+    if (isMember) {
+        [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+    }else if ([spotCode isEqualToString:@"NONE"]) {
+        
+        // This album has no spot code and user is not a member, so we add user to this stream
+        [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
+            if (!error){
+                DLog(@"Album is public so joining spot");
+                if ([results[STATUS] isEqualToString:ALRIGHT]){
+                    
+                    [AppHelper showNotificationWithMessage:@"You are now a member of this spot" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                    
+                    [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+                }else{
+                    DLog(@"Server error - %@",error);
+                }
+                
+            }else{
+                DLog(@"Error - %@",error);
+            }
+        }];
+    }else{
+    
+    //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
+    
+    alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    [alertView show];
+    }
+  }
+}
 
 -(void)checkForLocation
 {
@@ -420,8 +515,8 @@ static CLLocationManager *locationManager;
                 message:@"Location services is disabled for this app. Please enable location services to see nearby spots" buttons:@[@"OK"] delegate:nil];
        
     }
-
 }
+
 
 
 #pragma mark - UITableViewDataSource
@@ -509,7 +604,7 @@ static CLLocationManager *locationManager;
     
     if ([photos integerValue] > 0) {  // If there are photos to display
         
-        [personalSpotCell prepareForGallery:spotsToDisplay[indexPath.row][@"photoURLs"] index:indexPath];
+        [personalSpotCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
         //[personalSpotCell mScroller];
 
         if ([personalSpotCell.pGallery superview]) {
@@ -544,22 +639,74 @@ static CLLocationManager *locationManager;
     NSArray *spotsToDisplay = nil;
     
     if(self.allSpotsCollectionView.alpha == 1){
+        numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
         spotsToDisplay = self.allSpots;
-    }else if (self.nearbySpotsCollectionView.alpha == 1) {
-        spotsToDisplay = self.nearbySpots;
-    }
-    
-     numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-    DLog(@"Number of photos = %i",numberOfPhotos);
-    if (numberOfPhotos == 0) {
-        NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
-        NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
-        NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-        NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
-        [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-    }
-    
-}
+        if (numberOfPhotos == 0) {
+            NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
+            NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
+            //NSString *spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
+            NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+            NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+            self.currentSelectedSpot = dataPassed;
+            //NSString *isMember = spotsToDisplay[indexPath.item][@"userIsMember"];
+            
+            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+            
+        }
+
+    }else if (self.nearbySpotsCollectionView.alpha == 1){
+        
+         spotsToDisplay = self.nearbySpots;
+         numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+        
+        if (numberOfPhotos == 0){
+            NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
+            NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
+            NSString *spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
+            NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+            NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+            NSString *isMember = spotsToDisplay[indexPath.item][@"userIsMember"];
+            self.currentSelectedSpot = dataPassed;
+            
+            if (isMember){
+                
+                    // User is a member so let him view photos;
+                    [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+                    
+                }else if ([spotCode isEqualToString:@"NONE"]) {
+                    
+                    // This album has no spot code and user is not a member, so we add user to this stream
+                    [[User currentlyActiveUser] joinSpot:spotID completion:^(id results, NSError *error) {
+                     if (!error){
+                         DLog(@"Album is public so joining spot");
+                         if ([results[STATUS] isEqualToString:ALRIGHT]){
+                     
+                     [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                     
+                             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+                       }else{
+                         DLog(@"Server error - %@",error);
+                       }
+                         
+                     }else{
+                         DLog(@"Error - %@",error);
+                     }
+                 }];
+              }
+                    
+                }else{
+                    
+                    //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
+                    
+                    alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+                    [alertView show];
+                    
+                }
+            }
+        }
+
+
 
 
 #pragma mark - Location Manager Delegate
@@ -571,7 +718,7 @@ static CLLocationManager *locationManager;
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
         
-        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude}];
+        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [User currentlyActiveUser].userID}];
     }
 }
 
@@ -579,6 +726,7 @@ static CLLocationManager *locationManager;
 #pragma mark - Pull to refresh updates
 -(void)updateData
 {
+    DLog();
     __weak typeof(self) weakSelf = self;
     
     int64_t delayInSeconds = 1.2;
@@ -594,12 +742,13 @@ static CLLocationManager *locationManager;
             [weakSelf.placesBeingWatchedTableView stopRefreshAnimation];
 
         }else if (self.nearbySpotsCollectionView.alpha == 1){ // Nearby spots is visible
+            DLog(@"Update nearby spots");
             if (self.currentLocation != nil){
                 
                 NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
                 NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
                 
-                [weakSelf fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude}];
+                [weakSelf fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [User currentlyActiveUser].userID}];
             }
             //DLog(@"Updating nearby spots coz dats whats visible");
             [weakSelf.nearbySpotsCollectionView stopRefreshAnimation];
@@ -644,5 +793,16 @@ static CLLocationManager *locationManager;
 }
 
 
+#pragma mark - AlertView Delegate
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    //DLog(@"button index - %ld",(long)buttonIndex);
+    if (buttonIndex == 1) {
+        NSString *passcode = [alertView textFieldAtIndex:0].text;
+        [self joinSpot:passcode data:self.currentSelectedSpot];
+        
+    }
+    
+}
 
 @end

@@ -230,14 +230,10 @@
 {    [[LifespotsAPIClient sharedInstance] GET:@"spot/join"
                                   parameters:@{ @"userId":self.userID, @"albumCode":code}
                                      success:^(NSURLSessionDataTask *task, id responseObject){
-                                         
-        if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
+                                         DLog(@"Back from server - %@",responseObject);
             
             [AppHelper updateNumberOfAlbums:1];
             completion(responseObject,nil);
-            
-            //[self performSegueWithIdentifier:@"spotcelltoalbum" sender:responseObject];
-        }
 
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -247,8 +243,26 @@
 }
 
 
+-(void)joinSpot:(NSString *)spotId completion:(SpotJoinedCompletionBlock)completion
+{    [[LifespotsAPIClient sharedInstance] GET:@"spot/join"
+                                   parameters:@{ @"userId":self.userID, @"spotId": spotId}
+                                      success:^(NSURLSessionDataTask *task, id responseObject){
+                                          DLog(@"Back from server - %@",responseObject);
+                                          
+                                          [AppHelper updateNumberOfAlbums:1];
+                                          completion(responseObject,nil);
+                                          
+                                      } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                          completion(nil,error);
+                                          
+                                      }];
+    
+}
+
+
 -(void)leaveSpot:(NSString *)spotId completion:(GeneralCompletion)completion
-{    [[LifespotsAPIClient sharedInstance] POST:@"spot/leave"
+{
+    [[LifespotsAPIClient sharedInstance] POST:@"spot/leave"
                                    parameters:@{ @"userId":self.userID, @"albumId":spotId}
                                       success:^(NSURLSessionDataTask *task, id responseObject){
                                           

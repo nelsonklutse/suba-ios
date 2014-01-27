@@ -12,6 +12,18 @@
 
 @implementation AppDelegate
 
+-(LifespotsAPIClient *)apiBaseURL
+{
+    if (!_apiBaseURL) {
+        return [LifespotsAPIClient sharedInstance];
+    }
+    
+    return _apiBaseURL;
+}
+
+
+
+
 - (BOOL)application:(UIApplication *)application
             openURL:(NSURL *)url
   sourceApplication:(NSString *)sourceApplication
@@ -196,9 +208,40 @@
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
     
     [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:YES];
+     __weak LifespotsAPIClient *weakApiBaseURL = _apiBaseURL;
+    [_apiBaseURL.reachabilityManager startMonitoring];
+    __weak typeof(self) weakSelf = self;
+    [_apiBaseURL.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
+       
+
+        NSOperationQueue *opQueue = weakApiBaseURL.operationQueue;
+        switch (status) {
+                
+            case AFNetworkReachabilityStatusReachableViaWWAN:
+            case AFNetworkReachabilityStatusReachableViaWiFi:
+                DLog(@"There is internet coz status - %d",status);
+                [AppHelper showNotificationWithMessage:@"Network Connection success"
+                                                  type:kSUBANOTIFICATION_SUCCESS
+                                      inViewController:[weakSelf topViewController]
+                                       completionBlock:nil];
+                
+                [opQueue setSuspended:NO];
+                break;
+            case AFNetworkReachabilityStatusNotReachable:
+            default:
+                
+                DLog(@"There is no internet coz status - %d",status);
+                [AppHelper showNotificationWithMessage:@"No internet connection"
+                                                  type:kSUBANOTIFICATION_ERROR
+                                      inViewController:[weakSelf topViewController]
+                                       completionBlock:nil];
+                [opQueue setSuspended:YES];
+                break;
+        }
+
+    }];
     
-    
-    [self monitorNetworkChanges];
+    //[self monitorNetworkChanges];
     
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
@@ -224,19 +267,22 @@
     
     [[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidSignUpNotification object:nil];
     
+   
+    
 }
 
 
 
-/*-(void)applicationDidEnterBackground:(UIApplication *)application
+-(void)applicationDidEnterBackground:(UIApplication *)application
 {
     [self unmonitorNetworkChanges];
+     //[[NSNotificationCenter defaultCenter] removeObserver:self name:kUserReloadStreamNotification object:nil];
 }
 
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
     [self monitorNetworkChanges];
-}*/
+}
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
@@ -405,12 +451,12 @@
 - (void)monitorNetworkChanges{
     LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
     
-    //NSOperationQueue *opQueue = apiClient.operationQueue;
+    NSOperationQueue *opQueue = apiClient.operationQueue;
     
     [apiClient.reachabilityManager startMonitoring];
     
     [apiClient.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        /*switch (status) {
+        switch (status) {
             case AFNetworkReachabilityStatusReachableViaWWAN:
             case AFNetworkReachabilityStatusReachableViaWiFi:
                 DLog(@"There is internet coz status - %d",status);
@@ -420,13 +466,17 @@
             default:
             
                 DLog(@"There is no internet coz status - %d",status);
-                
+                [AppHelper showNotificationWithMessage:@"No internet connection"
+                                                  type:kSUBANOTIFICATION_ERROR
+                                      inViewController:[self topViewController]
+                                       completionBlock:nil];
                 [opQueue setSuspended:YES];
                 break;
-        }*/
-        DLog(@"network reachability chaged");
+        }
+        
+        /*DLog(@"network reachability chaged");
         NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
-        [notificationCenter postNotificationName:AFNetworkingReachabilityDidChangeNotification object:nil userInfo:@{ AFNetworkingReachabilityNotificationStatusItem: @(status) }];
+        [notificationCenter postNotificationName:AFNetworkingReachabilityDidChangeNotification object:nil userInfo:@{ AFNetworkingReachabilityNotificationStatusItem: @(status) }];*/
     }];
 }
 
@@ -470,6 +520,31 @@
     
     return viewController;
 }*/
+
+
+
+
+
+- (UIViewController *)topViewController{
+    return [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
+}
+
+- (UIViewController *)topViewController:(UIViewController *)rootViewController
+{
+    if (rootViewController.presentedViewController == nil) {
+        return rootViewController;
+    }
+    if ([rootViewController.presentedViewController isMemberOfClass:[UINavigationController class]]) {
+        UINavigationController *navigationController = (UINavigationController *)rootViewController.presentedViewController;
+        UIViewController *lastViewController = [[navigationController viewControllers] lastObject];
+        return [self topViewController:lastViewController];
+    }
+    UIViewController *presentedViewController = (UIViewController *)rootViewController.presentedViewController;
+    return [self topViewController:presentedViewController];
+}
+
+
+
 
 
 @end

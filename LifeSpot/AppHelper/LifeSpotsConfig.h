@@ -62,6 +62,7 @@
 #define sONLY_MEMBERS @"ONLY_MEMBERS"
 #define kSUBANOTIFICATION_ERROR @"kNotficationError"
 #define kSUBANOTIFICATION_SUCCESS @"kNotficationSuccess"
+#define kNoInternetAccessNotification @"kNoInternetNotification"
 
 
 // Notifications
@@ -73,5 +74,6 @@
 #define kUserUpdatedProfileInfoNotification @"kUserInfoWasUpdated"
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
+#define kUserReloadStreamNotification @"kUserJoinedSpot"
 
 #endif

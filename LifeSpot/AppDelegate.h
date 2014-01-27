@@ -16,4 +16,5 @@
 @property (strong, nonatomic) ICETutorialController *viewController;
 @property (strong,nonatomic) UINavigationController *rootNavController;
 
+@property (strong,nonatomic) LifespotsAPIClient *apiBaseURL;
 @end

@@ -8,6 +8,7 @@
 
 #import "CreateSpotViewController.h"
 #import "FoursquareLocationsViewController.h"
+#import "PhotoStreamViewController.h"
 #import "Location.h"
 #import "User.h"
 #import "Privacy.h"
@@ -22,11 +23,15 @@
 @property (strong,nonatomic) Location *chosenVenueLocation;
 @property (strong,nonatomic) NSDictionary *createdSpotDetails;
 
+@property (weak, nonatomic) IBOutlet UIView *loadingDataView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *joiningSpotIndicator;
 @property (weak, nonatomic) IBOutlet UITextField *spotNameField;
 @property (weak, nonatomic) IBOutlet UIButton *currentLocationButton;
 @property (weak, nonatomic) IBOutlet UIButton *createSpotButton;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *creatingSpotIndicator;
+@property (weak, nonatomic) IBOutlet UITextField *joinSpotId;
 
+- (IBAction)joinSpotAction:(id)sender;
 - (IBAction)createSpotAction:(UIButton *)sender;
 - (IBAction)showNearbyLocations:(id)sender;
 - (void)askLocationPermission;
@@ -55,6 +60,29 @@ static CLLocationManager *locationManager;
     // Dispose of any resources that can be recreated.
 }
 
+
+- (IBAction)joinSpotAction:(id)sender
+{
+    [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:YES];
+    DLog(@"joining");
+    [[User currentlyActiveUser] joinSpotCompletionCode:self.joinSpotId.text completion:^(id results, NSError *error) {
+        DLog(@"Result - %@",results);
+        if ([results[STATUS] isEqualToString:ALRIGHT]){
+            // Joined successfully
+            NSString *spotId = results[@"spotId"];
+            [self performSegueWithIdentifier:@"JOIN_SPOT_SEGUE" sender:spotId];
+            
+        }else if ([results[STATUS] isEqualToString:@"error"]){
+            // There is no spot with this code
+            [AppHelper showNotificationWithMessage:@"We could find a spot with this code"
+                                              type:kSUBANOTIFICATION_ERROR
+                                  inViewController:self
+                                   completionBlock:nil];
+        }
+        
+        [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:NO];
+    }];
+}
 
 - (IBAction)createSpotAction:(UIButton *)sender {
     // 1. View Privacy  2. Add Privacy 3. Location 4.
@@ -162,6 +190,11 @@ static CLLocationManager *locationManager;
         FoursquareLocationsViewController *nearbyVenuesVC = segue.destinationViewController;
         nearbyVenuesVC.currentLocation = self.userLocation;
         nearbyVenuesVC.locations = self.otherVenues;
+    }
+    
+    if ([segue.identifier isEqualToString:@"JOIN_SPOT_SEGUE"]) {
+        PhotoStreamViewController *pVC = segue.destinationViewController;
+        pVC.spotID = sender;
     }
 }
 

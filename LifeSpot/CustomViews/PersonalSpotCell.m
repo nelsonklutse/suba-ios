@@ -12,6 +12,7 @@
 
 @interface PersonalSpotCell()<TFScrollerDelegate,UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 @property (strong,nonatomic) NSArray *gImages;
+@property (strong,nonatomic) NSDictionary *spotInfo;
 @property int galleryIndex;
 //@property (retain,nonatomic) MainStreamViewController *mainStreamVC;
 @end
@@ -159,18 +160,19 @@
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoGalleryTappedAtIndexNotification
-     object:nil userInfo:@{@"photoIndex": @(index),@"photoURLs" : self.gImages}];
+     object:nil userInfo:@{@"photoIndex": @(index),@"spotInfo" : self.spotInfo}];
 }
 
 
 #pragma mark - Class Helpers
-- (void)prepareForGallery:(NSArray *)allSpots index:(NSIndexPath *)indexPath
+- (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
 {
-    //DLog(@"PhotoURLs in cell are: %@",allSpots);
-      //  self.gImages = allSpots;
+    DLog(@"SpotInfo is: %@",spotInfo);
+    self.spotInfo = spotInfo;
+    NSArray *allphotos = spotInfo[@"photoURLs"];
     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-    NSArray *sortedPhotos = [allSpots sortedArrayUsingDescriptors:sortDescriptors];
+    NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
     self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
 
         self.galleryIndex = indexPath.row;

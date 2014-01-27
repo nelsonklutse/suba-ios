@@ -193,8 +193,13 @@
         if (error) {
             DLog(@"Error - %@",error);
         }else{
-            DLog(@"Status - %@",results[STATUS]);
+            //DLog(@"Status - %@",results[STATUS]);
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                DLog(@"From save - %@",results);
+                
+                [[NSNotificationCenter defaultCenter]
+                 postNotificationName:kUserReloadStreamNotification object:nil];
+                
                 [indicator stopAnimating];
                 //self.navigationItem.title = results[@"spotName"];
                 self.spotName = results[@"spotName"];
@@ -291,16 +296,14 @@
         // User surely wants to leave the album
        // DLog(@"User surely wants to leave the album");
         [[User currentlyActiveUser] leaveSpot:self.spotID completion:^(id results, NSError *error) {
-            DLog(@"And back");
+            //DLog(@"And back");
             if (!error) {
                 if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                    [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                    [self performSegueWithIdentifier:@" LEAVE_STREAM_SEGUE" sender:nil];
                 }
             }
         }];
-        
-
-        
     }
     
 }
