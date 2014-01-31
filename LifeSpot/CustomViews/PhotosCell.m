@@ -16,15 +16,6 @@
 
 @implementation PhotosCell
 
-- (id)initWithFrame:(CGRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        // Initialization code
-    }
-    return self;
-}
-
 /*
 // Only override drawRect: if you perform custom drawing.
 // An empty implementation adversely affects performance during animation.
@@ -37,14 +28,14 @@
 
 #pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
-    DLog(@"Number of images in gallery is %i",[self.gImages[@"images"] count]);
+   // DLog(@"Number of images in gallery is %i",[self.gImages[@"images"] count]);
     return [self.gImages[@"images"] count];
 }
 
 
 - (NSURL*)photoGallery:(UIPhotoGalleryView *)photoGallery remoteImageURLAtIndex:(NSInteger)index {
     NSString *imageURL = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,self.gImages[@"images"][index]];
-    DLog(@"Setting Image at src=%@",imageURL);
+    //DLog(@"Setting Image at src=%@",imageURL);
     return [NSURL URLWithString:imageURL];
 }
 
@@ -57,7 +48,7 @@
     //self.galleryIndex = index;
     //NSMutableArray
   
-        DLog(@"Index Tapped - %i",index);
+        //DLog(@"Index Tapped - %i",index);
         /*NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
         NSRange rangeSecondArray = NSMakeRange(0, index);
         NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];

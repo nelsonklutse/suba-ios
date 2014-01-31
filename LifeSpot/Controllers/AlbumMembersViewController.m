@@ -12,6 +12,11 @@
 #import "InvitesViewController.h"
 #import "Spot.h"
 
+
+#define MembersKey @"MembersKey"
+#define SpotInfoKey @"SpotInfoKey"
+#define SpotIdKey @"SpotIdKey"
+
 @interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (weak, nonatomic) IBOutlet UITableView *memberTableView;
 @property (strong,nonatomic) NSArray *members;
@@ -27,8 +32,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view.
-    [self loadAlbumMembers:self.spotID];
+	
+    if (self.spotID){
+        [self loadAlbumMembers:self.spotID];
+    }
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -38,6 +46,11 @@
         // Method to update data
         [self updateMembersData];
     }];
+    
+    [self.memberTableView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
+    [self.memberTableView.pullToRefreshView setBorderWidth:6];
+    [self.memberTableView.pullToRefreshView setBackgroundColor:[UIColor redColor]];
+
 }
 
 - (void)didReceiveMemoryWarning
@@ -140,6 +153,37 @@
 }
 
 
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.spotID forKey:SpotIdKey];
+    [coder encodeObject:self.members forKey:MembersKey];
+    [coder encodeObject:self.spotInfo forKey:SpotInfoKey];
+    DLog();
+}
 
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.spotID = [coder decodeObjectForKey:SpotIdKey];
+    self.members = [coder decodeObjectForKey:MembersKey];
+    self.spotInfo = [coder decodeObjectForKey:SpotInfoKey];
+    DLog();
+}
+
+-(void)applicationFinishedRestoringState
+{
+    if (self.members) {
+        [self.memberTableView reloadData];
+    }else if(self.spotID){
+        [self loadAlbumMembers:self.spotID];
+    }
+    
+    DLog();
+}
 
 @end

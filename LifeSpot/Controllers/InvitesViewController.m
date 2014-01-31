@@ -16,7 +16,12 @@
 #import <MessageUI/MessageUI.h>
 //#import ""
 
-@interface InvitesViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UISearchBarDelegate,UISearchDisplayDelegate>
+#define PhoneContactsKey @"PhoneContactsKey"
+#define FacebookUsersKey @"FacebookUsersKey"
+#define SelectedSegmentKey @"SelectedSegmentKey"
+#define SubaUsersKey @"SubaUsersKey"
+
+@interface InvitesViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UISearchBarDelegate>
 
 @property (strong,nonatomic) NSMutableArray *subaUsers;
 @property (strong,nonatomic) NSMutableArray *invitedSubaUsers;
@@ -55,7 +60,7 @@
 @end
 
 @implementation InvitesViewController
-
+static BOOL isFiltered = NO;
 
 - (void)viewDidLoad
 {
@@ -79,7 +84,7 @@
     //self.invitesSearchBar.delegate = self;
     //self.subaUsersTableView.tableHeaderView = self.invitesSearchBar;
     
-    self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = YES;
+    //self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = YES;
 }
 
 
@@ -91,6 +96,8 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+
 - (IBAction)inviteUsers:(id)sender
 {
     if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
@@ -100,20 +107,23 @@
         //NSString *requestURL = [NSString stringWithFormat:@"%@invitedtoalbum",PUSH_PROVIDER_BASE_URL];
         
         NSString *senderId = [AppHelper userID];
+        
         NSDictionary *params = @{@"senderId": senderId,
                                  @"recipientIds" : [self.invitedSubaUsers description],
                                  @"spotOwner" : [AppHelper userName],
                                  @"spotId" : self.spotToInviteUserTo[@"spotId"],
                                  @"spotName" : self.spotToInviteUserTo[@"spotName"]};
-        //NSLog(@"Params - %@",params);
+       
         
         [[LSPushProviderAPIClient sharedInstance] POST:
-         @"invitedtoalbum" parameters:params constructingBodyWithBlock:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+         @"invitedtoalbum" parameters:params constructingBodyWithBlock:nil success:^(NSURLSessionDataTask *task, id responseObject){
              
-             NSLog(@"Server response - %@",responseObject);
+             // Add invited user to spot automagically
+             
+             DLog(@"Server response - %@",responseObject);
          } failure:^(NSURLSessionDataTask *task, NSError *error){
-             //
-              NSLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
+             
+              DLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
              
          }];
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
@@ -211,6 +221,7 @@
 
 - (IBAction)inviteSegmentSelected:(UISegmentedControl *)sender
 {
+    [self.invitesSearchBar resignFirstResponder];
     if (sender.selectedSegmentIndex == kSuba) {
         
         // Hide the other TableViews
@@ -584,12 +595,12 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     
     if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba) {
         
-        numberOfRows = (tableView == self.searchDisplayController.searchResultsTableView) ? [self.subaUsersFilteredArray count]:[self.subaUsers count];
+        numberOfRows = (isFiltered) ? [self.subaUsersFilteredArray count]:[self.subaUsers count];
         
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
-        numberOfRows = (tableView == self.searchDisplayController.searchResultsTableView) ? [self.fbUsersFilteredArray count]:[self.fbUsers count];
+        numberOfRows = (isFiltered) ? [self.fbUsersFilteredArray count]:[self.fbUsers count];
     }else{
-        numberOfRows = (tableView == self.searchDisplayController.searchResultsTableView) ? [self.phoneContactsFilteredArray count]:[self.phoneContacts count];
+        numberOfRows = (isFiltered) ? [self.phoneContactsFilteredArray count]:[self.phoneContacts count];
     }
     
     return numberOfRows;
@@ -606,7 +617,8 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         cellIdentifier = @"SubaInvitesCell";
        
         SubaUsersInviteCell *subaUserCell = (SubaUsersInviteCell *)[self.subaUsersTableView dequeueReusableCellWithIdentifier:cellIdentifier];
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
+        if (isFiltered) {
+            //DLog(@"is filtered -");
             userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
             photoURL = (NSString *)[self.subaUsersFilteredArray[indexPath.row] objectForKey:@"photo"];
         }else{
@@ -630,7 +642,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         NSString *phoneNumber = nil;
         SMSContactsCell *contactCell = (SMSContactsCell *)[self.contactsTableView dequeueReusableCellWithIdentifier:cellIdentifier];
         
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
+        if (isFiltered) {
             firstName = [self.phoneContactsFilteredArray[indexPath.row] objectForKey:@"firstName"];
             lastName =  [self.phoneContactsFilteredArray[indexPath.row] objectForKey:@"lastName"];
             contactImage = self.phoneContactsFilteredArray[indexPath.row][@"image"];
@@ -652,8 +664,12 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         FacebookUsersCell *fbUserCell = (FacebookUsersCell *)[self.facebookFriendsTableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
         
         NSDictionary *friendInfo = nil;
+        if (isFiltered) {
+            friendInfo = self.fbUsersFilteredArray[indexPath.row];
+        }else{
+           friendInfo = self.fbUsers[indexPath.row]; 
+        }
         
-        friendInfo = self.fbUsers[indexPath.row];
         NSString *friendPicURL = [[[friendInfo
                                     valueForKey:@"picture"]
                                    valueForKey:@"data"] valueForKey:@"url"];
@@ -774,32 +790,103 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba) {
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"userName contains[c] %@",searchText];
         self.subaUsersFilteredArray = [NSMutableArray arrayWithArray:[self.subaUsers filteredArrayUsingPredicate:predicate]];
+        //DLog(@"Suba users filtered - %@",self.subaUsersFilteredArray);
+        [self.subaUsersTableView reloadData];
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
         
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"first_name contains[c] %@ OR last_name contains[c] %@ OR middle_name contains[c] %@",searchText,searchText,searchText];
         
         //NSMutableArray *filteredFriends = [self filterFacebookFriends:self.fbUsers];
         self.fbUsersFilteredArray = [NSMutableArray arrayWithArray:[self.fbUsers filteredArrayUsingPredicate:predicate]];
-        DLog(@"FBUserFiltered array -%@\nPredicate - %@",[self.fbUsersFilteredArray description],[predicate debugDescription]); 
+        DLog(@"FBUserFiltered array -%@\nPredicate - %@",[self.fbUsersFilteredArray description],[predicate debugDescription]);
+        [self.facebookFriendsTableView reloadData];
     }else{
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"firstName contains[c] %@ OR lastName contains[c] %@",searchText,searchText];
         self.phoneContactsFilteredArray = [NSMutableArray arrayWithArray:[self.phoneContacts filteredArrayUsingPredicate:predicate]];
+        [self.contactsTableView reloadData];
         //DLog(@"Filtered contacts - %@",self.phoneContactsFilteredArray);
     }
     
 }
 
 
-#pragma mark - UISearchDisplayController Delegate Methods
--(BOOL)searchDisplayController:(UISearchDisplayController *)controller shouldReloadTableForSearchString:(NSString *)searchString{
-    // Tells the table data source to reload when text changes
-    [self filterContentForSearchText:searchString scope:
-     [[self.searchDisplayController.searchBar scopeButtonTitles] objectAtIndex:[self.searchDisplayController.searchBar selectedScopeButtonIndex]]];
+#pragma mark - UISearchBar Delegate
+
+-(void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    if (searchText.length == 0) {
+        isFiltered = NO;
+    }else{
+        
+        isFiltered = YES;
+        [self filterContentForSearchText:searchText
+                                   scope:[[self.invitesSearchBar scopeButtonTitles]
+                                          objectAtIndex:[self.invitesSearchBar selectedScopeButtonIndex]]];
+    }
+
+}
+
+
+-(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar
+{
+    searchBar.showsCancelButton = YES;
     
-    // Return YES to cause the search result table view to be reloaded.
-    //[self refreshInvitesTableView];
     return YES;
 }
+
+
+-(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
+{
+    [searchBar resignFirstResponder];
+    searchBar.showsCancelButton = NO;
+    isFiltered = NO;
+    
+    if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
+        [self.facebookFriendsTableView reloadData];
+        [self refreshTableView:self.facebookFriendsTableView];
+    }else if(self.inviteSegmentedControl.selectedSegmentIndex == kPhoneContacts){
+        [self.contactsTableView reloadData];
+        [self refreshTableView:self.contactsTableView];
+    }else{
+        [self.subaUsersTableView reloadData];
+        [self refreshTableView:self.subaUsersTableView];
+    }
+    
+}
+
+
+
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.phoneContacts forKey:PhoneContactsKey];
+    [coder encodeObject:self.fbUsers forKey:FacebookUsersKey];
+    [coder encodeObject:self.subaUsers forKey:SubaUsersKey];
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.phoneContacts = [coder decodeObjectForKey:PhoneContactsKey];
+    self.fbUsers = [coder decodeObjectForKey:FacebookUsersKey];
+    self.subaUsers = [coder decodeObjectForKey:SubaUsersKey];
+}
+
+-(void)applicationFinishedRestoringState
+{
+    if (self.inviteSegmentedControl.selectedSegmentIndex == kPhoneContacts) {
+        [self performSelector:@selector(fetchContacts:failure:)];
+    }else if(self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
+        [self performSelector:@selector(loadFacebookFriends)];
+    }else{
+        [self performSelector:@selector(displaySubaUsers)];
+    }
+}
+
 
 
 @end

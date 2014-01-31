@@ -14,11 +14,18 @@
 #import <CTAssetsPickerController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
+#import "LSPushProviderAPIClient.h"
 #import "Photo.h"
 #import "User.h"
 #import "Spot.h"
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
+
+#define SpotInfoKey @"SpotInfoKey"
+#define SpotNameKey @"SpotNameKey"
+#define SpotIdKey @"SpotIdKey"
+#define SpotPhotosKey @"SpotPhotosKey"
+
 
 @interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate>
 
@@ -70,9 +77,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     //self.navigationItem.rightBarButtonItem
     self.library = [[ALAssetsLibrary alloc] init];
     
+    if (!self.photos && !self.spotName && self.numberOfPhotos) {
+        // We are coming from an activity screen
+       [self loadSpotImages:self.spotID];
+    }
+    DLog(@"Number of photos - %ld",(long)self.numberOfPhotos);
+    
     if (!self.photos && self.numberOfPhotos > 0) {
         // We are coming from a place where spotName is not set so lets load spot info
-        DLog(@"Loading spot info");
+       // DLog(@"Loading spot info");
         [self loadSpotImages:self.spotID];
     }
     
@@ -80,6 +93,13 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         self.noPhotosView.hidden = NO;
         self.photoCollectionView.hidden = YES;
     }
+
+    
+    if (self.spotID) {
+        DLog(@"SpotId - %@",self.spotID);
+       [self loadSpotInfo:self.spotID User:[AppHelper userID]];
+    }
+    
 }
 
          
@@ -89,8 +109,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
        if (!error){
            self.photos = [results objectForKey:@"spotPhotos"];
            if ([self.photos count] > 0) {
+               DLog(@"Photos in spot - %@",self.photos);
+               self.noPhotosView.hidden = YES;
+               self.photoCollectionView.hidden = NO;
                [self.photoCollectionView reloadData];
-           }
+           }else{
+                   self.noPhotosView.hidden = NO;
+                   self.photoCollectionView.hidden = YES;
+             }
            
        }else{
            DLog(@"Error - %@",error);
@@ -104,9 +130,11 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         if (error) {
             DLog(@"Error - %@",error);
         }else{
-            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+            if ([results[STATUS] isEqualToString:ALRIGHT]){
                 self.spotInfo = (NSDictionary *)results;
-                //[self updateSpotView:self.spotInfo];
+                
+                self.spotName = (self.spotName) ? self.spotName : results[@"spotName"];
+                self.navigationItem.title = self.spotName;
                 [self.photoCollectionView reloadData];
             }
             
@@ -267,7 +295,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSArray *activityItems = nil;
     NSString *shareText = nil;
     if (objectOfInterest == kSpot) {
-        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared spot %@ with Suba for iOS @ http://www.subaapp.com",self.navigationItem.title];
+        DLog(@"SpotId - %@",self.spotID);
+        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared album %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navigationItem.title,self.spotID];
+        
         
         activityItems = @[self.albumSharePhoto,shareText];
     }else if (objectOfInterest == kPhoto){
@@ -331,6 +361,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
     trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
     trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+    
     //NSLog(@"Asset  Picked - %@ at time - %@",[asset debugDescription],trimmedString);
     [self resizeImage:fullResolutionImage towidth:320.0f toHeight:320.0f
             completon:^(UIImage *compressedPhoto, NSError *error) {
@@ -395,8 +426,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
    
     UIImage *image = info[UIImagePickerControllerOriginalImage];
     
-    [self resizeImage:image towidth:320.0f toHeight:320.0f
-            completon:^(UIImage *compressedPhoto, NSError *error) {
+   // [self resizeImage:image towidth:640.0f toHeight:640.0f
+           // completon:^(UIImage *compressedPhoto, NSError *error) {
                 
                 NSDictionary *imageMetaData = info[UIImagePickerControllerMediaMetadata];
                 NSDictionary *imageInfo = [imageMetaData valueForKey:@"{TIFF}"];
@@ -404,12 +435,12 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 
                 NSString *trimmedString = [photoTimestamp stringByReplacingOccurrencesOfString:@" " withString:@""];
                 //NSLog(@"Timestamp - %@",trimmedString);
-                UIImage *newImage = compressedPhoto;
-                NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
+               // UIImage *newImage = compressedPhoto;
+                NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
                 
                 [self uploadPhoto:imageData WithName:trimmedString];
                 
-            }];
+            //}];
     
     
     
@@ -429,6 +460,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     NSString *userId = [User currentlyActiveUser].userID;
     NSString *spotId = self.spotID;
+    
     NSDictionary *params = @{@"userId": userId,@"spotId": spotId};
     AFHTTPSessionManager *manager = [LifespotsAPIClient manager];
     
@@ -444,6 +476,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                                         
                                         [formData appendPartWithFileData:imageData name:@"picture" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
                                     }];
+    
     
     AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
     __weak AFURLConnectionOperation *woperation = operation;
@@ -499,9 +532,33 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
     }];
     
+    // Tell push provider to send
+    
+    
+    
+    NSArray *members = self.spotInfo[@"members"];
+    
+    NSMutableArray *memberIds = [NSMutableArray arrayWithCapacity:1];
+    for (NSDictionary *member in members) {
+        [memberIds addObject:member[@"id"]];
+    }
+    
+    NSDictionary *params = @{@"spotId": self.spotID,
+                             @"spotName" : self.spotName,
+                             @"memberIds" : [memberIds description]};
+    
+    //DLog(@"Params - %@",params);
+    
+    [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
+                                        parameters:params
+                         constructingBodyWithBlock:nil
+                                           success:^(NSURLSessionDataTask *task, id responseObject) {
+        DLog(@"From push provider - %@",responseObject);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"Error - %@",error);
+    }];
+    
 }
-
-
 
 
 #pragma mark - Segues
@@ -534,5 +591,63 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         }
     }
 }
+
+
+
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.spotInfo forKey:SpotInfoKey];
+    [coder encodeObject:self.spotName forKey:SpotNameKey];
+    [coder encodeObject:self.spotID forKey:SpotIdKey];
+    [coder encodeObject:self.photos forKey:SpotPhotosKey];
+    //[coder encodeObject:@(selectedButton) forKey:SelectedButtonKey];
+    DLog();
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.spotInfo = [coder decodeObjectForKey:SpotInfoKey];
+    self.spotName = [coder decodeObjectForKey:SpotNameKey];
+    self.spotID = [coder decodeObjectForKey:SpotIdKey];
+    self.photos = [coder decodeObjectForKey:SpotPhotosKey];
+    
+    DLog(@"SpotId - %@",self.spotID);
+    
+}
+
+-(void)applicationFinishedRestoringState
+{
+    //1. Update photos
+    if (self.photos) {
+        [self.photoCollectionView reloadData];
+    }
+    
+    if (self.spotID) {
+        [self loadSpotImages:self.spotID];
+    }
+    
+    if (self.spotName) {
+        //DLog(@"SpotName - %@\nSpotId - %@",self.spotName,self.spotID);
+        self.navigationItem.title = self.spotName;
+    }
+    
+    //2. If spotInfo is nil,loadspotInfo
+    if (self.spotID && !self.spotInfo) {
+        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
+    }
+    
+    DLog();
+}
+
+
+
+
+
 
 @end

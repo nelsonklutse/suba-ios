@@ -84,7 +84,8 @@
                                   SESSION : @"lout",
                                   API_TOKEN : @"-1",
                                   FACEBOOK_ID : @"-1",
-                                  NUMBER_OF_ALBUMS : @"0"
+                                  NUMBER_OF_ALBUMS : @"0",
+                                  PROFILE_PHOTO_URL : @""
                                 };
     [userDefaults registerDefaults:appDefaults];
     [userDefaults synchronize];
@@ -395,7 +396,7 @@
 
 +(void)showNotificationWithMessage:(NSString *)msg type:(NSString *)type inViewController:(UIViewController *)vc completionBlock:(NotificationCompletion)completion
 {
-    UIColor *tintColor = [UIColor colorWithRed:0.8 green:0.000 blue:0.2 alpha:1];
+    UIColor *tintColor = [UIColor colorWithRed:217/255.0 green:0.000 blue:7/255.0 alpha:1];
     
     if ([type isEqualToString:kSUBANOTIFICATION_SUCCESS]){
         tintColor = [UIColor colorWithRed:0.00 green:0.8 blue:0.2 alpha:1];

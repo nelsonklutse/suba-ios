@@ -45,7 +45,7 @@
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
     
-    self.accountSettings = @[@"Edit Profile",@"Push Notifications",@"Invite Friends To Suba"];
+    self.accountSettings = @[@"Edit Profile",@"Invite Friends To Suba"];
     self.help = @[@"Help",@"Send Feedback",@"About Suba"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
     
@@ -133,16 +133,19 @@
             //We are at the very first cell in the first section.Go to the Edit Settings page
             UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
             [self performSegueWithIdentifier:@"EDIT_PROFILE_SEGUE" sender:cell.textLabel.text];
-        }else if (indexPath.row == 1){
+        /*}else if (indexPath.row == 1){
             // First section 2nd cell
             UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
-            [self performSegueWithIdentifier:@"PUSH_NOTIFICATIONS_SEGUE" sender:cell.textLabel.text];
+            [self performSegueWithIdentifier:@"PUSH_NOTIFICATIONS_SEGUE" sender:cell.textLabel.text];*/
         }else{
             // First section 3rd cell
             //UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
             [self performSegueWithIdentifier:@"INVITE_FRIENDS_TO_SUBA_SEGUE" sender:nil];
         }
     }else if (indexPath.section == 1){
+        if (indexPath.row == 0) {
+            [self performSegueWithIdentifier:@"TERMS_SEGUE" sender:@(2)];
+        }
         if (indexPath.row == 1) {
             // NSLog(@"User with email address is sending feedback");
             [self sendFeedback:[AppHelper userEmail]];
@@ -179,8 +182,10 @@
         
         if ([sender integerValue] == 0) {
             url = [NSURL URLWithString:@"http://www.subaapp.com/privacy.html"];
-        }else{
+        }else if([sender integerValue] == 1){
             url = [NSURL URLWithString:@"http://www.subaapp.com/terms.html"];
+        }else if([sender integerValue] == 2){
+            url = [NSURL URLWithString:@"http://www.subaapp.com/support.html"];
         }
         DLog(@"Sender - %@\nurl - %@",sender,url);
         tVC.urlToLoad = url;
@@ -195,10 +200,14 @@
     [AppHelper logout];
     // Move to the main view controller
     UINavigationController *rvc = (UINavigationController *)[[[UIApplication sharedApplication] keyWindow] rootViewController];
-    DLog(@"Class- %@",[[[[UIApplication sharedApplication] keyWindow] rootViewController] class]);
+    //DLog(@"Class- %@",[[[[UIApplication sharedApplication] keyWindow] rootViewController] class]);
     
-    [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
-    [rvc popToRootViewControllerAnimated:YES];
+    [self.presentingViewController dismissViewControllerAnimated:YES completion:^{
+        [rvc popToRootViewControllerAnimated:NO];
+    }];
+    //[[[self.presentingViewController.parentViewController.navigationController viewControllers] objectAtIndex:0] popToRootViewControllerAnimated:YES];
+    
+    
 }
 
 

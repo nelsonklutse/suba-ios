@@ -13,6 +13,10 @@
 #import "PhotosCell.h"
 #import "PhotoStreamViewController.h"
 
+#define UserSpotsKey @"UserSpotsKey"
+#define UserProfileInfoKey @"UserProfileInfoKey"
+#define UserIdKey @"UserIdKey"
+
 @interface UserProfileViewController ()<UICollectionViewDataSource,UICollectionViewDelegate>
 @property (weak, nonatomic) IBOutlet UICollectionView *userSpotsCollectionView;
 
@@ -23,6 +27,7 @@
 - (void)loadSpotsCreated:(NSString *)userId;
 - (void)fetchUserInfo:(NSString *)userId;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
+- (void)updateUserProfile;
 @end
 
 @implementation UserProfileViewController
@@ -47,6 +52,15 @@
 {
     [super viewWillAppear:animated];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoCellTappedAtIndexNotification object:nil];
+    
+    [self.userSpotsCollectionView addPullToRefreshActionHandler:^{
+        [self updateUserProfile];
+    }];
+    
+    [self.userSpotsCollectionView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
+    [self.userSpotsCollectionView.pullToRefreshView setBorderWidth:6];
+
+    [self.userSpotsCollectionView.pullToRefreshView setBackgroundColor:[UIColor redColor]];
 }
 
 -(void)viewWillDisappear:(BOOL)animated
@@ -94,9 +108,9 @@
                                 NSArray *sortedSpots = [createdSpots sortedArrayUsingDescriptors:sortDescriptors];
                                 self.userSpots = sortedSpots;
                                                              
-                                NSLog(@"Spots created by user - %@",self.userSpots);
+                                //NSLog(@"Spots created by user - %@",self.userSpots);
                                 //self.nospotsView.alpha = 0;
-                                [self.userSpotsCollectionView reloadData];
+                                //[self.userSpotsCollectionView reloadData];
                             }else{
                         [UIView animateWithDuration:0.4 animations:^{
                           //self.spotsView.alpha = 0;
@@ -123,6 +137,21 @@
         }
     }];
 
+}
+
+
+-(void)updateUserProfile
+{
+    __weak typeof(self) weakSelf = self;
+    
+    int64_t delayInSeconds = 1.2;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        
+        [weakSelf loadSpotsCreated:self.userId];
+        [weakSelf.userSpotsCollectionView stopRefreshAnimation];
+    });
 }
 
 
@@ -155,7 +184,7 @@
 {
     static NSString *cellIdentifier = nil;
     if (indexPath.section == 0) {
-        DLog(@"Its section - %i",indexPath.section);
+        //DLog(@"Its section - %i",indexPath.section);
         // It is the profile view
         cellIdentifier = @"USER_INFO_CELL";
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
@@ -306,5 +335,37 @@
         }
     }
 }
+
+
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.userSpots forKey:UserSpotsKey];
+    [coder encodeObject:self.userProfileInfo forKey:UserProfileInfoKey];
+    [coder encodeObject:self.userId forKey:UserIdKey];
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.userSpots = [coder decodeObjectForKey:UserSpotsKey];
+    self.userProfileInfo = [coder decodeObjectForKey:UserProfileInfoKey];
+    
+}
+
+-(void)applicationFinishedRestoringState
+{
+    if (self.userSpots && self.userProfileInfo) {
+        [self.userSpotsCollectionView reloadData];
+    }else{
+        [self performSelector:@selector(loadSpotsCreated:) withObject:self.userId];
+    }
+}
+
+
 
 @end

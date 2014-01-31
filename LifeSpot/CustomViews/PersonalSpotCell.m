@@ -10,7 +10,7 @@
 //#import "MainStreamViewController.h"
 //#import "S3PhotoFetcher.h"
 
-@interface PersonalSpotCell()<TFScrollerDelegate,UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
+@interface PersonalSpotCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 @property (strong,nonatomic) NSArray *gImages;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property int galleryIndex;
@@ -48,7 +48,7 @@
 
 
 
-- (TFScroller *)mScroller
+/*- (TFScroller *)mScroller
 {
  
     if (!_mScroller){
@@ -63,7 +63,7 @@
     }
     
     return _mScroller;
-}
+}*/
 
 
 /*

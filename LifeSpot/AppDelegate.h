@@ -15,6 +15,6 @@
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) ICETutorialController *viewController;
 @property (strong,nonatomic) UINavigationController *rootNavController;
-
+@property (strong,nonatomic) UITabBarController *mainTabBarController;
 @property (strong,nonatomic) LifespotsAPIClient *apiBaseURL;
 @end

@@ -9,8 +9,20 @@
 #import "AppDelegate.h"
 #import "ICETutorialController.h"
 #import "SignUpViewController.h"
+#import "MainStreamViewController.h"
 
 @implementation AppDelegate
+
+-(UITabBarController *)mainTabBarController
+{
+    if (!_mainTabBarController) {
+        _mainTabBarController = [[UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]] instantiateViewControllerWithIdentifier:@"MAINTAB_BAR"];
+        
+        return _mainTabBarController;
+    }
+    
+    return _mainTabBarController;
+}
 
 -(LifespotsAPIClient *)apiBaseURL
 {
@@ -131,9 +143,10 @@
     UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
     self.rootNavController = [mainStoryboard instantiateInitialViewController];
     
-    if (!self.viewController) {
-        DLog(@"No VC present");
-        self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"MAIN_TUTORIAL_VC"];
+    if (!self.viewController &&  ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
+        // First launch or from logout
+        DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
+        self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
         
         self.viewController.autoScrollEnabled = YES;
         self.viewController.autoScrollLooping = YES;
@@ -169,10 +182,14 @@
         [self.rootNavController setViewControllers:@[self.viewController]];
         self.window.rootViewController = self.rootNavController;
         
-        [self.window makeKeyAndVisible];
+        
+   }else{
+        // Setting Tab Bar as root view controller
+       // DLog(@"Setting TabBar Controller as the root view controller");
+        self.window.rootViewController = self.mainTabBarController;
     }
     
-    
+    [self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -181,82 +198,55 @@
 {
     
     
+    /*if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
+        DLog(@"userid - %@",[AppHelper userID]);
+        self.window.rootViewController = self.mainTabBarController;
+       
+    }else{*/
+        // Register application wide default preferences
+        NSDictionary *appDefaults = @{
+                                      FIRST_NAME : @"",
+                                      LAST_NAME : @"",
+                                      USER_NAME : @"",
+                                      EMAIL : @"",
+                                      SESSION : @"lout",
+                                      API_TOKEN : @"-1",
+                                      PROFILE_PHOTO_URL : @"-1",
+                                      FACEBOOK_ID : @"-1",
+                                      NUMBER_OF_ALBUMS : @"0"
+                                      
+                                      };
+        
+        [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
+ 
+    //}
     
     
-    //[self.window makeKeyAndVisible];
     
-    [[FBSession activeSession] closeAndClearTokenInformation];
+    //[[FBSession activeSession] closeAndClearTokenInformation];
     // Override point for customization after application launch.
     
-    // Register application wide default preferences
-    NSDictionary *appDefaults = @{
-                                  FIRST_NAME : @"",
-                                  LAST_NAME : @"",
-                                  USER_NAME : @"",
-                                  EMAIL : @"",
-                                  SESSION : @"lout",
-                                  API_TOKEN : @"-1",
-                                  PROFILE_PHOTO_URL : @"-1",
-                                  FACEBOOK_ID : @"-1",
-                                  NUMBER_OF_ALBUMS : @"0",
-                                  IS_SPOT_ACTIVE : @"NO",
-                                  SPOT_IS_ACTIVE_MESSAGE : @"Camera is active when you are in a spot"
-                                  };
-    
-    [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
     
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
     
     [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:YES];
-     __weak LifespotsAPIClient *weakApiBaseURL = _apiBaseURL;
-    [_apiBaseURL.reachabilityManager startMonitoring];
-    __weak typeof(self) weakSelf = self;
-    [_apiBaseURL.reachabilityManager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
-       
-
-        NSOperationQueue *opQueue = weakApiBaseURL.operationQueue;
-        switch (status) {
-                
-            case AFNetworkReachabilityStatusReachableViaWWAN:
-            case AFNetworkReachabilityStatusReachableViaWiFi:
-                DLog(@"There is internet coz status - %d",status);
-                [AppHelper showNotificationWithMessage:@"Network Connection success"
-                                                  type:kSUBANOTIFICATION_SUCCESS
-                                      inViewController:[weakSelf topViewController]
-                                       completionBlock:nil];
-                
-                [opQueue setSuspended:NO];
-                break;
-            case AFNetworkReachabilityStatusNotReachable:
-            default:
-                
-                DLog(@"There is no internet coz status - %d",status);
-                [AppHelper showNotificationWithMessage:@"No internet connection"
-                                                  type:kSUBANOTIFICATION_ERROR
-                                      inViewController:[weakSelf topViewController]
-                                       completionBlock:nil];
-                [opQueue setSuspended:YES];
-                break;
-        }
-
-    }];
     
-    //[self monitorNetworkChanges];
+    [self monitorNetworkChanges];
     
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
-        DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);
+        //DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);
     }
     
     
-    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
        
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
-    }];
+    }];*/
     
-    
+     [self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -265,7 +255,7 @@
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidSignUpNotification object:nil];
+    //[[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidSignUpNotification object:nil];
     
    
     
@@ -287,7 +277,7 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    
+    [application setApplicationIconBadgeNumber:0];
     [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
         
@@ -303,24 +293,26 @@
     
     // If notifications are enabled for this app
     
-   /* if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
-        
-        if (![[Authenticate userID] isEqualToString:@"-1"]){
+   /*if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
+       DLog();
+        if (![[AppHelper userID] isEqualToString:@"-1"]){
             
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
             
-            [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [Authenticate userID]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [AppHelper userID]}
+                 success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 
                 //Handle all notifications
                 NSString *notifications = [responseObject[@"badge"] stringValue];
                 //DLog(@"Notifications  %@",userInfo);
                 
                 if ([notifications isEqualToString:@"0"]) {
-                    [self.tabBarController.tabBar.items[1] setBadgeValue:nil];
+                    [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
                 }else{
-                    [self.tabBarController.tabBar.items[1] setBadgeValue:notifications];
+                    [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
                 }
                 
+                     
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 DLog(@"Error - %@", error);
                 DLog(@"%@",operation.responseString);
@@ -360,23 +352,21 @@
 -(void)application:(UIApplication *) application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     //DLog(@"RECIEVED REMOTE NOTIFS");
     
-    //DLog(@"Root View Controller - %@\nChildView Controllers - %@",[self.window.rootViewController class],[[self.window.rootViewController childViewControllers] description]);
+    //NSLog(@"Root View Controller - %@\nChildView Controllers - %@",[self.window.rootViewController class],[[self.window.rootViewController childViewControllers] description]);
     if(application.applicationState == UIApplicationStateActive){
+       
+        NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
+        NSLog(@"Notifications  %@",userInfo);
         
-        //DLog(@"got while active");
-        
-        //Handle all notifications
-        //NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
-        //DLog(@"Notifications  %@",userInfo);
-        
-       /* if ([notifications isEqualToString:@"0"]){
-            [self.tabBarController.tabBar.items[1] setBadgeValue:nil];
+        if ([notifications isEqualToString:@"0"]){
+            [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
         }else{
-            [self.tabBarController.tabBar.items[1] setBadgeValue:notifications];
+            [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
         }
         
-        self.window.rootViewController = self.tabBarController;
-        */
+        
+        //self.window.rootViewController = self.mainTabBarController;
+        
     }
     
 }
@@ -459,13 +449,23 @@
         switch (status) {
             case AFNetworkReachabilityStatusReachableViaWWAN:
             case AFNetworkReachabilityStatusReachableViaWiFi:
-                DLog(@"There is internet coz status - %d",status);
+               // DLog(@"There is internet coz status - %ld",status);
+                /*[AppHelper showNotificationWithMessage:@"Network connection success"
+                                                  type:kSUBANOTIFICATION_SUCCESS
+                                      inViewController:[self topViewController]
+                                       completionBlock:nil];*/
                 [opQueue setSuspended:NO];
                 break;
             case AFNetworkReachabilityStatusNotReachable:
+                //DLog(@"There is no internet coz status - %ld",status);
+                [AppHelper showNotificationWithMessage:@"No internet connection"
+                                                  type:kSUBANOTIFICATION_ERROR
+                                      inViewController:[self topViewController]
+                                       completionBlock:nil];
+                [opQueue setSuspended:YES];
             default:
             
-                DLog(@"There is no internet coz status - %d",status);
+                //DLog(@"There is no internet coz status - %ld",status);
                 [AppHelper showNotificationWithMessage:@"No internet connection"
                                                   type:kSUBANOTIFICATION_ERROR
                                       inViewController:[self topViewController]
@@ -481,31 +481,74 @@
 }
 
 
-- (void)unmonitorNetworkChanges
+-(void)unmonitorNetworkChanges
 {
     LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
     [apiClient.reachabilityManager stopMonitoring];
 }
 
 
-
-/*#pragma mark - State Preservation and Restoration
--(BOOL)application:(UIApplication *)application shouldSaveApplicationState:(NSCoder *)coder
+// identify we are interested in storing application state, this is called when the app
+// is suspended to the background
+//
+- (BOOL)application:(UIApplication *)application shouldSaveApplicationState:(NSCoder *)coder
 {
-    DLog();
     return YES;
 }
 
--(BOOL)application:(UIApplication *)application shouldRestoreApplicationState:(NSCoder *)coder
+// identify we are interested in re-storing application state,
+// this is called when the app is re-launched
+//
+- (BOOL)application:(UIApplication *)application shouldRestoreApplicationState:(NSCoder *)coder
 {
-    DLog();
     return YES;
 }
 
 
-- (UIViewController *)application:(UIApplication *)application viewControllerWithRestorationIdentifierPath:(NSArray *)identifierComponents coder:(NSCoder *)coder
+#pragma mark - Restoration
+
+// store data not necessarily related to the user interface,
+// this is called when the app is suspended to the background
+//
+- (void)application:(UIApplication *)application willEncodeRestorableStateWithCoder:(NSCoder *)coder
 {
-    DLog(@"View Controller s identifier path - %@",identifierComponents);
+    // encode any state at the app delegate level
+}
+
+// reload data not necessarily related to the user interface,
+// this is called when the app is re-launched
+//
+- (void)application:(UIApplication *)application didDecodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    // decode any state at the app delegate level
+    //
+    // if you plan to do any asynchronous initialization for restoration -
+    // Use these methods to inform the system that state restoration is occuring
+    // asynchronously after the application has processed its restoration archive on launch.
+    // In the even of a crash, the system will be able to detect that it may have been
+    // caused by a bad restoration archive and arrange to ignore it on a subsequent application launch.
+    //
+    [[UIApplication sharedApplication] extendStateRestoration];
+    
+    dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(globalQueue, ^{
+        
+        // do any additional asynchronous initialization work here...
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            
+            // done asynchronously initializing, complete our state restoration
+            //
+            [[UIApplication sharedApplication] completeStateRestoration];
+        });
+    });
+    
+}
+
+
+/*- (UIViewController *)application:(UIApplication *)application viewControllerWithRestorationIdentifierPath:(NSArray *)identifierComponents coder:(NSCoder *)coder
+{
+    DLog(@"View Controller identifier path - %@",identifierComponents);
     UIViewController *viewController = nil;
     NSString *identifier = [identifierComponents lastObject];
     
@@ -518,6 +561,16 @@
         }
   //  }
     
+
+    if ([viewController isKindOfClass:[MainStreamViewController class]]) {
+        DLog(@"This VC has a tab");
+     
+        
+        //self.window.rootViewController = self.mainTabBarController;
+        
+        [self.window makeKeyAndVisible];
+    }
+    DLog(@"Restored View Controller class - %@\n",[viewController class]);
     return viewController;
 }*/
 

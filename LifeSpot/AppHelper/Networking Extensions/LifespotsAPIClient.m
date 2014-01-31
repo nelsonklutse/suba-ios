@@ -8,12 +8,12 @@
 
 #import "LifespotsAPIClient.h"
 
-static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
+//static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
 //static NSString * const LifeSpotsAPIBaseURLString  = @"http://54.200.15.155/";
 
 //static NSString * const LifeSpotsAPIBaseURLString  =  @"http://127.0.0.1:9000/";
 
-//static NSString * const  LifeSpotsAPIBaseURLString  =  @"http://10.1.0.211:9000/";
+static NSString * const  LifeSpotsAPIBaseURLString  =  @"http://10.1.0.211:9000/";
 //static NSString * const  LifeSpotsAPIBaseURLString  = @"http://192.168.1.7:9000/";
 
 

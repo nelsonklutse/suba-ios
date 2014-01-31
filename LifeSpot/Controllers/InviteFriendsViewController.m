@@ -14,6 +14,10 @@
 #import <MessageUI/MessageUI.h>
 
 
+#define PhoneContactsKey @"PhoneContactsKey"
+#define FacebookUsersKey @"FacebookUsersKey"
+#define SelectedSegmentKey @"SelectedSegmentKey"
+
 typedef enum{
     kContacts = 0,
     kFacebook
@@ -646,7 +650,6 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 
 
 #pragma mark - UISearchBar Delegate
-
 -(void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
     if (searchText.length == 0) {
@@ -677,8 +680,10 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kFacebook) {
         [self.facebookFriendsTableView reloadData];
+        [self refreshTableView:self.facebookFriendsTableView];
     }else{
         [self.phoneContactsTableView reloadData];
+        [self refreshTableView:self.phoneContactsTableView];
     }
     
 }
@@ -694,11 +699,11 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     // Filter the array using NSPredicate
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kFacebook){
         
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"first_name contains[c] %@ OR last_name contains[c] %@ OR middle_name contains[c] %@",searchText,searchText,searchText];
+       NSPredicate *predicate = [NSPredicate predicateWithFormat:@"first_name contains[c] %@ OR last_name contains[c] %@ OR middle_name contains[c] %@",searchText,searchText,searchText];
         
         //NSMutableArray *filteredFriends = [self filterFacebookFriends:self.fbUsers];
         self.facebookFriendsFilteredArray = [NSMutableArray arrayWithArray:[self.fbUsers filteredArrayUsingPredicate:predicate]];
-        DLog(@"FBUserFiltered array -%@\nPredicate - %@",[self.facebookFriendsFilteredArray  description],[predicate debugDescription]);
+        //DLog(@"FBUserFiltered array -%@\nPredicate - %@",[self.facebookFriendsFilteredArray  description],[predicate debugDescription]);
         [self.facebookFriendsTableView reloadData];
     }else{
         NSPredicate *predicate = [NSPredicate predicateWithFormat:@"firstName contains[c] %@ OR lastName contains[c] %@",searchText,searchText];
@@ -708,6 +713,38 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         //DLog(@"Filtered contacts - %@",self.phoneContactsFilteredArray);
     }
 }
+
+
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.phoneContacts forKey:PhoneContactsKey];
+    [coder encodeObject:self.fbUsers forKey:FacebookUsersKey];
+    
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.phoneContacts = [coder decodeObjectForKey:PhoneContactsKey];
+    self.fbUsers = [coder decodeObjectForKey:FacebookUsersKey];
+}
+
+-(void)applicationFinishedRestoringState
+{
+    if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kContacts) {
+        [self performSelector:@selector(fetchContacts:failure:)];
+    }else{
+        [self performSelector:@selector(loadFacebookFriends)];
+    }
+}
+
+
+
 
 /*
  #pragma mark Content Filtering

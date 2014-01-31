@@ -191,7 +191,7 @@ static CLLocationManager *locationManager;
 
 -(void)showNearbyFoursuareVenues:(NSDictionary *)latlng
 {
-    //DLog(@"LatLng- %@",latlng);
+    DLog(@"LatLng- %@",latlng);
     Location *loc = [[Location alloc] initWithLat:latlng[@"latitude"] Lng:latlng[@"longitude"]];
     
     [loc showBestMatchingFoursquareVenueCriteria:@"ll" completion:^(id results, NSError *error) {

@@ -14,11 +14,25 @@
 #import "User.h"
 #import "Location.h"
 #import "AlbumSettingsViewController.h"
+#import "PlacesWatchingViewController.h"
 
 typedef enum{
     kCollectionViewUpdateInsert = 0,
     kCollectionViewUpdateDelete
 }ColectionViewUpdateType;
+
+
+typedef enum{
+    kPlacesButton = 0,
+    kNearbyButton,
+    kAllSpotsButton
+}SelectedButton;
+
+#define PlacesWatchingKey @"PlacesWatchingKey"
+#define NearbySpotsKey @"NearbySpotsKey"
+#define AllSpotsKey @"AllSpotsKey"
+#define SelectedSpotKey @"SelectedSpotKey"
+#define SelectedButtonKey @"SelectedButtonKey"
 
 
 @interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
@@ -28,8 +42,9 @@ typedef enum{
 @property (strong,nonatomic) NSMutableArray *allSpots;
 @property (strong,nonatomic) NSDictionary *currentSelectedSpot;
 @property (strong,nonatomic) NSIndexPath *currentIndexPath;
-@property (strong,nonatomic) NSArray *images;
+//@property (strong,nonatomic) NSArray *images;
 @property (retain,nonatomic) CLLocation *currentLocation;
+@property (weak, nonatomic) IBOutlet UILabel *noDataLabel;
 
 @property (weak, nonatomic) IBOutlet UIButton *placesBeingWatchedButton;
 @property (weak, nonatomic) IBOutlet UIButton *nearbySpotsButton;
@@ -40,6 +55,7 @@ typedef enum{
 @property (weak, nonatomic) IBOutlet UICollectionView *nearbySpotsCollectionView;
 @property (weak, nonatomic) IBOutlet UICollectionView *allSpotsCollectionView;
 
+@property (weak, nonatomic) IBOutlet UIView *noDataView;
 
 
 - (IBAction)unWindToSpots:(UIStoryboardSegue *)segue;
@@ -64,6 +80,7 @@ typedef enum{
 
 @implementation MainStreamViewController
 static CLLocationManager *locationManager;
+static NSInteger selectedButton = 0;
 
 #pragma mark - Unwind Segues
 -(IBAction)unWindToSpots:(UIStoryboardSegue *)segue
@@ -148,12 +165,12 @@ static CLLocationManager *locationManager;
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
         
-        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [User currentlyActiveUser].userID}];
+        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [AppHelper userID]}];
     }else{
         [self showPlacesBeingWatchedView:YES];
     }
     
-    self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
+    //self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
     
     //Register remote notification types
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
@@ -172,14 +189,17 @@ static CLLocationManager *locationManager;
     [self.placesBeingWatchedTableView addPullToRefreshActionHandler:^{
         [weakSelf updateData];
     }];
+    
     [self.placesBeingWatchedTableView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.placesBeingWatchedTableView.pullToRefreshView setBorderWidth:6];
     //[self.placesBeingWatchedTableView.pullToRefreshView setBorderColor:<#(UIColor *)#>]
+    
     
     // Set up PullToRefresh for NearbySpots
     [self.nearbySpotsCollectionView addPullToRefreshActionHandler:^{
         [weakSelf updateData];
     }];
+    
     [self.nearbySpotsCollectionView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.nearbySpotsCollectionView.pullToRefreshView setBorderWidth:6];
    
@@ -189,17 +209,11 @@ static CLLocationManager *locationManager;
         [weakSelf updateData];
     }];
     
-    
     [self.allSpotsCollectionView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.allSpotsCollectionView.pullToRefreshView setBorderWidth:6];
     
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoGalleryTappedAtIndexNotification object:nil];
-    
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkChanged:) name:AFNetworkingReachabilityDidChangeNotification object:nil];
-    
-
     
 }
 
@@ -213,35 +227,63 @@ static CLLocationManager *locationManager;
                           name:kPhotoGalleryTappedAtIndexNotification
                         object:nil];
     
-    [[NSNotificationCenter defaultCenter]
-     removeObserver:self
-     name:AFNetworkingReachabilityDidChangeNotification
-     object:nil];
 }
 
 
 
 - (IBAction)placesButtonSelected:(UIButton *)sender {
+    
+    selectedButton = kPlacesButton;
+    self.noDataView.alpha = 0;
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
+        /*if ([self.placesBeingWatched count] == 0) {
+            [self fetchUserFavoriteLocations];
+        }*/
         
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+        if (!self.placesBeingWatched) {
+            [self fetchUserFavoriteLocations];
+        }
+         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
             [self.placesBeingWatchedButton setSelected:YES];
             [self.nearbySpotsButton setSelected:NO];
             [self.allSpotsButton setSelected:NO];
         });
     }];
     
-    if (!self.placesBeingWatched) {
-        [self fetchUserFavoriteLocations];
-    }
+   
 }
 
 - (IBAction)nearbySpotsButtonSelected:(UIButton *)sender{
+    
+    selectedButton = kNearbyButton;
+    self.noDataView.alpha = 0;
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.nearbySpotsCollectionView.alpha = 1;
+        
+        if (!self.nearbySpots) {
+            self.currentLocation = [locationManager location];
+            
+            if (self.currentLocation != nil){
+                
+                NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
+                NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
+                
+                [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]}];
+            }
+        }
+        
+        
+        /*if (self.nearbySpots && [self.nearbySpots count] > 0) {
+            self.nearbySpotsCollectionView.alpha = 1;
+            self.noDataView.alpha = 0;
+        }else{
+            self.nearbySpotsCollectionView.alpha = 0;
+            self.noDataView.alpha = 1;
+        }*/
+        
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
             [self.placesBeingWatchedButton setSelected:NO];
@@ -253,10 +295,27 @@ static CLLocationManager *locationManager;
 }
 
 - (IBAction)allSpotsButtonSelected:(UIButton *)sender {
+    
+    selectedButton = kAllSpotsButton;
+
+    self.noDataView.alpha = 0;
     [UIView animateWithDuration:0.5 animations:^{
         self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.allSpotsCollectionView.alpha = 1;
         
+        if (!self.allSpots) {
+            [self fetchUserSpots];
+        }
+        /*if ([self.allSpots count] == 0) {
+            [self fetchUserSpots];
+        }
+        if (self.allSpots && [self.allSpots count] > 0) {
+            self.allSpotsCollectionView.alpha = 1;
+            self.noDataView.alpha = 0;
+        }else{
+            self.allSpotsCollectionView.alpha = 0;
+            self.noDataView.alpha = 1;
+        }*/
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
             [self.placesBeingWatchedButton setSelected:NO];
             [self.nearbySpotsButton setSelected:NO];
@@ -264,10 +323,8 @@ static CLLocationManager *locationManager;
         });
     }];
     
-    if (!self.allSpots) {
-        [self fetchUserSpots];
     }
-}
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -275,12 +332,13 @@ static CLLocationManager *locationManager;
     // Dispose of any resources that can be recreated.
 }
 
+
 #pragma mark - Helper methods
 -(void)addSpotToAllSpotsStream:(NSDictionary *)spotDetails
 {
    // Check which segment is selected
     // If spot was created with a location and nearby is selected, add it
-    DLog(@"Spot that was created details - %@",spotDetails);
+    //DLog(@"Spot that was created details - %@",spotDetails);
     
     if (![spotDetails[@"venue"] isEqualToString:@"NONE"]) {
         // Spot was created with a location so we add it to nearby spots
@@ -320,7 +378,7 @@ static CLLocationManager *locationManager;
         }];
     }else if(updateType == kCollectionViewUpdateDelete){
        [collectionView performBatchUpdates:^{
-           DLog(@"Deleted item at index path");
+           //DLog(@"Deleted item at index path");
            [collectionView deleteItemsAtIndexPaths:updates];
        } completion:nil];
     }
@@ -330,6 +388,7 @@ static CLLocationManager *locationManager;
 
 -(void)fetchUserFavoriteLocations
 {
+    DLog();
     // Show Activity Indicator
     [self showPlacesBeingWatchedView:YES];
     User *userInSession = [User currentlyActiveUser];
@@ -340,25 +399,36 @@ static CLLocationManager *locationManager;
         if (error) {
             DLog(@"Error - %@",error);
         }else{
+            DLog(@"Results - %@",results);
             NSArray *locationsInfo = [results objectForKey:@"watching"];
             
-            NSSortDescriptor *prettyNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"prettyName" ascending:YES];
-            NSArray *sortDescriptors = [NSArray arrayWithObject:prettyNameDescriptor];
-            NSArray *sortedPlaces = [locationsInfo sortedArrayUsingDescriptors:sortDescriptors];
-            
-            
-            if ([locationsInfo count] > 0) {
-                self.placesBeingWatched = [NSMutableArray arrayWithArray:sortedPlaces];
+            if ([locationsInfo count] > 0) { // User is watching locations
+                NSSortDescriptor *prettyNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"prettyName" ascending:YES];
+                NSArray *sortDescriptors = [NSArray arrayWithObject:prettyNameDescriptor];
+                NSArray *sortedPlaces = [locationsInfo sortedArrayUsingDescriptors:sortDescriptors];
                 
-                [self.placesBeingWatchedTableView reloadData];
+                
+               // if ([locationsInfo count] > 0) {
+                    self.placesBeingWatched = [NSMutableArray arrayWithArray:sortedPlaces];
+                    
+                    [self.placesBeingWatchedTableView reloadData];
+                //}
+            }else{ // User is not watching any locations
+                self.placesBeingWatchedTableView.alpha = 0;
+                self.noDataView.alpha = 1;
+                self.noDataLabel.text = @"When you want locations, they appear here. Tap Explore to start watching";
             }
+            
          }
+        
+        
     }];
 }
 
 
 
 -(void)fetchUserSpots{
+    DLog();
     // Show Activity Indicator
     [self showPlacesBeingWatchedView:YES];
     [[User currentlyActiveUser] loadPersonalSpotsWithCompletion:^(id results, NSError *error) {
@@ -370,22 +440,29 @@ static CLLocationManager *locationManager;
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 NSArray *spots = (NSArray *)results[@"spots"];
                 
-                NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
-                NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-                NSArray *sortedSpots = [spots sortedArrayUsingDescriptors:sortDescriptors];
-                
-                if ([sortedSpots count] > 0) {
+                if ([spots count] > 0){ // We've got some spots to display
+                    self.noDataView.alpha = 0;
+                    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
+                    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+                    NSArray *sortedSpots = [spots sortedArrayUsingDescriptors:sortDescriptors];
                     
-                    //DLog(@"User spots info - %@",sortedSpots[0]);
-                    //if (!self.allSpots){ // If allspots is nil
-                    self.allSpots = [NSMutableArray arrayWithArray:sortedSpots];
-                    [self.allSpotsCollectionView reloadData];
+                        //DLog(@"User spots info - %@",sortedSpots[0]);
+                        //if (!self.allSpots){ // If allspots is nil
+                        self.allSpots = [NSMutableArray arrayWithArray:sortedSpots];
+                        [self.allSpotsCollectionView reloadData];
+                        
+                        // }else{
+                        // Change to Perform Batch updates l8er
+                        //  [self.allSpotsCollectionView reloadData];
+                        //}
                     
-                    // }else{
-                    // Change to Perform Batch updates l8er
-                    //  [self.allSpotsCollectionView reloadData];
-                    //}
+
+                }else{ //We've got no spots to display
+                    self.allSpotsCollectionView.alpha = 0;
+                    self.noDataView.alpha = 1;
+                    self.noDataLabel.text = @"When you create or join spots they will appear here. Tap the plus button up top to add spots to your stream";
                 }
+                
                 
             }
         }
@@ -395,6 +472,7 @@ static CLLocationManager *locationManager;
 
 -(void)fetchNearbySpots:(NSDictionary *)latLng
 {
+    DLog();
     // Show Activity Indicator
         [self showPlacesBeingWatchedView:YES];
     
@@ -406,21 +484,31 @@ static CLLocationManager *locationManager;
                 if ([results[STATUS] isEqualToString:ALRIGHT]) {
                     
                     NSArray *nearby = results[@"nearby"];
-                    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
                     
-                    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-                    NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
-                    
-                    DLog(@"Nearby spots - %@",self.nearbySpots);
-                    //if (!self.nearbySpots) {
+                    if ([nearby count] > 0){
+                        self.noDataView.alpha = 0;
+                        NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
+                        
+                        NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+                        NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
+                        
+                        //DLog(@"Nearby spots - %@",self.nearbySpots);
+                        
                         self.nearbySpots = [NSMutableArray arrayWithArray:sortedSpots];
                         [self.nearbySpotsCollectionView reloadData];
-                   // }else{
-                        // Change to Perform Batch updates l8er
-                      //  [self.nearbySpotsCollectionView reloadData];
-                   // }
+                        
+                    }else{
+                        
+                        self.nearbySpotsCollectionView.alpha = 0;
+                        self.noDataView.alpha = 1;
+                        self.noDataLabel.text = @"When there are albums created near your location,they will appear here";
+                    }
+                    
                     
                 }
+                
+                
+                
             }
             
         }];
@@ -468,7 +556,7 @@ static CLLocationManager *locationManager;
     NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
     NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
     NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
-    NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
+   // NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
 
     DLog(@"Is user Member - %@",isMember);
     if (isMember) {
@@ -535,15 +623,41 @@ static CLLocationManager *locationManager;
     PlacesWatchingCell *placeCell = [self.placesBeingWatchedTableView dequeueReusableCellWithIdentifier:@"PlacesWatchingCell"];
     
     placeCell.placeName.text = [self.placesBeingWatched[indexPath.row] objectForKey:@"prettyName"];
-    if ([[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"] integerValue] == 1) {
-        placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spot",[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"]];
+    
+    NSInteger numberOfSpots = [[self.placesBeingWatched[indexPath.row] objectForKey:@"numberOfSpots"] integerValue];
+    
+    if (numberOfSpots > 0) {
+        placeCell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    }
+    
+    
+    if (numberOfSpots == 1) {
+        placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spot",[self.placesBeingWatched[indexPath.row] objectForKey:@"numberOfSpots"]];
     }else{
-       placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%@ spots",[self.placesBeingWatched[indexPath.row] objectForKey:@"spots"]];
+       placeCell.numberOfSpots.text = [NSString stringWithFormat:@"%i spots",numberOfSpots];
     }
     
     
     return placeCell;
 }
+
+
+#pragma mark - UITableView Delegate 
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSInteger numberOfSpots = [[self.placesBeingWatched[indexPath.row] objectForKey:@"numberOfSpots"] integerValue];
+    
+    
+    if (numberOfSpots > 0) {
+        [self performSegueWithIdentifier:@"FromPlacesViewToWatching"
+                                  sender:@{@"spotName": self.placesBeingWatched[indexPath.row][@"prettyName"],
+                                           @"spots" : self.placesBeingWatched[indexPath.row][@"spots"]}];
+    }
+    
+}
+
+
+
 
 #pragma mark - UICollection View Datasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
@@ -718,7 +832,7 @@ static CLLocationManager *locationManager;
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
         
-        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [User currentlyActiveUser].userID}];
+        [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]}];
     }
 }
 
@@ -748,13 +862,14 @@ static CLLocationManager *locationManager;
                 NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
                 NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
                 
-                [weakSelf fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [User currentlyActiveUser].userID}];
+                [weakSelf fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude, @"userId" : [AppHelper userID]}];
             }
             //DLog(@"Updating nearby spots coz dats whats visible");
             [weakSelf.nearbySpotsCollectionView stopRefreshAnimation];
+            
         }else if (self.allSpotsCollectionView.alpha == 1){//All spots is visible
             [weakSelf fetchUserSpots];
-            //DLog(@"Updating all spots coz dats whats visible");
+            
             [weakSelf.allSpotsCollectionView stopRefreshAnimation];
         }
     });
@@ -764,7 +879,7 @@ static CLLocationManager *locationManager;
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:@"PhotosStreamSegue"]) {
-        if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]) {
+        if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]){
             PhotoStreamViewController *photosVC = segue.destinationViewController;
 
             if ([sender isKindOfClass:[NSArray class]]) {
@@ -777,10 +892,12 @@ static CLLocationManager *locationManager;
                 photosVC.spotName = sender[@"spotName"];
                 photosVC.spotID = sender[@"spotId"];
             }
-            
         }
-        
     
+    }else if ([segue.identifier isEqualToString:@"FromPlacesViewToWatching"]){
+        PlacesWatchingViewController *placesVC = segue.destinationViewController;
+        placesVC.spotsWatching = sender[@"spots"];
+        placesVC.locationName = sender[@"spotName"];
     }
 }
 
@@ -804,5 +921,70 @@ static CLLocationManager *locationManager;
     }
     
 }
+
+
+
+#pragma mark - State Preservation and Restoration
+-(void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super encodeRestorableStateWithCoder:coder];
+    
+    [coder encodeObject:self.allSpots forKey:AllSpotsKey];
+    [coder encodeObject:self.nearbySpots forKey:NearbySpotsKey];
+    [coder encodeObject:self.placesBeingWatched forKey:PlacesWatchingKey];
+    [coder encodeObject:self.currentSelectedSpot forKey:SelectedSpotKey];
+    [coder encodeObject:@(selectedButton) forKey:SelectedButtonKey];
+    
+    DLog();
+}
+
+
+-(void)decodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    [super decodeRestorableStateWithCoder:coder];
+    
+    self.allSpots = [coder decodeObjectForKey:AllSpotsKey];
+    self.nearbySpots = [coder decodeObjectForKey:NearbySpotsKey];
+    self.placesBeingWatched = [coder decodeObjectForKey:PlacesWatchingKey];
+    self.currentSelectedSpot = [coder decodeObjectForKey:SelectedSpotKey];
+    selectedButton = [[coder decodeObjectForKey:SelectedButtonKey] integerValue];
+    
+    DLog();
+}
+
+-(void)applicationFinishedRestoringState
+{
+    /*DLog(@"Selected Button is - %i",selectedButton);
+    if (self.allSpots) {
+        [self.allSpotsCollectionView reloadData];
+    }*/
+    
+    DLog();
+    
+    if (selectedButton == 0) {
+        // Places was the last visible view
+        if (!self.placesBeingWatched) {
+           [self performSelector:@selector(placesButtonSelected:)];
+        }else [self.placesBeingWatchedTableView reloadData];
+        
+    }else if (selectedButton == 1){
+        //DLog(@"Selected Button is - %i",selectedButton);
+        // Nearby spots was the last visible view
+        if (!self.nearbySpots) {
+            [self performSelector:@selector(nearbySpotsButtonSelected:)];
+        }else [self.nearbySpotsCollectionView reloadData];
+        
+    }else{
+        //DLog(@"Selected Button is - %i",selectedButton);
+        if (!self.allSpots) {
+          [self performSelector:@selector(allSpotsButtonSelected:)];
+        }else [self.allSpotsCollectionView reloadData];
+        
+    }
+    
+    // Reload all the views
+    //[self updateData];
+}
+
 
 @end

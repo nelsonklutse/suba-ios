@@ -111,7 +111,7 @@
 
 
 
-#pragma mark - State Preservation and Restoration
+/*#pragma mark - State Preservation and Restoration
 -(void)encodeRestorableStateWithCoder:(NSCoder *)coder
 {
     [super encodeRestorableStateWithCoder:coder];
@@ -138,7 +138,7 @@
     // Inflate view from freezed state
     self.userNameField.text = self.userName;
 }
-
+*/
 
 
 @end
