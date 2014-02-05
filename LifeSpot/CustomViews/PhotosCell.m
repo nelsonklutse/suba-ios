@@ -87,7 +87,7 @@
     self.photoGallery.verticalGallery = _photoGallery.peakSubView = NO;
     self.photoGallery.initialIndex = 0;
     self.photoGallery.showsScrollIndicator = NO;
-    self.photoGallery.backgroundColor = [UIColor blackColor];
+    self.photoGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
     
     
 }

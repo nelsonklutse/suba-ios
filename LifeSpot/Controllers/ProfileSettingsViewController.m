@@ -8,9 +8,12 @@
 
 #import "ProfileSettingsViewController.h"
 #import "User.h"
+#import <CTAssetsPickerController.h>
+#import <AssetsLibrary/AssetsLibrary.h>
+#import "ALAssetsLibrary+CustomPhotoAlbum.h"
 //#import <CXAlertView/CXAlertView.h>
 
-@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate>
+@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,CTAssetsPickerControllerDelegate>
 
 @property (strong,nonatomic) UIImage *profilePhoto;
 @property (strong,nonatomic) NSString *fullName;
@@ -40,6 +43,7 @@
 - (IBAction)dismissKeypad:(id)sender;
 - (void)showPhotoOptions;
 - (void)userInfo;
+- (void)pickAssets;
 @end
 
 @implementation ProfileSettingsViewController
@@ -65,6 +69,7 @@
 
 
 - (IBAction)updateUsrDetails:(id)sender{
+    
     if (!self.userUpdatedInfo[@"picName"]){
         [self.userUpdatedInfo addEntriesFromDictionary:@{@"imageData": @""}];
         [self.userUpdatedInfo addEntriesFromDictionary:@{@"picName": @"UNCHANGED"}];
@@ -76,7 +81,7 @@
     
     
     // First check the full name
-    if ([self.usrFullNameField.text isEqualToString:@""]) {
+    if ([self.usrFullNameField.text isEqualToString:@""] && !self.userUpdatedInfo[@"picName"] && [self.usrNameField.text isEqualToString:[AppHelper userName]]) {
         //FullName is not set so we show a notification
         
         [AppHelper showNotificationWithMessage:@"Please choose a name"
@@ -129,7 +134,7 @@
         [self.userUpdatedInfo addEntriesFromDictionary:@{@"form-encoded" : urlFormEncodedParams}];
         
         
-        DLog(@"UserInfoBeing Sent -  %@",[self.userUpdatedInfo debugDescription]);
+       // DLog(@"UserInfoBeing Sent -  %@",[self.userUpdatedInfo debugDescription]);
     
     if ([urlFormEncodedParams objectForKey:@"userName"]) {
         [AppHelper showLoadingDataView:self.savingUserChangesView indicator:self.savingUserChangesIndicatorView flag:YES];
@@ -147,11 +152,14 @@
                             DLog(@"Update ProfileInfo Error - %@",error);
                             
                     }else{
-                            NSDictionary *userInfo = results;
-                        
-                        [AppHelper setFirstName:results[@"firstName"]];
+                        NSDictionary *userInfo = results;
+                        if (results[@"profilePhotoURL"]) {
+                            [AppHelper setProfilePhotoURL:results[@"profilePhotoURL"]];
+                        }
+                         [AppHelper setFirstName:results[@"firstName"]];
                          [AppHelper setLastName:results[@"lastName"]];
-                        [AppHelper setUserName:results[@"userName"]];
+                         [AppHelper setUserName:results[@"userName"]];
+                        [[NSUserDefaults standardUserDefaults] synchronize];
                         
                             DLog(@"User updated info from server - %@",userInfo);
                             // Unwind segue to User settings
@@ -175,6 +183,7 @@
         // Just update the user info
         [AppHelper showLoadingDataView:self.savingUserChangesView indicator:self.savingUserChangesIndicatorView flag:YES];
         //DLog(@"Username is not set so we are just updating info");
+        
         [user updateProfileInfo:self.userUpdatedInfo completion:^(id results, NSError *error) {
             if (error) {
                 // Analytics to show requests failing
@@ -185,7 +194,7 @@
                 DLog(@"User updated info from server - %@",userInfo);
                 // Unwind segue to User settings
                 [AppHelper showNotificationWithMessage:@"Profile info saved" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
-                
+                [AppHelper savePreferences:userInfo];
                 
                     [self performSegueWithIdentifier:@"UNWIND_TO_USER_SETTINGS_SEGUE" sender:nil];
                 
@@ -214,9 +223,52 @@
 {
     UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:@"Choose Photo" delegate:self cancelButtonTitle:@"Not Now" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Choose From Gallery", nil];
     
-    [action showFromTabBar:self.parentViewController.tabBarController.tabBar];
+    [action showInView:self.view];
 }
 
+- (void)pickAssets
+{
+    
+    CTAssetsPickerController *picker = [[CTAssetsPickerController alloc] init];
+    picker.maximumNumberOfSelection = 1;
+    picker.assetsFilter = [ALAssetsFilter allPhotos];
+    picker.delegate = self;
+    
+    [self presentViewController:picker animated:YES completion:NULL];
+}
+
+#pragma mark - Assets Picker Delegate
+
+- (void)assetsPickerController:(CTAssetsPickerController *)picker didFinishPickingAssets:(NSArray *)assets
+{
+    //[self.assets addObjectsFromArray:assets];
+    ALAsset *asset = (ALAsset *)assets[0];
+    ALAssetRepresentation *representation = asset.defaultRepresentation;
+    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullResolutionImage
+                                                       scale:1.0f
+                                                 orientation:(UIImageOrientation)representation.orientation];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //dateFormatter se
+    
+    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+
+    self.profilePictureView.image = fullResolutionImage;
+    NSString *picName = [NSString stringWithFormat:@"%@_%@.jpg",[AppHelper userName],trimmedString];
+    
+    NSData *imageData = UIImageJPEGRepresentation(fullResolutionImage, 1);
+    [self.userUpdatedInfo addEntriesFromDictionary:@{@"imageData": imageData}];
+    [self.userUpdatedInfo addEntriesFromDictionary:@{@"picName": picName}];
+    
+    //NSLog(@"Image Data Added to the userUpdatedInfo Dictionary");
+    self.userChangesDoneBarButtonItem.enabled = YES;
+    [picker dismissViewControllerAnimated:NO completion:^{
+        self.userChangesDoneBarButtonItem.enabled = YES;
+    }];
+}
 
 
 #pragma mark - UIActionSheet Delegate Methods
@@ -253,12 +305,14 @@
 
             [self presentViewController:imagePicker animated:YES completion:nil];
         }else if(sourceType == kChooseFromGallery){
-            imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            //imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            [self pickAssets];
+            //[self presentViewController:imagePicker animated:YES completion:nil];
         }
         
         //imagePicker.mediaTypes = @[(NSString *)kUTTypeImage];
         
-        [self presentViewController:imagePicker animated:YES completion:nil];
+        
     }
         
     }else{
@@ -293,6 +347,7 @@
 #pragma mark - UIIMagePickerController Delegate methods
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
+    DLog(@"media info - %@",info);
     UIImage *image = info[UIImagePickerControllerOriginalImage];
     self.profilePictureView.image = image;
     
@@ -300,19 +355,31 @@
     //NSDictionary *imageInfo = [imageMetaData valueForKey:@"{TIFF}"];
     //NSString *photoTimestamp = imageInfo[@"DateTime"];
     
-    NSString *picName = [NSString stringWithFormat:@"%@.jpg",[AppHelper userName]];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //dateFormatter se
     
-    NSData *imageData = UIImageJPEGRepresentation(image, 0.6);
+    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+
+    
+    NSString *picName = [NSString stringWithFormat:@"%@_%@.jpg",[AppHelper userName],trimmedString];
+    
+    NSData *imageData = UIImageJPEGRepresentation(image, 1);
     [self.userUpdatedInfo addEntriesFromDictionary:@{@"imageData": imageData}];
     [self.userUpdatedInfo addEntriesFromDictionary:@{@"picName": picName}];
     
     //NSLog(@"Image Data Added to the userUpdatedInfo Dictionary");
     self.userChangesDoneBarButtonItem.enabled = YES;
-    [picker.presentingViewController dismissViewControllerAnimated:YES completion:^{
+    [picker dismissViewControllerAnimated:NO completion:^{
         self.userChangesDoneBarButtonItem.enabled = YES;
     }];
 
 }
+
+
 
 -(void)userInfo
 {
@@ -320,7 +387,7 @@
     
     DLog(@"Profile photo URL - %@",[AppHelper profilePhotoURL]);
     
-    if ([[AppHelper firstName] length] == 0){
+    if ([[AppHelper firstName] isEqualToString:@""]){
         self.usrFullNameField.placeholder = @"Full Name";
     }else{
         self.fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
@@ -329,7 +396,7 @@
     
     self.usrNameField.text = [AppHelper userName];
     //self.usrEmailField.text = [AppHelper userEmail];
-    
+    DLog(@"Name - %@",[AppHelper firstName]);
 }
 
 

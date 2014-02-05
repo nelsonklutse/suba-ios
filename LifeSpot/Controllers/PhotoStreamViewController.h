@@ -11,12 +11,17 @@
 typedef enum {
     kSpot = 0,
     kPhoto
-} Mutant;
+}Mutant;
 
 typedef enum{
     kTakeCamera = 0,
     kGallery
 }PhotoSourceType;
+
+typedef enum{
+    kSexuallyExplicit = 0,
+    kUnrelated
+}ReportOptions;
 
 
 @interface PhotoStreamViewController : UIViewController

@@ -190,6 +190,7 @@ static CLLocationManager *locationManager;
         FoursquareLocationsViewController *nearbyVenuesVC = segue.destinationViewController;
         nearbyVenuesVC.currentLocation = self.userLocation;
         nearbyVenuesVC.locations = self.otherVenues;
+        
     }
     
     if ([segue.identifier isEqualToString:@"JOIN_SPOT_SEGUE"]) {

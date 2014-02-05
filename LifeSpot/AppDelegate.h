@@ -8,13 +8,16 @@
 
 #import <UIKit/UIKit.h>
 
-@class ICETutorialController;
+@class SubaTutorialController;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
-@property (strong, nonatomic) ICETutorialController *viewController;
+@property (strong, nonatomic) SubaTutorialController *viewController;
 @property (strong,nonatomic) UINavigationController *rootNavController;
 @property (strong,nonatomic) UITabBarController *mainTabBarController;
 @property (strong,nonatomic) LifespotsAPIClient *apiBaseURL;
+
+- (UIViewController *)topViewController;
+- (void)resetMainViewController;
 @end

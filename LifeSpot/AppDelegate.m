@@ -7,9 +7,10 @@
 //
 
 #import "AppDelegate.h"
-#import "ICETutorialController.h"
+#import "SubaTutorialController.h"
 #import "SignUpViewController.h"
 #import "MainStreamViewController.h"
+#import <SDImageCache.h>
 
 @implementation AppDelegate
 
@@ -114,7 +115,7 @@
                                                             description:@"Or join an already existing one"
                                                             pictureName:@"2.png"];
     ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Invite"
-                                                            description:@"Invite via Suba,Facebook or SMS"
+                                                            description:@"Invite via Suba, Facebook or SMS"
                                                             pictureName:@"3.png"];
     ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@"Capture"
                                                             description:@"Capture moments in your stream"
@@ -143,21 +144,25 @@
     UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
     self.rootNavController = [mainStoryboard instantiateInitialViewController];
     
-    if (!self.viewController &&  ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
+    self.viewController = (SubaTutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
+    
+    self.viewController.autoScrollEnabled = YES;
+    self.viewController.autoScrollLooping = YES;
+    self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
+    
+    [self.viewController setPages:tutorialLayers];
+    
+    
+    // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
+    [self.viewController setCommonPageSubTitleStyle:subStyle];
+    [self.viewController setCommonPageDescriptionStyle:descStyle];
+    
+    if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
         // First launch or from logout
         DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
-        self.viewController = (ICETutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
-        
-        self.viewController.autoScrollEnabled = YES;
-        self.viewController.autoScrollLooping = YES;
-        self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
-        
-        [self.viewController setPages:tutorialLayers];
         
         
-        // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
-        [self.viewController setCommonPageSubTitleStyle:subStyle];
-        [self.viewController setCommonPageDescriptionStyle:descStyle];
+
         
         __unsafe_unretained typeof(self) weakSelf = self;
         
@@ -165,6 +170,7 @@
         [self.viewController setButton1Block:^(UIButton *button){
             //DLog(@"Facebook Button pressed.");
             [weakSelf openFBSession];
+            [weakSelf.viewController stopScrolling];
         }];
         
         // Set button 2 action, stop the scrolling.
@@ -173,7 +179,12 @@
             //DLog(@"Button 2 pressed.");
             //DLog(@"Auto-scrolling stopped.");
             
-            [weakSelf.viewController stopScrolling];
+            //[weakSelf.viewController stopScrolling];
+            
+            [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
+            
+            //weakSelf.viewController per
+            
         }];
         
         // Run it.
@@ -197,7 +208,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     
-    
+    DLog();
     /*if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
         DLog(@"userid - %@",[AppHelper userID]);
         self.window.rootViewController = self.mainTabBarController;
@@ -216,8 +227,10 @@
                                       NUMBER_OF_ALBUMS : @"0"
                                       
                                       };
-        
+    if ([[AppHelper userID] isEqualToString:@"-1"]) {
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
+    }
+    
  
     //}
     
@@ -245,6 +258,10 @@
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
     }];*/
+    [[SDImageCache sharedImageCache] clearDisk];
+    [[SDImageCache sharedImageCache] cleanDisk];
+    [[SDImageCache sharedImageCache] clearMemory];
+
     
      [self.window makeKeyAndVisible];
     return YES;
@@ -278,12 +295,12 @@
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     [application setApplicationIconBadgeNumber:0];
-    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
         
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
-    }];
+    }];*/
     
     [FBAppEvents activateApp];
     
@@ -597,7 +614,95 @@
 }
 
 
+-(void)resetMainViewController
+{
+    self.window.rootViewController = nil;
+    //[self.window.rootViewController removeFromParentViewController];
+    
+    // Init the pages texts, and pictures.
+    /*ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@"Create"
+                                                            description:@"Create a stream and add your location"
+                                                            pictureName:@"1.png"];
+    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@"Join"
+                                                            description:@"Or join an already existing one"
+                                                            pictureName:@"2.png"];
+    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Invite"
+                                                            description:@"Invite via Suba, Facebook or SMS"
+                                                            pictureName:@"3.png"];
+    ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@"Capture"
+                                                            description:@"Capture moments in your stream"
+                                                            pictureName:@"4.png"];
+    ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@"Share"
+                                                            description:@"Share your stream on social media."
+                                                            pictureName:@"5.png"];
+    
+    
+    // Set the common style for SubTitles and Description (can be overrided on each page).
+    ICETutorialLabelStyle *subStyle = [[ICETutorialLabelStyle alloc] init];
+    [subStyle setFont:TUTORIAL_SUB_TITLE_FONT];
+    [subStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
+    [subStyle setLinesNumber:TUTORIAL_SUB_TITLE_LINES_NUMBER];
+    [subStyle setOffset:TUTORIAL_SUB_TITLE_OFFSET];
+    
+    ICETutorialLabelStyle *descStyle = [[ICETutorialLabelStyle alloc] init];
+    [descStyle setFont:TUTORIAL_DESC_FONT];
+    [descStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
+    [descStyle setLinesNumber:TUTORIAL_DESC_LINES_NUMBER];
+    [descStyle setOffset:TUTORIAL_DESC_OFFSET];
+    
+    // Load into an array.
+    NSArray *tutorialLayers = @[layer1,layer2,layer3,layer4,layer5];
+    
+    UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+    self.rootNavController = [mainStoryboard instantiateInitialViewController];
+    
+    
+    self.rootNavController = [mainStoryboard instantiateInitialViewController];
+    
+    self.viewController = (SubaTutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
+    
+    self.viewController.autoScrollEnabled = YES;
+    self.viewController.autoScrollLooping = YES;
+    self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
+    
+    [self.viewController setPages:tutorialLayers];
+    
+    
+    // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
+    [self.viewController setCommonPageSubTitleStyle:subStyle];
+    [self.viewController setCommonPageDescriptionStyle:descStyle];*/
 
+    __unsafe_unretained typeof(self) weakSelf = self;
+    
+    // Set button 1 action.
+    [self.viewController setButton1Block:^(UIButton *button){
+        //DLog(@"Facebook Button pressed.");
+        [weakSelf openFBSession];
+        [weakSelf.viewController stopScrolling];
+    }];
+    
+    // Set button 2 action, stop the scrolling.
+    
+    [self.viewController setButton2Block:^(UIButton *button){
+        //DLog(@"Button 2 pressed.");
+        //DLog(@"Auto-scrolling stopped.");
+        
+        //[weakSelf.viewController stopScrolling];
+        
+        [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
+        
+        //weakSelf.viewController per
+        
+    }];
+    
+    // Run it.
+    //[self.viewController startScrolling];
+    
+    [self.rootNavController setViewControllers:@[self.viewController]];
+    self.window.rootViewController = self.rootNavController;
+    
+    [self.window makeKeyAndVisible];
+}
 
 
 @end

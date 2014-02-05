@@ -39,8 +39,21 @@
 {
     [super viewWillAppear:animated];
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoGalleryTappedAtIndexNotification object:nil];
+}
+
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    [[NSNotificationCenter defaultCenter]
+     removeObserver:self
+     name:kPhotoGalleryTappedAtIndexNotification
+     object:nil];
     
 }
+
 
 
 - (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data
@@ -102,11 +115,22 @@
 -(void)galleryTappedAtIndex:(NSNotification *)aNotification
 {
     
-    NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
-    NSArray *photos = notifInfo[@"spotInfo"][@"photoURLs"];
+        NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
+        NSArray *photos = notifInfo[@"spotInfo"][@"photoURLs"];
+        int indexOfTappedPhoto = [notifInfo[@"photoIndex"] intValue];
+        self.currentSelectedSpot = notifInfo[@"spotInfo"];
     
-        //self.currentSelectedSpot = notifInfo[@"spotInfo"];
-        DLog(@"Notification Info - %@",notifInfo);
+    if (indexOfTappedPhoto > 0) {
+        //DLog(@"Rearranging the array coz index is %i",index);
+        NSRange rangeForFirstArray = NSMakeRange(indexOfTappedPhoto, [photos count] - indexOfTappedPhoto);
+        NSRange rangeSecondArray = NSMakeRange(0, indexOfTappedPhoto);
+        NSArray *firstArray = [photos subarrayWithRange:rangeForFirstArray];
+        NSArray *secondArray = [photos subarrayWithRange:rangeSecondArray];
+        
+        photos = [firstArray arrayByAddingObjectsFromArray:secondArray];
+    }
+    
+        //DLog(@"Notification Info - %@",notifInfo);
         NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
         NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
         NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
@@ -231,7 +255,8 @@
                     if (!error){
                         DLog(@"Album is public so joining spot");
                         if ([results[STATUS] isEqualToString:ALRIGHT]){
-                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+
                             [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
                             
                             [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
@@ -258,10 +283,6 @@
 
 
 
-
-
-
-
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:@"FromWatchingStreamsToPhotoStream"]) {
@@ -277,6 +298,7 @@
                 photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
                 photosVC.spotName = sender[@"spotName"];
                 photosVC.spotID = sender[@"spotId"];
+               
             }
         }
         
@@ -288,8 +310,8 @@
 #pragma mark - AlertView Delegate
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    //DLog(@"button index - %ld",(long)buttonIndex);
-    if (buttonIndex == 1) {
+    
+    if (buttonIndex == 1){
         NSString *passcode = [alertView textFieldAtIndex:0].text;
         [self joinSpot:passcode data:self.currentSelectedSpot];
         

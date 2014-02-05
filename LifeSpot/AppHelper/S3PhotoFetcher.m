@@ -7,6 +7,7 @@
 //
 
 #import "S3PhotoFetcher.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @implementation S3PhotoFetcher
 
@@ -40,10 +41,11 @@
     dispatch_async(downloadPhotoQueue, ^{
         __weak UIImageView *mainImageView = imgView;
         NSURL *photoSrc = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",self.s3BucketURL,photoURL]];
-        NSURLRequest *request = [NSURLRequest requestWithURL:photoSrc];
+        //NSURLRequest *request = [NSURLRequest requestWithURL:photoSrc];
         //NSLog(@"Making image request from - %@",[photoSrc description]);
         dispatch_async(dispatch_get_main_queue(),^{
-            [imgView setImageWithURLRequest:request placeholderImage:img success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+            
+            /*[imgView setImageWithURLRequest:request placeholderImage:img success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
                 //NSLog(@"We're setting the image now");
                 mainImageView.image = image;
                 completion(image,nil);
@@ -52,7 +54,18 @@
             } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                 //NSLog(@"We're failing the request");
                 completion(nil,error);
+            }];*/
+            [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                if (!error) {
+                    mainImageView.image = image;
+                    completion(image,nil);
+                }else{
+                   completion(nil,error);
+                }
             }];
+            
+            
+            
         });
         
     });

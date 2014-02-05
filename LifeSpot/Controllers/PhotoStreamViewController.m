@@ -18,6 +18,8 @@
 #import "Photo.h"
 #import "User.h"
 #import "Spot.h"
+#import "BDKNotifyHUD.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 
@@ -27,32 +29,39 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 #define SpotPhotosKey @"SpotPhotosKey"
 
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate>
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate>{
+    UIImage *photoToSave;
+}
 
+@property (strong,nonatomic) NSDictionary *reportInfo;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
 
+
 @property (weak, nonatomic) IBOutlet UIView *noPhotosView;
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
 - (IBAction)sharePhoto:(UIButton *)sender;
 - (IBAction)likePicture:(UIButton *)sender;
-- (IBAction)savePhoto:(UIButton *)sender;
+- (void)savePhoto:(UIImage *)imageToSave;
 - (IBAction)cameraButtonTapped:(id)sender;
 - (IBAction)settingsButtonTapped:(id)sender;
 - (IBAction)shareAlbumAction:(id)sender;
+- (IBAction)showMoreActions:(UIButton *)sender;
 
 - (void)share:(Mutant)objectOfInterest Sender:(UIButton *)sender;
-- (void)savePhotoToCustomAlbum:(UIImage *)photo sender:(UIButton *)sender;
+- (void)savePhotoToCustomAlbum:(UIImage *)photo;
 - (void)resizeImage:(UIImage*) image
             towidth:(float) width
            toHeight:(float) height
           completon:(PhotoResizedCompletion)completion;
 - (void)showPhotoOptions;
-- (void)showMembers;
+- (void)showReportOptions;
+- (void)reportPhoto:(NSDictionary *)reportInfo;
+- (IBAction)showMembers:(id)sender;
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
 @end
@@ -66,18 +75,10 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     self.noPhotosView.hidden = YES;
     
     self.navigationItem.title = (self.spotName) ? self.spotName : @"Spot";
-    UIBarButtonItem *membersButton = [[UIBarButtonItem alloc]
-                                   initWithTitle:@""
-                                   style:UIBarButtonItemStyleBordered
-                                   target:self
-                                   action:@selector(showMembers)];
-    [membersButton setImage:[UIImage imageNamed:@"members"]];
-    self.navigationItem.rightBarButtonItem = membersButton;
-   
-    //self.navigationItem.rightBarButtonItem
+    
     self.library = [[ALAssetsLibrary alloc] init];
     
-    if (!self.photos && !self.spotName && self.numberOfPhotos) {
+    if (!self.photos && !self.spotName && self.numberOfPhotos == 0) {
         // We are coming from an activity screen
        [self loadSpotImages:self.spotID];
     }
@@ -89,7 +90,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         [self loadSpotImages:self.spotID];
     }
     
-    if(self.numberOfPhotos == 0){
+    if(self.numberOfPhotos == 0 && self.spotName){
         self.noPhotosView.hidden = NO;
         self.photoCollectionView.hidden = YES;
     }
@@ -99,6 +100,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         DLog(@"SpotId - %@",self.spotID);
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     }
+    
+    self.photoCollectionView.contentInset = UIEdgeInsetsMake(0, (self.view.frame.size.width-300)/2, 0, (self.view.frame.size.width-300)/2);
     
 }
 
@@ -150,31 +153,75 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 }
 
 
+-(void)reportPhoto:(NSDictionary *)reportInfo
+{
+    [User reportPhoto:reportInfo completion:^(id results, NSError *error) {
+        //DLog(@"Results - %@",results);
+        
+        BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
+                                                       text:@"Photo Reported!"];
+        
+        hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
+        
+        // Animate it, then get rid of it. These settings last 1 second, takes a half-second fade.
+        [self.view addSubview:hud];
+        [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
+            [hud removeFromSuperview];
+            [CSNotificationView showInViewController:self
+                                           tintColor: [UIColor colorWithRed:217/255.0 green:77/255.0 blue:20/255.0 alpha:1]
+                                               image:nil
+                                             message:@"Thank you for your report. We will remove this photo if it violates our Community Guidelines."
+                                            duration:5.0f];
+        }];
+        
+        
+    }];
+}
+
+/*-(void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    PhotoStreamCell *photoStreamCell = (PhotoStreamCell *)cell;
+    
+    DLog(@"cell picture taker - %@\nCell frame - %@\nCell bounds - %@",
+         photoStreamCell.pictureTakerName.text,NSStringFromCGRect(photoStreamCell.frame),NSStringFromCGRect(photoStreamCell.bounds));
+}*/
+
 #pragma mark - UICollectionView Datasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     return [self.photos count];
 }
 
+
+
+
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    
    static NSString *cellIdentifier = @"PhotoStreamCell";
     PhotoStreamCell *photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
     
+    [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
+                         indicator:photoCardCell.loadingPictureIndicator
+                              flag:YES];
+    
+    photoCardCell.pictureTakerView.image = [UIImage imageNamed:@"anonymousUser"];
     //DLog(@"Photos - %@",self.photos[indexPath.row]);
     NSString *photoURLstring = self.photos[indexPath.row][@"s3name"];
     
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
-        [photoCardCell.pictureTakerView setImageWithURL:[NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+        
+        [photoCardCell.pictureTakerView setImageWithURL: [NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
+        
+       // [photoCardCell.pictureTakerView setImageWithURL:[NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+        
     }
     
     photoCardCell.pictureTakerName.text = self.photos[indexPath.row][@"pictureTaker"];
     photoCardCell.numberOfLikesLabel.text = self.photos[indexPath.row][@"likes"];
     
-    [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
-                         indicator:photoCardCell.loadingPictureIndicator
-                              flag:YES];
+    
     
     // Download photo card image
     [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:photoURLstring to:photoCardCell.photoCardImage placeholderImage:[UIImage imageNamed:@"blurBg"] completion:^(id results, NSError *error) {
@@ -192,7 +239,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 }
 
 
--(void)showMembers{
+
+-(void)showMembers:(id)sender{
     [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
 }
 
@@ -211,16 +259,18 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 
 
-- (IBAction)likePicture:(UIButton *)sender {
+- (IBAction)likePicture:(UIButton *)sender
+{
+    
 }
 
-- (IBAction)savePhoto:(UIButton *)sender {
-    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-    if (cell.photoCardImage.image != nil) {
-        [AppHelper showLoadingDataView:cell.loadingPictureView
-                             indicator:cell.loadingPictureIndicator
-                                  flag:YES];
-        [self savePhotoToCustomAlbum:cell.photoCardImage.image sender:sender];
+- (void)savePhoto:(UIImage *)imageToSave {
+    
+    if (imageToSave != nil){
+        
+        
+        [self savePhotoToCustomAlbum:imageToSave];
+         
 
     }else{
         [AppHelper showAlert:@"Save Image Request"
@@ -281,6 +331,42 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     [self share:kSpot Sender:sender];
 }
 
+-(void)showReportOptions
+{
+    UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"Why are you reporting photo?"
+                                                             delegate:self
+                                                    cancelButtonTitle:@"Cancel"
+                                               destructiveButtonTitle:nil
+                                                    otherButtonTitles:@" This photo is sexually explicit",@"This is photo is unrelated",nil];
+    actionsheet.tag = 2000;
+    //actionsheet.destructiveButtonIndex = 1;
+    [actionsheet showInView:self.view];
+  
+}
+
+
+- (IBAction)showMoreActions:(UIButton *)sender
+{
+    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+    NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
+    self.reportInfo = self.photos[indexpath.row];
+    photoToSave = cell.photoCardImage.image;
+    
+    
+    
+    //DLog(@"Cell - selected - %@\nPhotoInfo - %@",cell.pictureTakerName,self.photos[indexpath.row]);
+    
+    UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
+                                                             delegate:self
+                                                    cancelButtonTitle:@"Cancel"
+                                               destructiveButtonTitle:nil
+                                                    otherButtonTitles:@"Save Photo",@"Report Photo", nil];
+    actionsheet.tag = 1000;
+    actionsheet.destructiveButtonIndex = 1;
+    [actionsheet showInView:self.view];
+    
+}
+
 
 -(void)showPhotoOptions
 {
@@ -315,13 +401,10 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 }
 
 
--(void)savePhotoToCustomAlbum:(UIImage *)photo sender:(UIButton *)sender
+-(void)savePhotoToCustomAlbum:(UIImage *)photo
 {
-    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-    [self.library saveImage:photo toAlbum:@"Suba" completion:^(NSURL *assetURL, NSError *error) {
-        [AppHelper showLoadingDataView:cell.loadingPictureView
-                             indicator:cell.loadingPictureIndicator
-                                  flag:NO];
+    [self.library saveImage:photo toAlbum:@"Suba Photos" completion:^(NSURL *assetURL, NSError *error) {
+        [AppHelper showNotificationWithMessage:@"Image saved in camera roll" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
     }failure:^(NSError *error){
         [AppHelper showAlert:@"Save image error"
                      message:@"There was an error saving the photo"
@@ -383,12 +466,13 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
         if (sourceType == kTakeCamera) {
             imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
+            imagePicker.delegate = self;
+            imagePicker.allowsEditing = NO;
         }else if(sourceType == kGallery){
             [self pickAssets];
         }
         
-        imagePicker.delegate = self;
-        imagePicker.allowsEditing = NO;
+        
         
         [self presentViewController:imagePicker animated:YES completion:nil];
        
@@ -406,6 +490,38 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 #pragma mark - UIActionSheet Delegate Methods
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    DLog(@"photo info - %@",self.reportInfo);
+    if (actionSheet.tag == 1000) {
+        if(buttonIndex == 0){
+            //User wants to save photo
+            [self savePhoto:photoToSave];
+        }
+           
+    }else if(actionSheet.tag == 2000){
+        // User is reporting a photo
+        NSString *reportType = nil;
+        if (buttonIndex == kSexuallyExplicit){
+            reportType = kSEXUALLY_EXPLICIT;
+            
+            
+        }else{
+            reportType = kUNRELATED_PHOTO;
+           DLog(@"Photo is unrelated");
+        }
+        
+        // form report photo info
+        NSDictionary *params = @{
+                                 @"photoId":self.reportInfo[@"id"],
+                                 @"spotId" : self.reportInfo[@"spotId"],
+                                 @"pictureTakerName" : self.reportInfo[@"pictureTaker"],
+                                 @"reporterId" : [AppHelper userID],
+                                 @"reportType" : reportType
+                                 };
+        [self reportPhoto:params];
+    }
+    
+    else{
+    
     if (buttonIndex == kTakeCamera) {
         // Call the Camera here
         [self pickPhoto:kTakeCamera];
@@ -414,9 +530,20 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         // Choose from the Gallery
         [self pickPhoto:kGallery];
     }
+}
     //NSLog(@"Button Clicked is %li",(long)buttonIndex);
-    [actionSheet dismissWithClickedButtonIndex:buttonIndex animated:YES];
+    //[actionSheet dismissWithClickedButtonIndex:buttonIndex animated:YES];
     
+}
+
+
+-(void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (actionSheet.tag == 1000) {
+        if (buttonIndex == 1) {
+            [self showReportOptions];
+        }
+    }
 }
 
 
@@ -437,7 +564,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 //NSLog(@"Timestamp - %@",trimmedString);
                // UIImage *newImage = compressedPhoto;
                 NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
-                
+    
                 [self uploadPhoto:imageData WithName:trimmedString];
                 
             //}];
@@ -594,6 +721,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 
 
+
 #pragma mark - State Preservation and Restoration
 -(void)encodeRestorableStateWithCoder:(NSCoder *)coder
 {
@@ -644,6 +772,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     DLog();
 }
+
 
 
 

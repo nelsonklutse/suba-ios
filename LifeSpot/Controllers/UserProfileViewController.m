@@ -12,6 +12,7 @@
 #import "ProfileSpotsHeaderView.h"
 #import "PhotosCell.h"
 #import "PhotoStreamViewController.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 #define UserSpotsKey @"UserSpotsKey"
 #define UserProfileInfoKey @"UserProfileInfoKey"
@@ -44,9 +45,27 @@
      [self fetchUserInfo:userId];
     
     
+     //DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
+    
     //self.userSpotsCollectionView.frame = [[UIScreen mainScreen] bounds];
     
 }
+
+ /*-(void)viewWillLayoutSubviews
+{
+    [super viewWillLayoutSubviews];
+    
+   CGRect frame = self.view.bounds;
+    frame.size.height -= (self.tabBarController.tabBar.frame.size.height + 64);
+    
+    self.userSpotsCollectionView.frame = frame;
+    
+    //self.userSpotsCollectionView.frame = self.view.bounds;
+    DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
+}*/
+
+
+
 
 -(void)viewWillAppear:(BOOL)animated
 {
@@ -61,6 +80,8 @@
     [self.userSpotsCollectionView.pullToRefreshView setBorderWidth:6];
 
     [self.userSpotsCollectionView.pullToRefreshView setBackgroundColor:[UIColor redColor]];
+    
+    DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
 }
 
 -(void)viewWillDisappear:(BOOL)animated
@@ -101,7 +122,7 @@
                             }else{
                             // If the user has created spots
                             if ([results[@"spots"] count] > 0){
-                                                             
+                                DLog(@"User spots"); 
                                 NSArray *createdSpots = results[@"spots"];
                                 NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
                                 NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
@@ -110,7 +131,8 @@
                                                              
                                 //NSLog(@"Spots created by user - %@",self.userSpots);
                                 //self.nospotsView.alpha = 0;
-                                //[self.userSpotsCollectionView reloadData];
+                                
+                                [self.userSpotsCollectionView reloadData];
                             }else{
                         [UIView animateWithDuration:0.4 animations:^{
                           //self.spotsView.alpha = 0;
@@ -149,7 +171,7 @@
     
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         
-        [weakSelf loadSpotsCreated:self.userId];
+        [weakSelf loadSpotsCreated:[AppHelper userID]];
         [weakSelf.userSpotsCollectionView stopRefreshAnimation];
     });
 }
@@ -188,10 +210,14 @@
         // It is the profile view
         cellIdentifier = @"USER_INFO_CELL";
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+         NSURL *profilePhotoURL = [NSURL URLWithString:[AppHelper profilePhotoURL]];
+        
+        [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
         
         if (self.userProfileInfo) {
             NSString *numberOfSpots = [self.userProfileInfo[@"numberOfSpots"] stringValue];
-            NSURL *profilePhotoURL = [NSURL URLWithString:self.userProfileInfo[@"profilePicURL"]];
+            profilePhotoURL = [NSURL URLWithString:self.userProfileInfo[@"profilePicURL"]];
+            
             NSString *userName = self.userProfileInfo[@"userName"];
             
             self.navigationItem.title = [NSString stringWithFormat:@"@%@",userName];
@@ -199,10 +225,10 @@
             userInfoCell.spotsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Spot" : @"Spots";
             
             if (profilePhotoURL) {
-                [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL];
+                [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
             }
             
-            userInfoCell.userProfileImage.layer.borderColor = [UIColor whiteColor].CGColor;
+            //userInfoCell.userProfileImage.layer.borderColor = [UIColor whiteColor].CGColor;
             
         }
         

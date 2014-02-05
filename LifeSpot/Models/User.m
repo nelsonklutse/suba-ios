@@ -84,6 +84,7 @@
 
 -(void)fetchCreatedSpotsCompletion:(NSString *)userId completion:(CreatedSpotsLoadedCompletionBlock)completion
 {
+    DLog(@"UserId - %@",userId); 
     [[LifespotsAPIClient sharedInstance] GET:@"user/spots/created" parameters:@{@"userId": userId} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -141,7 +142,8 @@
 
 - (void)updateProfileInfo:(NSDictionary *)userInfo completion:(UserProfileInfoUpdatedCompletion)completion
 {
-    if([userInfo[@"imageData"] isEqualToString:@""]){
+    DLog(@"User info - %@",userInfo[@"form-encoded"]);
+    if([userInfo[@"picName"] isEqualToString:@"UNCHANGED"]){
         [[LifespotsAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
             
     } success:^(NSURLSessionDataTask *task, id responseObject){
@@ -336,4 +338,20 @@
         completion(nil,error);
     }];
 }
+
+
++ (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    //DLog(@"Params - %@",params);
+    [[LifespotsAPIClient sharedInstance] POST:@"user/photo/report"
+                                   parameters:params
+                                      success:^(NSURLSessionDataTask *task, id responseObject) {
+                                          completion(responseObject,nil);
+                                      } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                          completion(nil,error);
+                                      }];
+}
+
+
+
 @end

@@ -89,8 +89,9 @@ static BOOL isFiltered = NO;
     } failure:^(NSError *error) {
         DLog(@"Error - %@",error);
     }];
-
 }
+
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -100,7 +101,6 @@ static BOOL isFiltered = NO;
 
 
 #pragma mark - Helpers
-
 -(void)refreshTableView:(UITableView *)tableView
 {
     for (NSIndexPath *indexPath in [tableView indexPathsForSelectedRows]) {

@@ -8,6 +8,7 @@
 
 #import "AlbumSettingsViewController.h"
 #import "FoursquareLocationsViewController.h"
+#import "MainStreamViewController.h"
 #import "Location.h"
 #import "Spot.h"
 #import "User.h"
@@ -63,6 +64,7 @@
         self.viewPrivacySwitch.on = YES;
         self.viewPrivacySwitch.enabled = NO;
     }
+    self.leaveAlbumButton.enabled = NO;
 }
 
 - (void)didReceiveMemoryWarning
@@ -105,7 +107,7 @@
                          self.spotName =  self.spotNameField.text = self.spotInfo[@"spotName"];
                          
                         self.spotKeyField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
-                         ? @"N/A" : self.spotInfo[@"spotCode"];
+                         ? @"" : self.spotInfo[@"spotCode"];
                          
                 [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
                 self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
@@ -115,7 +117,7 @@
                 self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:sANYONE]) ? NO:YES;
                      }
                  }
-                 
+                 self.leaveAlbumButton.enabled = YES;
              }];
 }
 
@@ -284,6 +286,7 @@
     if ([segue.identifier isEqualToString:@"ChangeLocationFromSettings"]) {
         self.saveAlbumSettingsBarItem.enabled = YES;
     }
+    
 }
 
 
@@ -300,7 +303,7 @@
             if (!error) {
                 if ([results[STATUS] isEqualToString:ALRIGHT]) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                    [self performSegueWithIdentifier:@" LEAVE_STREAM_SEGUE" sender:nil];
+                    [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
                 }
             }
         }];

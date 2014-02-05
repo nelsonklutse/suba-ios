@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A2BD6C7189E462E00B9F4B5 /* SubaTutorialController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */; };
 		2A463D691885728E00549C7B /* PhotoStreamViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D681885728E00549C7B /* PhotoStreamViewController.m */; };
 		2A463D6C1885777600549C7B /* PhotoStreamCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D6B1885777600549C7B /* PhotoStreamCell.m */; };
 		2A504B1D189AB359008E3C40 /* PlacesWatchingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */; };
 		2A504B20189AB8D1008E3C40 /* PlacesWatchingStreamCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B1F189AB8D1008E3C40 /* PlacesWatchingStreamCell.m */; };
+		2A504B26189C4FD6008E3C40 /* BDKNotifyHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B25189C4FD6008E3C40 /* BDKNotifyHUD.m */; };
 		2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */; };
 		2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */; };
 		2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */; };
@@ -121,6 +123,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2A2BD6C5189E462E00B9F4B5 /* SubaTutorialController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubaTutorialController.h; sourceTree = "<group>"; };
+		2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SubaTutorialController.m; sourceTree = "<group>"; };
 		2A463D671885728E00549C7B /* PhotoStreamViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotoStreamViewController.h; sourceTree = "<group>"; };
 		2A463D681885728E00549C7B /* PhotoStreamViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhotoStreamViewController.m; sourceTree = "<group>"; };
 		2A463D6A1885777600549C7B /* PhotoStreamCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotoStreamCell.h; sourceTree = "<group>"; };
@@ -129,6 +133,8 @@
 		2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlacesWatchingViewController.m; sourceTree = "<group>"; };
 		2A504B1E189AB8D1008E3C40 /* PlacesWatchingStreamCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlacesWatchingStreamCell.h; sourceTree = "<group>"; };
 		2A504B1F189AB8D1008E3C40 /* PlacesWatchingStreamCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlacesWatchingStreamCell.m; sourceTree = "<group>"; };
+		2A504B24189C4FD6008E3C40 /* BDKNotifyHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BDKNotifyHUD.h; sourceTree = "<group>"; };
+		2A504B25189C4FD6008E3C40 /* BDKNotifyHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BDKNotifyHUD.m; sourceTree = "<group>"; };
 		2A5E3A731889B32C003F4933 /* ExplorePlacesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesViewController.h; sourceTree = "<group>"; };
 		2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesViewController.m; sourceTree = "<group>"; };
 		2A5E3A761889BD1E003F4933 /* ExplorePlacesCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesCell.h; sourceTree = "<group>"; };
@@ -307,6 +313,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2A504B27189C4FF3008E3C40 /* BDKNotifyHUD */ = {
+			isa = PBXGroup;
+			children = (
+				2A504B24189C4FD6008E3C40 /* BDKNotifyHUD.h */,
+				2A504B25189C4FD6008E3C40 /* BDKNotifyHUD.m */,
+			);
+			name = BDKNotifyHUD;
+			sourceTree = "<group>";
+		};
 		2AB0FA4A187AD276000AB276 /* Vendor */ = {
 			isa = PBXGroup;
 			children = (
@@ -368,6 +383,8 @@
 				2AFF59AB189944F100F051A0 /* ActivityViewController.m */,
 				2A504B1B189AB359008E3C40 /* PlacesWatchingViewController.h */,
 				2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */,
+				2A2BD6C5189E462E00B9F4B5 /* SubaTutorialController.h */,
+				2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -427,6 +444,7 @@
 		2AB0FA5A187AD7FE000AB276 /* AppHelper */ = {
 			isa = PBXGroup;
 			children = (
+				2A504B27189C4FF3008E3C40 /* BDKNotifyHUD */,
 				2AB0FA71187AD9EE000AB276 /* Networking Extensions */,
 				2AB0FA5C187AD911000AB276 /* AppHelper.h */,
 				2AB0FA5D187AD911000AB276 /* AppHelper.m */,
@@ -778,6 +796,7 @@
 				2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */,
 				2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */,
 				2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */,
+				2A504B26189C4FD6008E3C40 /* BDKNotifyHUD.m in Sources */,
 				2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */,
 				2ACAE5EB1886F4A00076A665 /* SMSContactsCell.m in Sources */,
 				2AB0FA6F187AD96C000AB276 /* Photo.m in Sources */,
@@ -797,6 +816,7 @@
 				2A463D6C1885777600549C7B /* PhotoStreamCell.m in Sources */,
 				2AB0FA77187AD9EE000AB276 /* LSPushProviderAPIClient.m in Sources */,
 				2AFF59AC189944F100F051A0 /* ActivityViewController.m in Sources */,
+				2A2BD6C7189E462E00B9F4B5 /* SubaTutorialController.m in Sources */,
 				2AB0FA70187AD96C000AB276 /* Privacy.m in Sources */,
 				89E3DC7618604E9D00D193F4 /* AppDelegate.m in Sources */,
 				2ACAE5E81886F4830076A665 /* AlbumMembersCell.m in Sources */,
@@ -906,6 +926,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				ONLY_ACTIVE_ARCH = YES;
+				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
 				SDKROOT = iphoneos;
 			};
 			name = Debug;
@@ -938,6 +959,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -949,7 +971,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -959,6 +981,7 @@
 				GCC_PREFIX_HEADER = "LifeSpot/LifeSpot-Prefix.pch";
 				INFOPLIST_FILE = "LifeSpot/LifeSpot-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -969,7 +992,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
-				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -979,6 +1002,7 @@
 				GCC_PREFIX_HEADER = "LifeSpot/LifeSpot-Prefix.pch";
 				INFOPLIST_FILE = "LifeSpot/LifeSpot-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

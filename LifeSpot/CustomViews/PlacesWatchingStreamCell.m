@@ -8,7 +8,7 @@
 
 #import "PlacesWatchingStreamCell.h"
 
-@interface PlacesWatchingStreamCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
+@interface PlacesWatchingStreamCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate,UIPhotoItemDelegate>
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,nonatomic) NSArray *gImages;
 @end
@@ -49,7 +49,7 @@
 
 #pragma UIPhotoGalleryDelegate methods
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
-    //self.galleryIndex = index;
+    
     //NSMutableArray
     if (index > 0) {
         //DLog(@"Rearranging the array coz index is %i",index);
@@ -68,6 +68,23 @@
 }
 
 
+
+
+- (UIPhotoGalleryDoubleTapHandler)photoGallery:(UIPhotoGalleryView *)photoGallery doubleTapHandlerAtIndex:(NSInteger)index {
+    switch (photoGallery.galleryMode) {
+        case UIPhotoGalleryModeImageLocal:
+            return UIPhotoGalleryDoubleTapHandlerZoom;
+            
+        case UIPhotoGalleryModeImageRemote:
+            return UIPhotoGalleryDoubleTapHandlerNone;
+            
+        default:
+            return UIPhotoGalleryDoubleTapHandlerCustom;
+    }
+}
+
+
+
 #pragma mark - Class Helpers
 - (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
 {
@@ -83,14 +100,17 @@
     
     self.pGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
     
+    self.pGallery.contentMode = UIViewContentModeScaleToFill;
     self.pGallery.dataSource = self;
     self.pGallery.delegate = self;
     
     self.pGallery.galleryMode = UIPhotoGalleryModeImageRemote;
-    self.pGallery.verticalGallery = _pGallery.peakSubView = NO;
-    self.pGallery.initialIndex = 1;
+    self.pGallery.verticalGallery = NO;
+    self.pGallery.peakSubView = YES;
+    self.pGallery.initialIndex = 0;
     self.pGallery.showsScrollIndicator = NO;
-    self.pGallery.backgroundColor = [UIColor blackColor];
+    self.pGallery.subviewGap = 10;
+    self.pGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
     
     
 }

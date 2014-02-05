@@ -217,9 +217,17 @@
 + (void)savePreferences:(NSDictionary *)prefs
 {
    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setValue:prefs[API_TOKEN] forKey:API_TOKEN];
+    if ([prefs objectForKey:API_TOKEN]) {
+        [userDefaults setValue:prefs[API_TOKEN] forKey:API_TOKEN];
+    }
+    
+    if ([prefs objectForKey:EMAIL]) {
     [userDefaults setValue:prefs[EMAIL] forKey:EMAIL];
+    }
+    
+    if ([prefs objectForKey:USER_NAME]) {
     [userDefaults setValue:prefs[USER_NAME] forKey:USER_NAME];
+    }
     
     if ([prefs objectForKey:FIRST_NAME]) {
         [userDefaults setValue:prefs[FIRST_NAME] forKey:FIRST_NAME];
@@ -253,7 +261,7 @@
     return [userDefaults valueForKey:SPOT_ID];
 }
 
-+ (NSDictionary *)userPreferences{
+/*+ (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *userPrefs = @{API_TOKEN : [userDefaults valueForKey:API_TOKEN],
                                 EMAIL : [userDefaults valueForKey:EMAIL],
@@ -266,7 +274,7 @@
                                 };
     return userPrefs;
     
-}
+}*/
 
 #pragma mark - API calls
 + (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(UserAuthenticatedCompletion)completionBlock{
@@ -292,9 +300,13 @@
              if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
                  
                  [self savePreferences:responseObject];
+                 
                  [self setFacebookID:user[@"id"]];
                  [self setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
-                 DLog(@"User Prefs now -\n%@",[AppHelper userPreferences]);
+                 //DLog(@"User Prefs now -\n%@",[AppHelper userPreferences]);
+                 
+                 DLog(@"User defaults - %@",NSStringFromClass([[NSUserDefaults standardUserDefaults] class]));
+                 
                  
                  completionBlock(responseObject,nil);
              }

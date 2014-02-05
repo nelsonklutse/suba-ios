@@ -8,6 +8,8 @@
 
 #import "FoursquareLocationsViewController.h"
 #import "FoursquareVenueCell.h"
+#import "CreateSpotViewController.h"
+#import "AlbumSettingsViewController.h"
 #import "Location.h"
 
 @interface FoursquareLocationsViewController ()<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate,CLLocationManagerDelegate>
@@ -23,12 +25,14 @@
 @property (weak, nonatomic) IBOutlet UITableView *venuesTableView;
 @property (weak, nonatomic) IBOutlet UIView *searchingVenuesView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *searchingVenuesIndicator;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *doneButton;
 
 
 //- (IBAction)locationChosen:(id)sender;
 - (void)displayFourSquareLocations:(Location *)locationPassed;
 - (void)showLoadingLocationsView:(BOOL)flag;
 - (NSArray *)retrieveVenueDetails:(NSDictionary *)venue;
+- (IBAction)dismissViewController:(UIBarButtonItem *)sender;
 @end
 
 @implementation FoursquareLocationsViewController
@@ -38,9 +42,8 @@ static CLLocationManager *locationManager;
 {
     [super viewDidLoad];
     
-    /*if (self.locations == NULL) {
-        DLog(@"Matching Locations is NULL");
-    }*/
+    // Disable the done button until location is selected
+    self.doneButton.enabled = NO;
     
     self.filteredLocations = [NSMutableArray arrayWithCapacity:[self.locations count]];
     
@@ -148,6 +151,8 @@ static CLLocationManager *locationManager;
             self.lastSelected = indexPath;
         }
     }
+    
+    self.doneButton.enabled = YES;
 }
 
 /*
@@ -279,6 +284,25 @@ static CLLocationManager *locationManager;
     }
     
        return venueDetails;
+}
+
+- (IBAction)dismissViewController:(UIBarButtonItem *)sender
+{
+    if (sender.tag == 100) {
+        
+        if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]) {
+            [self performSegueWithIdentifier:@"FoursquareToCreateSegueCancel" sender:nil];
+        }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
+            [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueCancel" sender:nil];
+        }
+    }else if (sender.tag == 200){
+        if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]) {
+            [self performSegueWithIdentifier:@"FoursquareToCreateSegueDone" sender:nil];
+        }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
+            [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueDone" sender:nil];
+        }
+ 
+    }
 }
 
 

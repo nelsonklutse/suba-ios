@@ -12,7 +12,7 @@
 
 @interface PersonalSpotCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 @property (strong,nonatomic) NSArray *gImages;
-@property (strong,nonatomic) NSDictionary *spotInfo;
+@property (strong,nonatomic) NSMutableDictionary *spotInfo;
 @property int galleryIndex;
 //@property (retain,nonatomic) MainStreamViewController *mainStreamVC;
 @end
@@ -148,13 +148,16 @@
     self.galleryIndex = index;
     //NSMutableArray
     if (index > 0) {
-        //DLog(@"Rearranging the array coz index is %i",index);
+        DLog(@"Rearranging the array coz index is %i",index);
+        
         NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
         NSRange rangeSecondArray = NSMakeRange(0, index);
         NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
         NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
         
         self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
+        DLog(@"self.gImages - %@",[self.gImages debugDescription]);
+        [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
     }
     
     
@@ -167,12 +170,13 @@
 #pragma mark - Class Helpers
 - (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
 {
-    DLog(@"SpotInfo is: %@",spotInfo);
-    self.spotInfo = spotInfo;
+    //DLog(@"SpotInfo is: %@",spotInfo);
+    self.spotInfo = [NSMutableDictionary dictionaryWithDictionary:spotInfo];
     NSArray *allphotos = spotInfo[@"photoURLs"];
     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
     NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
+    
     self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
 
         self.galleryIndex = indexPath.row;
@@ -184,9 +188,9 @@
     
         self.pGallery.galleryMode = UIPhotoGalleryModeImageRemote;
         self.pGallery.verticalGallery = _pGallery.peakSubView = NO;
-        self.pGallery.initialIndex = 1;
+        self.pGallery.initialIndex = 0;
         self.pGallery.showsScrollIndicator = NO;
-        self.pGallery.backgroundColor = [UIColor blackColor];
+        self.pGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
         
     
 }

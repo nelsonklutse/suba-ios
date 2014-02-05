@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface PlacesWatchingStreamCell : UICollectionViewCell
+
 @property (retain,nonatomic) UIPhotoGalleryView *pGallery;
 
 @property (weak, nonatomic) IBOutlet UIView *photoGalleryView;

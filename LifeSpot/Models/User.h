@@ -57,5 +57,6 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 - (void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion;
 - (void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion;
 + (void)allUsers:(GeneralCompletion)completion;
++ (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 
 @end

@@ -63,6 +63,8 @@
 #define kSUBANOTIFICATION_ERROR @"kNotficationError"
 #define kSUBANOTIFICATION_SUCCESS @"kNotficationSuccess"
 #define kNoInternetAccessNotification @"kNoInternetNotification"
+#define kSEXUALLY_EXPLICIT @"SEXUALLY_EXPLICIT"
+#define kUNRELATED_PHOTO @"UNRELATED_PHOTO"
 
 
 // Notifications

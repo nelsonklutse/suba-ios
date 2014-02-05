@@ -80,7 +80,7 @@ typedef enum{
 
 @implementation MainStreamViewController
 static CLLocationManager *locationManager;
-static NSInteger selectedButton = 0;
+static NSInteger selectedButton = 10;
 
 #pragma mark - Unwind Segues
 -(IBAction)unWindToSpots:(UIStoryboardSegue *)segue
@@ -89,6 +89,7 @@ static NSInteger selectedButton = 0;
         //Show notification
         AlbumSettingsViewController *aVC = segue.sourceViewController;
         NSString *albumName = aVC.spotName;
+        DLog(@"album name - %@",albumName);
         NSString *spotId = aVC.spotID;
         DLog(@"SpotId - %@",spotId);
          int counter = 0;
@@ -151,10 +152,8 @@ static NSInteger selectedButton = 0;
     self.allSpotsCollectionView.alpha = 0;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
-       [self.nearbySpotsButton setSelected:YES];
+        [self.nearbySpotsButton setSelected:YES];
     });
-    
-    
     
     self.placesBeingWatchedLoadingView.hidden = YES;
     [self checkForLocation];
@@ -170,12 +169,18 @@ static NSInteger selectedButton = 0;
         [self showPlacesBeingWatchedView:YES];
     }
     
+    
+    self.edgesForExtendedLayout = UIRectEdgeAll;
+    self.placesBeingWatchedTableView.contentInset = UIEdgeInsetsMake(0., 0., CGRectGetHeight(self.tabBarController.tabBar.frame), 0);
+    
     //self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
     
     //Register remote notification types
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateData) name:kUserReloadStreamNotification object:nil];
+    
+    
     
 }
 
@@ -232,12 +237,14 @@ static NSInteger selectedButton = 0;
 
 
 - (IBAction)placesButtonSelected:(UIButton *)sender {
+    self.navigationItem.title = @"Places";
     
     selectedButton = kPlacesButton;
     self.noDataView.alpha = 0;
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
+        
         /*if ([self.placesBeingWatched count] == 0) {
             [self fetchUserFavoriteLocations];
         }*/
@@ -256,6 +263,7 @@ static NSInteger selectedButton = 0;
 }
 
 - (IBAction)nearbySpotsButtonSelected:(UIButton *)sender{
+    self.navigationItem.title = @"Nearby Stream";
     
     selectedButton = kNearbyButton;
     self.noDataView.alpha = 0;
@@ -295,7 +303,7 @@ static NSInteger selectedButton = 0;
 }
 
 - (IBAction)allSpotsButtonSelected:(UIButton *)sender {
-    
+    self.navigationItem.title = @"All Streams";
     selectedButton = kAllSpotsButton;
 
     self.noDataView.alpha = 0;
@@ -397,7 +405,7 @@ static NSInteger selectedButton = 0;
         [self showPlacesBeingWatchedView:NO];
         
         if (error) {
-            DLog(@"Error - %@",error);
+            DLog(@"Error - %@",NSStringFromClass([error class]));
         }else{
             DLog(@"Results - %@",results);
             NSArray *locationsInfo = [results objectForKey:@"watching"];
@@ -410,13 +418,12 @@ static NSInteger selectedButton = 0;
                 
                // if ([locationsInfo count] > 0) {
                     self.placesBeingWatched = [NSMutableArray arrayWithArray:sortedPlaces];
-                    
                     [self.placesBeingWatchedTableView reloadData];
                 //}
             }else{ // User is not watching any locations
                 self.placesBeingWatchedTableView.alpha = 0;
                 self.noDataView.alpha = 1;
-                self.noDataLabel.text = @"When you want locations, they appear here. Tap Explore to start watching";
+                self.noDataLabel.text = @"When you watch locations, they appear here. Tap Explore to start watching";
             }
             
          }
@@ -548,6 +555,8 @@ static NSInteger selectedButton = 0;
     
     NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
     NSArray *photos = notifInfo[@"spotInfo"][@"photoURLs"];
+    
+    
     if (self.allSpotsCollectionView.alpha == 1) {
         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
     }else{
@@ -795,6 +804,8 @@ static NSInteger selectedButton = 0;
                          DLog(@"Album is public so joining spot");
                          if ([results[STATUS] isEqualToString:ALRIGHT]){
                      
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                             
                      [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
                      
                              [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
@@ -964,20 +975,20 @@ static NSInteger selectedButton = 0;
     if (selectedButton == 0) {
         // Places was the last visible view
         if (!self.placesBeingWatched) {
-           [self performSelector:@selector(placesButtonSelected:)];
+           [self fetchUserFavoriteLocations];
         }else [self.placesBeingWatchedTableView reloadData];
         
     }else if (selectedButton == 1){
         //DLog(@"Selected Button is - %i",selectedButton);
         // Nearby spots was the last visible view
         if (!self.nearbySpots) {
-            [self performSelector:@selector(nearbySpotsButtonSelected:)];
+            //[self performSelector:@selector(nearbySpotsButtonSelected:)];
         }else [self.nearbySpotsCollectionView reloadData];
         
     }else{
         //DLog(@"Selected Button is - %i",selectedButton);
         if (!self.allSpots) {
-          [self performSelector:@selector(allSpotsButtonSelected:)];
+          [self fetchUserSpots];
         }else [self.allSpotsCollectionView reloadData];
         
     }
@@ -985,6 +996,14 @@ static NSInteger selectedButton = 0;
     // Reload all the views
     //[self updateData];
 }
+
+
+
+-(void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:kUserReloadStreamNotification];
+}
+
 
 
 @end
