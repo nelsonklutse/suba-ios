@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>B523449F-1993-4284-8397-CD5F541399A2</string>
+	<key>IDESourceControlProjectName</key>
+	<string>LifeSpot</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>0DCC4DB6-835F-4F99-A254-DFB9C85E8B7F</key>
+		<string>https://bitbucket.org/mapoo/finallifespots.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>LifeSpot.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>0DCC4DB6-835F-4F99-A254-DFB9C85E8B7F</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://bitbucket.org/mapoo/finallifespots.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>0DCC4DB6-835F-4F99-A254-DFB9C85E8B7F</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>0DCC4DB6-835F-4F99-A254-DFB9C85E8B7F</string>
+			<key>IDESourceControlWCCName</key>
+			<string>finallifespots</string>
+		</dict>
+	</array>
+</dict>
+</plist>
