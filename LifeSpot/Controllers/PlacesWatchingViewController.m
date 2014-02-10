@@ -206,12 +206,12 @@
         if ([placesSpotsCell.pGallery superview]) {
             [placesSpotsCell.pGallery removeFromSuperview];
         }
-        placesSpotsCell.photoGalleryView.backgroundColor = [UIColor lightGrayColor];
+        placesSpotsCell.photoGalleryView.backgroundColor = [UIColor clearColor];
         [placesSpotsCell.photoGalleryView addSubview:placesSpotsCell.pGallery];
         
     }else{
         
-        UIImageView *noPhotosImageView = [[UIImageView alloc] initWithFrame:placesSpotsCell.photoGalleryView.frame];
+        UIImageView *noPhotosImageView = [[UIImageView alloc] initWithFrame:placesSpotsCell.photoGalleryView.bounds];
         noPhotosImageView.image = [UIImage imageNamed:@"noPhoto"];
         noPhotosImageView.contentMode = UIViewContentModeScaleAspectFit;
         
@@ -244,6 +244,33 @@
             self.currentSelectedSpot = dataPassed;
             
             if (isMember){
+                // User is a member so let him view photos;
+                [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
+            }else if ([spotCode isEqualToString:@"NONE"] || spotCode == NULL) {
+                // This album has no spot code and user is not a member, so we add user to this stream
+                [[User currentlyActiveUser] joinSpot:spotID completion:^(id results, NSError *error) {
+                    if (!error){
+                        //DLog(@"Album is public so joining spot");
+                        if ([results[STATUS] isEqualToString:ALRIGHT]){
+                            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                            [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                            [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
+                        }else{
+                            DLog(@"Server error - %@",error);
+                        }
+                    }else{
+                        DLog(@"Error - %@",error);
+                    }
+                }];
+            }else{
+                //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
+                alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+                [alertView show];
+            }
+    }
+            
+            /*if (isMember){
                 DLog(@"isUser member - %@",isMember);
                 // User is a member so let him view photos;
                 [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
@@ -278,7 +305,7 @@
             alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
             [alertView show];
             
-        }
+        }*/
 }
 
 

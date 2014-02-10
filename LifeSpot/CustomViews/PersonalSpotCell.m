@@ -7,8 +7,8 @@
 //
 
 #import "PersonalSpotCell.h"
-//#import "MainStreamViewController.h"
-//#import "S3PhotoFetcher.h"
+#import "DACircularProgressView.h"
+#import "S3PhotoFetcher.h"
 
 @interface PersonalSpotCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 @property (strong,nonatomic) NSArray *gImages;
@@ -123,7 +123,9 @@
 
 #pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
-    //DLog(@"Number of Images - %lu",(unsigned long)[self.gImages count]);
+    if ([self.gImages count] >= 3) {
+        return 3;
+    }
     return [self.gImages count];
 }
 
@@ -140,6 +142,38 @@
 }
 
 
+-(UIView *)photoGallery:(UIPhotoGalleryView *)photoGallery customViewAtIndex:(NSInteger)index
+{
+    
+    UIImageView *page = [[UIImageView alloc] init];
+    NSUInteger photos = [self.gImages count];
+    
+    if (photos == 1) {
+        page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
+    }else{
+        page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
+    }
+    
+    page.contentMode = UIViewContentModeScaleAspectFill;
+    
+    NSString *imageURL = self.gImages[index][@"s3name"];
+    
+    DLog(@"Image URL - %@",imageURL);
+    DACircularProgressView *progressView = [[DACircularProgressView alloc]
+                                            initWithFrame:CGRectMake((page.bounds.size.width/2) - 20, (page.bounds.size.height/2) - 20, 40.0f, 40.0f)];
+    
+    progressView.thicknessRatio = .1f;
+    progressView.roundedCorners = YES;
+    progressView.trackTintColor = [UIColor whiteColor];
+    progressView.progressTintColor = [UIColor colorWithRed:0.850f green:0.301f blue:0.078f alpha:1];
+    [page addSubview:progressView];
+    
+    [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:page placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView completion:^(id results, NSError *error) {
+        [progressView removeFromSuperview];
+    }];
+    
+    return page;
+}
 
 
 
@@ -147,7 +181,7 @@
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     self.galleryIndex = index;
     //NSMutableArray
-    if (index > 0) {
+    //if (index > 0) {
         DLog(@"Rearranging the array coz index is %i",index);
         
         NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
@@ -158,7 +192,7 @@
         self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
         DLog(@"self.gImages - %@",[self.gImages debugDescription]);
         [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
-    }
+    
     
     
     [[NSNotificationCenter defaultCenter]
@@ -181,18 +215,38 @@
 
         self.galleryIndex = indexPath.row;
     
+    DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
+    if ([self.gImages count] == 1) {
         self.pGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
+        
+        self.pGallery.initialIndex = 0;
+        //DLog(@"Set photo gallery initial index to %i",self.photoGallery.initialIndex);
+    }else{
+        self.pGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(20, 0, 280,self.photoGalleryView.frame.size.height)];
+        
+    }
+
         
         self.pGallery.dataSource = self;
         self.pGallery.delegate = self;
     
-        self.pGallery.galleryMode = UIPhotoGalleryModeImageRemote;
+        self.pGallery.galleryMode = UIPhotoGalleryModeCustomView;
         self.pGallery.verticalGallery = _pGallery.peakSubView = NO;
         self.pGallery.initialIndex = 0;
         self.pGallery.showsScrollIndicator = NO;
-        self.pGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
-        
+        self.pGallery.subviewGap = 5;
+        //self.pGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
+        self.pGallery.backgroundColor = [UIColor clearColor];
     
+    if ([self.gImages count] > 1) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100000), dispatch_get_main_queue(), ^{
+            if (self.pGallery.initialIndex != 1) {
+                [self.pGallery setInitialIndex:1 animated:NO];
+            }
+            
+        });
+    }
+
 }
 
 

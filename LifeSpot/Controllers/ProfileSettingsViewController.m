@@ -244,8 +244,7 @@
     //[self.assets addObjectsFromArray:assets];
     ALAsset *asset = (ALAsset *)assets[0];
     ALAssetRepresentation *representation = asset.defaultRepresentation;
-    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullResolutionImage
-                                                       scale:1.0f
+    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage                                                       scale:1.0f
                                                  orientation:(UIImageOrientation)representation.orientation];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     //dateFormatter se

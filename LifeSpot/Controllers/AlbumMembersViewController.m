@@ -24,9 +24,24 @@
 
 - (void)loadAlbumMembers:(NSString *)spotId;
 - (void)updateMembersData;
+
+- (IBAction)unWindToMembersFromCancel:(UIStoryboardSegue *)segue;
+- (IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue;
 @end
 
 @implementation AlbumMembersViewController
+
+-(IBAction)unWindToMembersFromCancel:(UIStoryboardSegue *)segue
+{
+    
+}
+
+-(IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue
+{
+    [CSNotificationView showInViewController:self.navigationController style:CSNotificationViewStyleSuccess message:@"Participants added"];
+    DLog(@"Load members");
+    [self loadAlbumMembers:self.spotID];
+}
 
 
 - (void)viewDidLoad
@@ -70,7 +85,7 @@
    }];*/
     
     [Spot fetchSpotInfo:spotId User:[AppHelper userID] completion:^(id results, NSError *error) {
-        DLog(@"Results - %@",results);
+        //DLog(@"Results - %@",results);
         self.spotInfo = results;
         self.members = results[@"members"];
         [self.memberTableView reloadData];
@@ -110,6 +125,8 @@
 {
     static NSString *cellIdentifier = @"AlbumMembersCell";
     AlbumMembersCell *memberCell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
+    
+    memberCell.memberImageView.image = [UIImage imageNamed:@"anonymousUser"];
     
     memberCell.memberUserNameLabel.text = self.members[indexPath.row][@"userName"];
     memberCell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;

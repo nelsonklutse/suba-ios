@@ -15,6 +15,11 @@
 #import "Location.h"
 #import "AlbumSettingsViewController.h"
 #import "PlacesWatchingViewController.h"
+#import "NearbySpotsCell.h"
+#import "InfinitePagingView.h"
+#import "S3PhotoFetcher.h"
+#import "DACircularProgressView.h"
+#import <SDWebImage/UIImageView+WebCache.h>
 
 typedef enum{
     kCollectionViewUpdateInsert = 0,
@@ -79,6 +84,7 @@ typedef enum{
 @end
 
 @implementation MainStreamViewController
+
 static CLLocationManager *locationManager;
 static NSInteger selectedButton = 10;
 
@@ -169,7 +175,6 @@ static NSInteger selectedButton = 10;
         [self showPlacesBeingWatchedView:YES];
     }
     
-    
     self.edgesForExtendedLayout = UIRectEdgeAll;
     self.placesBeingWatchedTableView.contentInset = UIEdgeInsetsMake(0., 0., CGRectGetHeight(self.tabBarController.tabBar.frame), 0);
     
@@ -179,8 +184,6 @@ static NSInteger selectedButton = 10;
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateData) name:kUserReloadStreamNotification object:nil];
-    
-    
     
 }
 
@@ -559,7 +562,7 @@ static NSInteger selectedButton = 10;
     
     if (self.allSpotsCollectionView.alpha == 1) {
         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
-    }else{
+    }else{ // It is the nearby spots stream
     self.currentSelectedSpot = notifInfo[@"spotInfo"];
     DLog(@"Notification Info - %@",notifInfo);
     NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
@@ -570,7 +573,7 @@ static NSInteger selectedButton = 10;
     DLog(@"Is user Member - %@",isMember);
     if (isMember) {
         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
-    }else if ([spotCode isEqualToString:@"NONE"]) {
+    }else if([spotCode isEqualToString:@"NONE"]){
         
         // This album has no spot code and user is not a member, so we add user to this stream
         [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
@@ -708,13 +711,13 @@ static NSInteger selectedButton = 10;
     }
     
     
-   
+    //DLog(@"Spots to display - %@",spotsToDisplay);
     [[personalSpotCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     NSString *photos = spotsToDisplay[indexPath.row][@"photos"];
     //DLog(@"%@ photos - %@",spotsToDisplay[indexPath.row][@"creatorName"],photos);
     personalSpotCell.userNameLabel.text = (spotsToDisplay[indexPath.row][@"creatorName"] != NULL)?spotsToDisplay[indexPath.row][@"creatorName"] : @"";
-   
+    
     NSString *imageSrc = spotsToDisplay[indexPath.row][@"creatorPhoto"];
     [personalSpotCell.userNameView setImageWithURL:[NSURL URLWithString:imageSrc] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     personalSpotCell.spotNameLabel.text = spotsToDisplay[indexPath.row][@"spotName"];
@@ -729,11 +732,11 @@ static NSInteger selectedButton = 10;
         
         [personalSpotCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
         //[personalSpotCell mScroller];
-
+        
         if ([personalSpotCell.pGallery superview]) {
             [personalSpotCell.pGallery removeFromSuperview];
         }
-        personalSpotCell.photoGalleryView.backgroundColor = [UIColor lightGrayColor];
+        personalSpotCell.photoGalleryView.backgroundColor = [UIColor clearColor];
         [personalSpotCell.photoGalleryView addSubview:personalSpotCell.pGallery];
         
         
@@ -763,7 +766,13 @@ static NSInteger selectedButton = 10;
     
     if(self.allSpotsCollectionView.alpha == 1){
         numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+        NSArray *photos = spotsToDisplay[indexPath.item][@"photoURLs"];
+        NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+        NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+        photos = [photos sortedArrayUsingDescriptors:sortDescriptors];
+
         spotsToDisplay = self.allSpots;
+        
         if (numberOfPhotos == 0) {
             NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
             NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
@@ -776,12 +785,10 @@ static NSInteger selectedButton = 10;
             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
             
         }
-
     }else if (self.nearbySpotsCollectionView.alpha == 1){
         
          spotsToDisplay = self.nearbySpots;
          numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-        
         if (numberOfPhotos == 0){
             NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
             NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
@@ -792,44 +799,35 @@ static NSInteger selectedButton = 10;
             self.currentSelectedSpot = dataPassed;
             
             if (isMember){
-                
-                    // User is a member so let him view photos;
+                // User is a member so let him view photos;
                     [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-                    
                 }else if ([spotCode isEqualToString:@"NONE"]) {
-                    
                     // This album has no spot code and user is not a member, so we add user to this stream
                     [[User currentlyActiveUser] joinSpot:spotID completion:^(id results, NSError *error) {
                      if (!error){
-                         DLog(@"Album is public so joining spot");
-                         if ([results[STATUS] isEqualToString:ALRIGHT]){
-                     
+                         //DLog(@"Album is public so joining spot");
+                        if ([results[STATUS] isEqualToString:ALRIGHT]){
                         [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                             
                      [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
-                     
                              [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
                        }else{
                          DLog(@"Server error - %@",error);
                        }
-                         
                      }else{
                          DLog(@"Error - %@",error);
                      }
                  }];
-              }
-                    
                 }else{
-                    
                     //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
                     UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
-                    
                     alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
                     [alertView show];
-                    
                 }
             }
         }
+    
+    
+}
 
 
 

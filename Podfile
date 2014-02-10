@@ -18,3 +18,5 @@ pod 'CSNotificationView', '~> 0.3.3'
 pod 'CXAlertView', '~> 1.0.1'
 
 pod 'BDKNotifyHUD', '~> 1.1.0'
+
+pod 'DACircularProgress', '~> 2.1.0'

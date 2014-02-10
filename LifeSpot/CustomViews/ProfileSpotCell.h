@@ -13,7 +13,7 @@
 @property (weak, nonatomic) IBOutlet UIView *userInfoView;
 @property (weak, nonatomic) IBOutlet UIImageView *userProfileImage;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfSpotsLabel;
-
+@property (weak, nonatomic) IBOutlet UILabel *numberOfPhotosLabel;
 @property (weak, nonatomic) IBOutlet UILabel *spotsLabel;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfPhotos;
 @property (weak, nonatomic) IBOutlet UILabel *photosLabel;

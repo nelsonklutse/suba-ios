@@ -40,12 +40,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
 
+@property (nonatomic, readwrite) CGRect likeButtonBounds;
+@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
+
 
 @property (weak, nonatomic) IBOutlet UIView *noPhotosView;
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
 - (IBAction)sharePhoto:(UIButton *)sender;
-- (IBAction)likePicture:(UIButton *)sender;
+- (IBAction)likePicture:(id)sender;
 - (void)savePhoto:(UIImage *)imageToSave;
 - (IBAction)cameraButtonTapped:(id)sender;
 - (IBAction)settingsButtonTapped:(id)sender;
@@ -64,6 +67,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (IBAction)showMembers:(id)sender;
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
+- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 @end
 
 @implementation PhotoStreamViewController
@@ -101,8 +105,6 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     }
     
-    self.photoCollectionView.contentInset = UIEdgeInsetsMake(0, (self.view.frame.size.width-300)/2, 0, (self.view.frame.size.width-300)/2);
-    
 }
 
          
@@ -110,7 +112,11 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
    [Spot fetchSpotImagesUsingSpotId:spotId completion:^(id results, NSError *error) {
        if (!error){
-           self.photos = [results objectForKey:@"spotPhotos"];
+           NSArray *allPhotos = [results objectForKey:@"spotPhotos"];
+           NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+           NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+           self.photos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
+           
            if ([self.photos count] > 0) {
                DLog(@"Photos in spot - %@",self.photos);
                self.noPhotosView.hidden = YES;
@@ -197,9 +203,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    
+    DLog(@"Photos - %@",self.photos[0]);
    static NSString *cellIdentifier = @"PhotoStreamCell";
     PhotoStreamCell *photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
+            [photoCardCell.likePhotoImage setSelected:NO];
+    });
+
     
     [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
                          indicator:photoCardCell.loadingPictureIndicator
@@ -259,18 +270,108 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 
 
-- (IBAction)likePicture:(UIButton *)sender
+- (IBAction)likePicture:(id)sender
 {
+    /*
+     UIButton *likeButton = (UIButton *)sender;
+    PhotoStreamCell *cell = (PhotoStreamCell *)likeButton.superview.superview.superview;
+    NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
+    DLog(@"Button state - %i",likeButton.state);
+    NSString *picId = self.photos[indexPath.item][@"id"];
     
+    if (likeButton.state == UIControlStateNormal || likeButton.state == UIControlStateHighlighted){
+        //DLog(@"Like\nUserId - %@\nPicId - %@",[AppHelper userID],picId);
+        
+        NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : picId,@"updateFlag" :@"1"};
+        
+        [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error) {
+            if ([results[STATUS] isEqualToString:ALRIGHT]){
+                cell.numberOfLikesLabel.text = results[@"likes"];
+                
+                [self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
+                
+                BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
+                                                                text:@"Photo Liked!"];
+                
+                hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
+                
+                // Animate it, then get rid of it. These settings last 1 second, takes a half-second fade.
+                [self.view addSubview:hud];
+                [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
+                    [hud removeFromSuperview];
+                }];
+
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
+                    [cell.likePhotoImage setSelected:YES];
+                        [UIView animateWithDuration:1.8 animations:^{
+                        cell.likePhotoImage.alpha = 0;
+                        cell.likePhotoImage.alpha = 1;
+                    }];
+                });
+            }
+
+        }];
+    }else{
+        //DLog(@"Unlike");
+       NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : picId,@"updateFlag" :@"0"};
+        
+        [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error){
+            
+            if ([results[STATUS] isEqualToString:ALRIGHT]){
+                cell.numberOfLikesLabel.text = results[@"likes"];
+                [self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
+                
+                BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
+                                                                text:@"Photo Unliked!"];
+                
+                hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
+                
+                // Animate it, then get rid of it. These settings last 1 second, takes a half-second fade.
+                [self.view addSubview:hud];
+                [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
+                    [hud removeFromSuperview];
+                }];
+                
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
+                    [cell.likePhotoImage setSelected:NO];
+                    [UIView animateWithDuration:1.8 animations:^{
+                        cell.likePhotoImage.alpha = 0;
+                        cell.likePhotoImage.alpha = 1;
+                    }];
+                });
+            }
+            
+        }];
+    }
+     */
+        
 }
+
+
+-(void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes
+{
+    NSMutableDictionary *guiltyPhoto = nil;
+    NSInteger indexOfLikedPhoto = 0;
+    for (NSDictionary *photo in photos) {
+        if ([photo[@"id"] integerValue] == [photoId integerValue]){
+            indexOfLikedPhoto = [photos indexOfObject:photo];
+            DLog(@"Index of liked photo - %i",indexOfLikedPhoto);
+            guiltyPhoto = [NSMutableDictionary dictionaryWithDictionary:photo];
+            break;
+        }
+    }
+    guiltyPhoto[@"id"] = likes;
+    self.photos[indexOfLikedPhoto] = guiltyPhoto;
+    DLog(@"Guilty photo - %@",self.photos[indexOfLikedPhoto]);
+}
+
+
 
 - (void)savePhoto:(UIImage *)imageToSave {
     
     if (imageToSave != nil){
-        
-        
         [self savePhotoToCustomAlbum:imageToSave];
-         
 
     }else{
         [AppHelper showAlert:@"Save Image Request"
@@ -432,7 +533,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     //[self.assets addObjectsFromArray:assets];
     ALAsset *asset = (ALAsset *)assets[0];
     ALAssetRepresentation *representation = asset.defaultRepresentation;
-    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullResolutionImage
+    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
                                                        scale:1.0f
                                                  orientation:(UIImageOrientation)representation.orientation];
     
@@ -551,26 +652,25 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
    
-    UIImage *image = info[UIImagePickerControllerOriginalImage];
+    UIImage *image = info[UIImagePickerControllerEditedImage];
     
-   // [self resizeImage:image towidth:640.0f toHeight:640.0f
-           // completon:^(UIImage *compressedPhoto, NSError *error) {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //dateFormatter se
+    
+    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+
+    [self resizeImage:image towidth:320.0f toHeight:320.0f
+           completon:^(UIImage *compressedPhoto, NSError *error) {
                 
-                NSDictionary *imageMetaData = info[UIImagePickerControllerMediaMetadata];
-                NSDictionary *imageInfo = [imageMetaData valueForKey:@"{TIFF}"];
-                NSString *photoTimestamp = imageInfo[@"DateTime"];
-                
-                NSString *trimmedString = [photoTimestamp stringByReplacingOccurrencesOfString:@" " withString:@""];
-                //NSLog(@"Timestamp - %@",trimmedString);
-               // UIImage *newImage = compressedPhoto;
-                NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
-    
-                [self uploadPhoto:imageData WithName:trimmedString];
-                
-            //}];
-    
-    
-    
+                UIImage *newImage = compressedPhoto;
+               NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
+               
+               [self uploadPhoto:imageData WithName:trimmedString];
+        }];
     
     [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
@@ -584,7 +684,6 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 -(void)uploadPhoto:(NSData *)imageData WithName:(NSString *)name
 {
-    
     NSString *userId = [User currentlyActiveUser].userID;
     NSString *spotId = self.spotID;
     
@@ -611,9 +710,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     self.imageUploadProgressView.hidden = NO;
     
     [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-        
+        //DLog(@"Upload progress value -  %f",(float) totalBytesWritten / totalBytesExpectedToWrite);
         self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
-        if (self.imageUploadProgressView.progress == 1.0) {
+        if (self.imageUploadProgressView.progress == 1.0){
             self.imageUploadProgressView.hidden = YES; // or remove from superview
             
         }

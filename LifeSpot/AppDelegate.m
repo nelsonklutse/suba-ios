@@ -258,9 +258,9 @@
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
     }];*/
-    [[SDImageCache sharedImageCache] clearDisk];
-    [[SDImageCache sharedImageCache] cleanDisk];
-    [[SDImageCache sharedImageCache] clearMemory];
+   // [[SDImageCache sharedImageCache] clearDisk];
+    //[[SDImageCache sharedImageCache] cleanDisk];
+    //[[SDImageCache sharedImageCache] clearMemory];
 
     
      [self.window makeKeyAndVisible];

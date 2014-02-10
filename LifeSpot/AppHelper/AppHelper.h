@@ -24,7 +24,7 @@ typedef void (^NotificationCompletion) ();
 
 + (void)savePreferences:(NSDictionary *)prefs;
 + (void)saveSessionWithOptions:(NSArray *)options;
-+ (NSDictionary *)userPreferences;
+//+ (NSDictionary *)userPreferences;
 + (BOOL)validateEmail:(NSString *)string;
 + (BOOL)CheckPasswordMinLength:(NSInteger *)length password:(NSString *)string;
 + (NSString *)firstName;

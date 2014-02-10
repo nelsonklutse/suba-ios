@@ -16,4 +16,5 @@ typedef enum {
 
 @interface InvitesViewController : UIViewController
 @property (strong,nonatomic) NSDictionary *spotToInviteUserTo;
+//@property (strong,nonatomic) NSArray *partcipants;
 @end

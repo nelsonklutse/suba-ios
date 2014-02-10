@@ -152,8 +152,14 @@
             //Log the error
             DLog(@"Error -  %@",error);
         }else{
-            self.userProfileInfo = (NSDictionary *)results;
-            [self.userSpotsCollectionView reloadData];
+            DLog(@"User info - %@",results);
+            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                self.userProfileInfo = (NSDictionary *)results;
+                [self.userSpotsCollectionView reloadData];
+            }else{
+                // There was a problem on the server
+            }
+            
             
             //DLog(@"UserInfo - %@",self.userProfileInfo);
         }
@@ -223,6 +229,7 @@
             self.navigationItem.title = [NSString stringWithFormat:@"@%@",userName];
             userInfoCell.numberOfSpotsLabel.text = numberOfSpots;
             userInfoCell.spotsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Spot" : @"Spots";
+            userInfoCell.numberOfPhotosLabel.text = [self.userProfileInfo[@"photos"] stringValue];
             
             if (profilePhotoURL) {
                 [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
@@ -261,6 +268,7 @@
             }
             photosCell.photoGalleryView.backgroundColor = [UIColor clearColor];
             [photosCell.photoGalleryView addSubview:photosCell.photoGallery];
+            
             
             //DLog(@"Gallery subviews at index - %i is %@",indexPath.item,[[photosCell.photoGalleryView subviews] debugDescription]);
             

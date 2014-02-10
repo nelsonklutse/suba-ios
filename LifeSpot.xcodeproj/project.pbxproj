@@ -15,12 +15,19 @@
 		2A504B26189C4FD6008E3C40 /* BDKNotifyHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B25189C4FD6008E3C40 /* BDKNotifyHUD.m */; };
 		2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */; };
 		2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */; };
+		2A74F90318A53EBE00889227 /* NearbySpotsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A74F90218A53EBE00889227 /* NearbySpotsCell.m */; };
+		2A74F90818A545F800889227 /* InfinitePagingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A74F90718A545F800889227 /* InfinitePagingView.m */; };
+		2A74F90C18A567F000889227 /* DACircularProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A74F90B18A567F000889227 /* DACircularProgressView.m */; };
+		2A74F90E18A56C6800889227 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A74F90D18A56C6800889227 /* Images.xcassets */; };
 		2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */; };
 		2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */; };
+		2AAA51A818A79D9A00591AA5 /* UIImage+Alpha.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AAA51A118A79D9A00591AA5 /* UIImage+Alpha.m */; };
+		2AAA51A918A79D9A00591AA5 /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AAA51A318A79D9A00591AA5 /* UIImage+Resize.m */; };
+		2AAA51AA18A79D9A00591AA5 /* UIImage+RoundedCorner.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AAA51A518A79D9A00591AA5 /* UIImage+RoundedCorner.m */; };
+		2AAA51AB18A79D9A00591AA5 /* UIImage+Scaling.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AAA51A718A79D9A00591AA5 /* UIImage+Scaling.m */; };
 		2AB0FA50187AD276000AB276 /* ICETutorialController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4D187AD276000AB276 /* ICETutorialController.m */; };
 		2AB0FA51187AD276000AB276 /* ICETutorialPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4F187AD276000AB276 /* ICETutorialPage.m */; };
 		2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA56187AD3BE000AB276 /* SignUpViewController.m */; };
-		2AB0FA59187AD7A4000AB276 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB0FA58187AD7A4000AB276 /* FacebookSDK.framework */; };
 		2AB0FA60187AD911000AB276 /* AppHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA5D187AD911000AB276 /* AppHelper.m */; };
 		2AB0FA61187AD911000AB276 /* S3PhotoFetcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA5F187AD911000AB276 /* S3PhotoFetcher.m */; };
 		2AB0FA6C187AD96C000AB276 /* Location.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA62187AD96C000AB276 /* Location.m */; };
@@ -73,6 +80,7 @@
 		8940C60018631C5000FD1780 /* SettingsIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FD18631C5000FD1780 /* SettingsIcon.png */; };
 		8940C60118631C5000FD1780 /* Spotlight.png in Resources */ = {isa = PBXBuildFile; fileRef = 8940C5FE18631C5000FD1780 /* Spotlight.png */; };
 		8940C60318632BEE00FD1780 /* girl.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 8940C60218632BEE00FD1780 /* girl.jpg */; };
+		89A8A12118A3A6200050B0BE /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89A8A12018A3A6200050B0BE /* FacebookSDK.framework */; };
 		89E3DC6618604E9D00D193F4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6518604E9D00D193F4 /* Foundation.framework */; };
 		89E3DC6818604E9D00D193F4 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6718604E9D00D193F4 /* CoreGraphics.framework */; };
 		89E3DC6A18604E9D00D193F4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6918604E9D00D193F4 /* UIKit.framework */; };
@@ -81,7 +89,6 @@
 		89E3DC7618604E9D00D193F4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 89E3DC7518604E9D00D193F4 /* AppDelegate.m */; };
 		89E3DC7918604E9D00D193F4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 89E3DC7718604E9D00D193F4 /* Main.storyboard */; };
 		89E3DC7C18604E9D00D193F4 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 89E3DC7B18604E9D00D193F4 /* ViewController.m */; };
-		89E3DC7E18604E9D00D193F4 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89E3DC7D18604E9D00D193F4 /* Images.xcassets */; };
 		89E3DC8518604E9D00D193F4 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC8418604E9D00D193F4 /* XCTest.framework */; };
 		89E3DC8618604E9D00D193F4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6518604E9D00D193F4 /* Foundation.framework */; };
 		89E3DC8718604E9D00D193F4 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6918604E9D00D193F4 /* UIKit.framework */; };
@@ -139,17 +146,31 @@
 		2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesViewController.m; sourceTree = "<group>"; };
 		2A5E3A761889BD1E003F4933 /* ExplorePlacesCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesCell.h; sourceTree = "<group>"; };
 		2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesCell.m; sourceTree = "<group>"; };
+		2A74F90118A53EBE00889227 /* NearbySpotsCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NearbySpotsCell.h; sourceTree = "<group>"; };
+		2A74F90218A53EBE00889227 /* NearbySpotsCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NearbySpotsCell.m; sourceTree = "<group>"; };
+		2A74F90618A545F800889227 /* InfinitePagingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InfinitePagingView.h; sourceTree = "<group>"; };
+		2A74F90718A545F800889227 /* InfinitePagingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InfinitePagingView.m; sourceTree = "<group>"; };
+		2A74F90A18A567F000889227 /* DACircularProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DACircularProgressView.h; sourceTree = "<group>"; };
+		2A74F90B18A567F000889227 /* DACircularProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DACircularProgressView.m; sourceTree = "<group>"; };
+		2A74F90D18A56C6800889227 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		2A7A27C3188D3DED000A2A45 /* UserSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserSettingsViewController.h; sourceTree = "<group>"; };
 		2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserSettingsViewController.m; sourceTree = "<group>"; };
 		2A7A27C6188D5C0E000A2A45 /* SearchBarCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchBarCell.h; sourceTree = "<group>"; };
 		2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SearchBarCell.m; sourceTree = "<group>"; };
+		2AAA51A018A79D9A00591AA5 /* UIImage+Alpha.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Alpha.h"; sourceTree = "<group>"; };
+		2AAA51A118A79D9A00591AA5 /* UIImage+Alpha.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Alpha.m"; sourceTree = "<group>"; };
+		2AAA51A218A79D9A00591AA5 /* UIImage+Resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Resize.h"; sourceTree = "<group>"; };
+		2AAA51A318A79D9A00591AA5 /* UIImage+Resize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Resize.m"; sourceTree = "<group>"; };
+		2AAA51A418A79D9A00591AA5 /* UIImage+RoundedCorner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+RoundedCorner.h"; sourceTree = "<group>"; };
+		2AAA51A518A79D9A00591AA5 /* UIImage+RoundedCorner.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+RoundedCorner.m"; sourceTree = "<group>"; };
+		2AAA51A618A79D9A00591AA5 /* UIImage+Scaling.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Scaling.h"; sourceTree = "<group>"; };
+		2AAA51A718A79D9A00591AA5 /* UIImage+Scaling.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Scaling.m"; sourceTree = "<group>"; };
 		2AB0FA4C187AD276000AB276 /* ICETutorialController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialController.h; sourceTree = "<group>"; };
 		2AB0FA4D187AD276000AB276 /* ICETutorialController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ICETutorialController.m; sourceTree = "<group>"; };
 		2AB0FA4E187AD276000AB276 /* ICETutorialPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialPage.h; sourceTree = "<group>"; };
 		2AB0FA4F187AD276000AB276 /* ICETutorialPage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ICETutorialPage.m; sourceTree = "<group>"; };
 		2AB0FA55187AD3BE000AB276 /* SignUpViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SignUpViewController.h; sourceTree = "<group>"; };
 		2AB0FA56187AD3BE000AB276 /* SignUpViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SignUpViewController.m; sourceTree = "<group>"; };
-		2AB0FA58187AD7A4000AB276 /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FacebookSDK.framework; sourceTree = "<group>"; };
 		2AB0FA5B187AD836000AB276 /* LifeSpotsConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LifeSpotsConfig.h; sourceTree = "<group>"; };
 		2AB0FA5C187AD911000AB276 /* AppHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppHelper.h; sourceTree = "<group>"; };
 		2AB0FA5D187AD911000AB276 /* AppHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppHelper.m; sourceTree = "<group>"; };
@@ -238,6 +259,7 @@
 		8940C5FD18631C5000FD1780 /* SettingsIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SettingsIcon.png; sourceTree = "<group>"; };
 		8940C5FE18631C5000FD1780 /* Spotlight.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Spotlight.png; sourceTree = "<group>"; };
 		8940C60218632BEE00FD1780 /* girl.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = girl.jpg; sourceTree = "<group>"; };
+		89A8A12018A3A6200050B0BE /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FacebookSDK.framework; sourceTree = "<group>"; };
 		89E3DC6218604E9D00D193F4 /* LifeSpot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LifeSpot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		89E3DC6518604E9D00D193F4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		89E3DC6718604E9D00D193F4 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -251,7 +273,6 @@
 		89E3DC7818604E9D00D193F4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		89E3DC7A18604E9D00D193F4 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		89E3DC7B18604E9D00D193F4 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
-		89E3DC7D18604E9D00D193F4 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		89E3DC8318604E9D00D193F4 /* LifeSpotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LifeSpotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		89E3DC8418604E9D00D193F4 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		89E3DC8C18604E9D00D193F4 /* LifeSpotTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LifeSpotTests-Info.plist"; sourceTree = "<group>"; };
@@ -288,12 +309,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				2AB0FA83187C35F8000AB276 /* AddressBook.framework in Frameworks */,
+				89A8A12118A3A6200050B0BE /* FacebookSDK.framework in Frameworks */,
 				2AB0FA84187C35F8000AB276 /* AddressBookUI.framework in Frameworks */,
 				2AB0FA80187C35EF000AB276 /* MessageUI.framework in Frameworks */,
 				2AB0FA7E187C35E5000AB276 /* Social.framework in Frameworks */,
 				2AB0FA7C187C35DD000AB276 /* CoreLocation.framework in Frameworks */,
 				89E3DC6818604E9D00D193F4 /* CoreGraphics.framework in Frameworks */,
-				2AB0FA59187AD7A4000AB276 /* FacebookSDK.framework in Frameworks */,
 				89E3DC6A18604E9D00D193F4 /* UIKit.framework in Frameworks */,
 				89E3DC6618604E9D00D193F4 /* Foundation.framework in Frameworks */,
 				DF1AF4E767D44E498DD799A9 /* libPods.a in Frameworks */,
@@ -320,6 +341,31 @@
 				2A504B25189C4FD6008E3C40 /* BDKNotifyHUD.m */,
 			);
 			name = BDKNotifyHUD;
+			sourceTree = "<group>";
+		};
+		2A74F90918A567F000889227 /* DACircularProgress */ = {
+			isa = PBXGroup;
+			children = (
+				2A74F90A18A567F000889227 /* DACircularProgressView.h */,
+				2A74F90B18A567F000889227 /* DACircularProgressView.m */,
+			);
+			path = DACircularProgress;
+			sourceTree = "<group>";
+		};
+		2AAA519F18A79D9A00591AA5 /* UIImage+Resize */ = {
+			isa = PBXGroup;
+			children = (
+				2AAA51A018A79D9A00591AA5 /* UIImage+Alpha.h */,
+				2AAA51A118A79D9A00591AA5 /* UIImage+Alpha.m */,
+				2AAA51A218A79D9A00591AA5 /* UIImage+Resize.h */,
+				2AAA51A318A79D9A00591AA5 /* UIImage+Resize.m */,
+				2AAA51A418A79D9A00591AA5 /* UIImage+RoundedCorner.h */,
+				2AAA51A518A79D9A00591AA5 /* UIImage+RoundedCorner.m */,
+				2AAA51A618A79D9A00591AA5 /* UIImage+Scaling.h */,
+				2AAA51A718A79D9A00591AA5 /* UIImage+Scaling.m */,
+			);
+			name = "UIImage+Resize";
+			path = "../UIImage+Resize";
 			sourceTree = "<group>";
 		};
 		2AB0FA4A187AD276000AB276 /* Vendor */ = {
@@ -409,6 +455,8 @@
 		2AB0FA54187AD286000AB276 /* CustomViews */ = {
 			isa = PBXGroup;
 			children = (
+				2A74F90118A53EBE00889227 /* NearbySpotsCell.h */,
+				2A74F90218A53EBE00889227 /* NearbySpotsCell.m */,
 				2ABA8124188DD99500A5E8B7 /* ProfileSpotCell.m */,
 				2ABA8125188DD99500A5E8B7 /* ProfileSpotCell.h */,
 				2ABA8121188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m */,
@@ -444,6 +492,9 @@
 		2AB0FA5A187AD7FE000AB276 /* AppHelper */ = {
 			isa = PBXGroup;
 			children = (
+				2A74F90918A567F000889227 /* DACircularProgress */,
+				2A74F90618A545F800889227 /* InfinitePagingView.h */,
+				2A74F90718A545F800889227 /* InfinitePagingView.m */,
 				2A504B27189C4FF3008E3C40 /* BDKNotifyHUD */,
 				2AB0FA71187AD9EE000AB276 /* Networking Extensions */,
 				2AB0FA5C187AD911000AB276 /* AppHelper.h */,
@@ -505,6 +556,7 @@
 			isa = PBXGroup;
 			children = (
 				89E3DC6B18604E9D00D193F4 /* LifeSpot */,
+				2A74F90D18A56C6800889227 /* Images.xcassets */,
 				2AB0FA4A187AD276000AB276 /* Vendor */,
 				89E3DC8A18604E9D00D193F4 /* LifeSpotTests */,
 				89E3DC6418604E9D00D193F4 /* Frameworks */,
@@ -525,12 +577,12 @@
 		89E3DC6418604E9D00D193F4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				89A8A12018A3A6200050B0BE /* FacebookSDK.framework */,
 				2AB0FA81187C35F8000AB276 /* AddressBook.framework */,
 				2AB0FA82187C35F8000AB276 /* AddressBookUI.framework */,
 				2AB0FA7F187C35EF000AB276 /* MessageUI.framework */,
 				2AB0FA7D187C35E5000AB276 /* Social.framework */,
 				2AB0FA7B187C35DD000AB276 /* CoreLocation.framework */,
-				2AB0FA58187AD7A4000AB276 /* FacebookSDK.framework */,
 				89E3DC6518604E9D00D193F4 /* Foundation.framework */,
 				89E3DC6718604E9D00D193F4 /* CoreGraphics.framework */,
 				89E3DC6918604E9D00D193F4 /* UIKit.framework */,
@@ -543,13 +595,13 @@
 		89E3DC6B18604E9D00D193F4 /* LifeSpot */ = {
 			isa = PBXGroup;
 			children = (
+				2AAA519F18A79D9A00591AA5 /* UIImage+Resize */,
 				2AB0FA5A187AD7FE000AB276 /* AppHelper */,
 				2AB0FA52187AD286000AB276 /* Controllers */,
 				2AB0FA53187AD286000AB276 /* Models */,
 				2AB0FA54187AD286000AB276 /* CustomViews */,
 				89E3DC7A18604E9D00D193F4 /* ViewController.h */,
 				89E3DC7B18604E9D00D193F4 /* ViewController.m */,
-				89E3DC7D18604E9D00D193F4 /* Images.xcassets */,
 				89E3DC6C18604E9D00D193F4 /* Supporting Files */,
 			);
 			path = LifeSpot;
@@ -711,7 +763,6 @@
 				89E3DCC418604EC500D193F4 /* tutorial_background_02@2x.jpg in Resources */,
 				89E3DCBD18604EC500D193F4 /* button-background.png in Resources */,
 				89E3DCBB18604EC500D193F4 /* background-gradient.png in Resources */,
-				89E3DC7E18604E9D00D193F4 /* Images.xcassets in Resources */,
 				89E3DCC218604EC500D193F4 /* tutorial_background_00@2x.jpg in Resources */,
 				89E3DCC518604EC500D193F4 /* tutorial_background_03@2x.jpg in Resources */,
 				89E4545418609FFB0041FA93 /* 5@2x.png in Resources */,
@@ -719,6 +770,7 @@
 				89E3DCC318604EC500D193F4 /* tutorial_background_01@2x.jpg in Resources */,
 				2ADE846C18819E20001C2515 /* gard_12.jpg in Resources */,
 				89E3DC7018604E9D00D193F4 /* InfoPlist.strings in Resources */,
+				2A74F90E18A56C6800889227 /* Images.xcassets in Resources */,
 				89E4544C18609FFB0041FA93 /* 1@2x.png in Resources */,
 				89E4544E18609FFB0041FA93 /* 2@2x.png in Resources */,
 				89E3DCC018604EC500D193F4 /* Default.png in Resources */,
@@ -794,21 +846,26 @@
 			files = (
 				2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */,
 				2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */,
+				2AAA51A818A79D9A00591AA5 /* UIImage+Alpha.m in Sources */,
 				2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */,
 				2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */,
 				2A504B26189C4FD6008E3C40 /* BDKNotifyHUD.m in Sources */,
 				2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */,
+				2A74F90318A53EBE00889227 /* NearbySpotsCell.m in Sources */,
 				2ACAE5EB1886F4A00076A665 /* SMSContactsCell.m in Sources */,
 				2AB0FA6F187AD96C000AB276 /* Photo.m in Sources */,
 				2AB0FA76187AD9EE000AB276 /* LifespotsAPIClient.m in Sources */,
+				2AAA51AB18A79D9A00591AA5 /* UIImage+Scaling.m in Sources */,
 				2AB0FA60187AD911000AB276 /* AppHelper.m in Sources */,
 				89E3DC7C18604E9D00D193F4 /* ViewController.m in Sources */,
 				2AB0FA93187D68A1000AB276 /* FoursquareVenueCell.m in Sources */,
 				2ACAE5F7188705F90076A665 /* InvitesViewController.m in Sources */,
 				2ACAE5F11886F4C90076A665 /* FacebookUsersCell.m in Sources */,
+				2AAA51AA18A79D9A00591AA5 /* UIImage+RoundedCorner.m in Sources */,
 				2AB0FA90187C3DAF000AB276 /* MainStreamViewController.m in Sources */,
 				2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */,
 				2AB0FA8A187C372A000AB276 /* FoursquareLocationsViewController.m in Sources */,
+				2AAA51A918A79D9A00591AA5 /* UIImage+Resize.m in Sources */,
 				2A504B1D189AB359008E3C40 /* PlacesWatchingViewController.m in Sources */,
 				2ACAE5E518869A530076A665 /* AlbumSettingsViewController.m in Sources */,
 				2ACAE5EE1886F4B70076A665 /* SubaUsersInviteCell.m in Sources */,
@@ -822,6 +879,7 @@
 				2ACAE5E81886F4830076A665 /* AlbumMembersCell.m in Sources */,
 				2ADE847B188237FE001C2515 /* MagazineTeaserView.m in Sources */,
 				2ACAE5F4188705E40076A665 /* AlbumMembersViewController.m in Sources */,
+				2A74F90C18A567F000889227 /* DACircularProgressView.m in Sources */,
 				2ADE846118802BEF001C2515 /* PersonalSpotCell.m in Sources */,
 				2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */,
 				2A504B20189AB8D1008E3C40 /* PlacesWatchingStreamCell.m in Sources */,
@@ -829,6 +887,7 @@
 				2AB0FA7A187B302B000AB276 /* LoginViewController.m in Sources */,
 				2ADE847C188237FE001C2515 /* TFScroller.m in Sources */,
 				2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */,
+				2A74F90818A545F800889227 /* InfinitePagingView.m in Sources */,
 				2AB0FA6C187AD96C000AB276 /* Location.m in Sources */,
 				2AB0FA6D187AD96C000AB276 /* Spot.m in Sources */,
 				2AB0FA6E187AD96C000AB276 /* User.m in Sources */,

@@ -7,6 +7,8 @@
 //
 
 #import "PhotosCell.h"
+#import "DACircularProgressView.h"
+#import "S3PhotoFetcher.h"
 
 @interface PhotosCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 
@@ -39,6 +41,41 @@
     return [NSURL URLWithString:imageURL];
 }
 
+
+-(UIView *)photoGallery:(UIPhotoGalleryView *)photoGallery customViewAtIndex:(NSInteger)index
+{
+    
+    UIImageView *page = [[UIImageView alloc] init];
+    NSUInteger photos = [self.gImages[@"images"] count];
+    
+    if (photos == 1) {
+        page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
+    }else{
+        page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
+    }
+    page.contentMode = UIViewContentModeScaleAspectFill;
+    //DLog(@"PhotoGallery frame - %@\nPhotoGallery subview gap - %f\nImage frame - %@",NSStringFromCGRect(photoGallery.frame),photoGallery.subviewGap,NSStringFromCGRect(page.frame));
+    
+    //page.backgroundColor = [UIColor yellowColor];
+    NSString *imageURL = self.gImages[@"images"][index];
+    
+   //DLog(@"Image URL - %@",imageURL);
+    DACircularProgressView *progressView = [[DACircularProgressView alloc]
+                                            initWithFrame:CGRectMake((page.bounds.size.width/2) - 20, (page.bounds.size.height/2) - 20, 40.0f, 40.0f)];
+    progressView.thicknessRatio = .1f;
+    progressView.roundedCorners = YES;
+    progressView.trackTintColor = [UIColor whiteColor];
+    progressView.progressTintColor = [UIColor colorWithRed:0.850f green:0.301f blue:0.078f alpha:1];
+    [page addSubview:progressView];
+    
+    [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:page placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView completion:^(id results, NSError *error) {
+        //DLog(@"IMAGE DOWNLOADED");
+        //page.image = (UIImage *)results;
+        [progressView removeFromSuperview];
+    }];
+    
+    return page;
+}
 
 
 
@@ -77,19 +114,37 @@
     //DLog(@"gImages - %@",[allSpots debugDescription]);
     
     //self.galleryIndex = indexPath.row;
+    DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
+    if ([self.gImages[@"images"] count] == 1) {
+         self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
+        
+        self.photoGallery.initialIndex = 0;
+        //DLog(@"Set photo gallery initial index to %i",self.photoGallery.initialIndex);
+    }else{
+       self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(20, 0, 280,self.photoGalleryView.frame.size.height)];
+        
+}
     
-    self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
     
     self.photoGallery.dataSource = self;
     self.photoGallery.delegate = self;
     
-    self.photoGallery.galleryMode = UIPhotoGalleryModeImageRemote;
+    self.photoGallery.galleryMode = UIPhotoGalleryModeCustomView;
     self.photoGallery.verticalGallery = _photoGallery.peakSubView = NO;
-    self.photoGallery.initialIndex = 0;
+    
     self.photoGallery.showsScrollIndicator = NO;
-    self.photoGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
+    [self.photoGallery setSubviewGap:5];
+    self.photoGalleryView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
+    //self.photoGallery.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"blurBg"]];
     
-    
+    if ([self.gImages count] > 1) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 100000), dispatch_get_main_queue(), ^{
+            if (self.photoGallery.initialIndex != 1) {
+                [self.photoGallery setInitialIndex:1 animated:NO];
+            }
+            
+        });
+    }
 }
 
 

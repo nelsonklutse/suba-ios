@@ -106,7 +106,7 @@ static BOOL isFiltered = NO;
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba){
         //NSString *requestURL = [NSString stringWithFormat:@"%@invitedtoalbum",PUSH_PROVIDER_BASE_URL];
         
-        NSString *senderId = [AppHelper userID];
+        /*NSString *senderId = [AppHelper userID];
         
         NSDictionary *params = @{@"senderId": senderId,
                                  @"recipientIds" : [self.invitedSubaUsers description],
@@ -114,7 +114,8 @@ static BOOL isFiltered = NO;
                                  @"spotId" : self.spotToInviteUserTo[@"spotId"],
                                  @"spotName" : self.spotToInviteUserTo[@"spotName"]};
        
-        
+       
+        DLog(@"Invited users - %@",self.invitedSubaUsers);
         [[LSPushProviderAPIClient sharedInstance] POST:
          @"invitedtoalbum" parameters:params constructingBodyWithBlock:nil success:^(NSURLSessionDataTask *task, id responseObject){
              
@@ -125,7 +126,30 @@ static BOOL isFiltered = NO;
              
               DLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
              
-         }];
+         }];*/
+        
+        
+        
+        NSDictionary *invitedUsers = nil;
+        if ([self.invitedSubaUsers count] == 1) {
+            invitedUsers = @{@"userId": (NSString *)self.invitedSubaUsers[0],@"streamId" : self.spotToInviteUserTo[@"spotId"],@"senderId" : [AppHelper userID]};
+        }else if([self.invitedSubaUsers count] > 1){
+            invitedUsers = @{@"userIds" : self.invitedSubaUsers,@"streamId" : self.spotToInviteUserTo[@"spotId"],@"senderId" : [AppHelper userID]};
+        }
+        DLog(@"Invited users - %@",invitedUsers);
+        [[LifespotsAPIClient sharedInstance] POST:@"spot/members/add" parameters:invitedUsers success:^(NSURLSessionDataTask *task, id responseObject) {
+            //UIColor *tintColor = [UIColor colorWithRed:0.00 green:0.8 blue:0.2 alpha:1];
+            if([responseObject[STATUS] isEqualToString:ALRIGHT]){
+                //self.partcipants = (NSArray *)responseObject[@"members"];
+                [self performSegueWithIdentifier:@"FromAddToMembersSegue" sender:nil];
+                
+            }
+                
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            DLog(@"Failure reason - %@",error.localizedFailureReason);
+        }];
+        
+        
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
     }else if(self.inviteSegmentedControl.selectedSegmentIndex == kPhoneContacts) {
                [self sendSMSToRecipients:self.smsRecipients];
@@ -720,7 +744,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         }else{
             recipientSelectedId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
         }
-        [self.invitedSubaUsers addObject:recipientSelectedId];
+        [self.invitedSubaUsers addObject:(NSString *)recipientSelectedId];
         DLog(@"Invited suba users - %@",self.invitedSubaUsers);
         
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){

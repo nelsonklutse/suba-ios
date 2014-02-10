@@ -330,6 +330,16 @@
 }
 
 
+-(void)likePhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[LifespotsAPIClient sharedInstance] POST:@"picture/like" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error); 
+    }];
+}
+
+
 +(void)allUsers:(GeneralCompletion)completion
 {
     [[LifespotsAPIClient sharedInstance] GET:@"users/all" parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
@@ -351,6 +361,8 @@
                                           completion(nil,error);
                                       }];
 }
+
+
 
 
 
