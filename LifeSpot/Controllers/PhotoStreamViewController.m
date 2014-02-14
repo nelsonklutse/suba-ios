@@ -67,7 +67,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (IBAction)showMembers:(id)sender;
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
-- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
+//- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 @end
 
 @implementation PhotoStreamViewController
@@ -82,19 +82,19 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     self.library = [[ALAssetsLibrary alloc] init];
     
-    if (!self.photos && !self.spotName && self.numberOfPhotos == 0) {
+    if (!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
         // We are coming from an activity screen
        [self loadSpotImages:self.spotID];
     }
     DLog(@"Number of photos - %ld",(long)self.numberOfPhotos);
     
-    if (!self.photos && self.numberOfPhotos > 0) {
+    if (!self.photos && self.numberOfPhotos > 0 && self.spotID) {
         // We are coming from a place where spotName is not set so lets load spot info
        // DLog(@"Loading spot info");
         [self loadSpotImages:self.spotID];
     }
     
-    if(self.numberOfPhotos == 0 && self.spotName){
+    if(self.numberOfPhotos == 0 && self.spotName && self.spotID){
         self.noPhotosView.hidden = NO;
         self.photoCollectionView.hidden = YES;
     }
@@ -138,10 +138,11 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     [Spot fetchSpotInfo:spotId User:userId completion:^(id results, NSError *error) {
         if (error) {
             DLog(@"Error - %@",error);
+            [AppHelper showAlert:@"Network Error" message:error.localizedDescription buttons:@[@"Ok"] delegate:nil];
         }else{
             if ([results[STATUS] isEqualToString:ALRIGHT]){
                 self.spotInfo = (NSDictionary *)results;
-                
+                DLog(@"Spot Info - %@",self.spotInfo);
                 self.spotName = (self.spotName) ? self.spotName : results[@"spotName"];
                 self.navigationItem.title = self.spotName;
                 [self.photoCollectionView reloadData];
@@ -162,7 +163,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 -(void)reportPhoto:(NSDictionary *)reportInfo
 {
     [User reportPhoto:reportInfo completion:^(id results, NSError *error) {
-        //DLog(@"Results - %@",results);
+        DLog(@"Results - %@",results);
         
         BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
                                                        text:@"Photo Reported!"];
@@ -174,7 +175,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
             [hud removeFromSuperview];
             [CSNotificationView showInViewController:self
-                                           tintColor: [UIColor colorWithRed:217/255.0 green:77/255.0 blue:20/255.0 alpha:1]
+                                           tintColor: [UIColor colorWithRed:0.850 green:0.301 blue:0.078 alpha:1]
                                                image:nil
                                              message:@"Thank you for your report. We will remove this photo if it violates our Community Guidelines."
                                             duration:5.0f];
@@ -349,7 +350,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 }
 
 
--(void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes
+/*-(void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes
 {
     NSMutableDictionary *guiltyPhoto = nil;
     NSInteger indexOfLikedPhoto = 0;
@@ -364,7 +365,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     guiltyPhoto[@"id"] = likes;
     self.photos[indexOfLikedPhoto] = guiltyPhoto;
     DLog(@"Guilty photo - %@",self.photos[indexOfLikedPhoto]);
-}
+}*/
 
 
 
@@ -418,7 +419,29 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 - (IBAction)cameraButtonTapped:(id)sender
 {
-    [self showPhotoOptions];
+    // Check whether the user
+    
+    
+    
+    NSString *streamCreator = self.spotInfo[@"userName"];
+    
+    if ([streamCreator isEqualToString:[AppHelper userName]]) { // If user created this album no problem
+        [self showPhotoOptions];
+        
+    }else{ // If user is not creator,check whether he/she can add photos
+        
+    BOOL userCanAddPhoto = ([self.spotInfo[@"addPrivacy"] isEqualToString:@"ANYONE"]) ? YES: NO;
+        
+    if (userCanAddPhoto){
+        [self showPhotoOptions];
+    }else{
+        [AppHelper showAlert:@"Add Photo"
+                     message:@"You are not allowed to add photos to this stream"
+                     buttons:@[@"OK"] delegate:nil];
+    }
+        
+ }
+    
 }
 
 
@@ -531,31 +554,37 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)assetsPickerController:(CTAssetsPickerController *)picker didFinishPickingAssets:(NSArray *)assets
 {
     //[self.assets addObjectsFromArray:assets];
-    ALAsset *asset = (ALAsset *)assets[0];
-    ALAssetRepresentation *representation = asset.defaultRepresentation;
-    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
-                                                       scale:1.0f
-                                                 orientation:(UIImageOrientation)representation.orientation];
+    if ([assets count] == 1) {
+        ALAsset *asset = (ALAsset *)assets[0];
+        ALAssetRepresentation *representation = asset.defaultRepresentation;
+        DLog(@"Orientation -%i",representation.orientation);
+        UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
+                                                           scale:1.0f
+                                                     orientation:(UIImageOrientation)ALAssetOrientationUp];
+        
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        //dateFormatter se
+        
+        [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+        NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+        trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+        trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+        
+        //NSLog(@"Asset  Picked - %@ at time - %@",[asset debugDescription],trimmedString);
+        [self resizeImage:fullResolutionImage towidth:320.0f toHeight:320.0f
+                completon:^(UIImage *compressedPhoto, NSError *error) {
+                    
+                    UIImage *newImage = compressedPhoto;
+                    NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
+                    
+                    [self uploadPhoto:imageData WithName:trimmedString];
+                    
+                }];
+    }else{
+        [AppHelper showAlert:@"Add Photo" message:@"You did not select a photo to add to the stream" buttons:@[@"OK"] delegate:nil];
+    }
     
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    //dateFormatter se
-    
-    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
-    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
-    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
-    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
-    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
-    
-    //NSLog(@"Asset  Picked - %@ at time - %@",[asset debugDescription],trimmedString);
-    [self resizeImage:fullResolutionImage towidth:320.0f toHeight:320.0f
-            completon:^(UIImage *compressedPhoto, NSError *error) {
-                
-                UIImage *newImage = compressedPhoto;
-                NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
-                
-                [self uploadPhoto:imageData WithName:trimmedString];
-                
-            }];
 }
 
 
@@ -611,13 +640,16 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         }
         
         // form report photo info
+        DLog(@"report info - %@",self.reportInfo);
         NSDictionary *params = @{
                                  @"photoId":self.reportInfo[@"id"],
-                                 @"spotId" : self.reportInfo[@"spotId"],
+                                 @"spotId" : self.spotID, 
                                  @"pictureTakerName" : self.reportInfo[@"pictureTaker"],
                                  @"reporterId" : [AppHelper userID],
                                  @"reportType" : reportType
                                  };
+        
+        
         [self reportPhoto:params];
     }
     
@@ -688,7 +720,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSString *spotId = self.spotID;
     
     NSDictionary *params = @{@"userId": userId,@"spotId": spotId};
-    AFHTTPSessionManager *manager = [LifespotsAPIClient manager];
+    AFHTTPSessionManager *manager = [LifespotsAPIClient sharedInstance];
     
     NSURL *baseURL = (NSURL *)[LifespotsAPIClient lifespotsAPIBaseURL];
     
@@ -703,7 +735,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                                         [formData appendPartWithFileData:imageData name:@"picture" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
                                     }];
     
-    
+    //[manager.requestSerializer setValue:@"com.suba.subaapp" forHTTPHeaderField:@"x-suba-api-token"];
+
     AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
     __weak AFURLConnectionOperation *woperation = operation;
     
@@ -727,17 +760,23 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
             NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
             if (error) {
                 DLog(@"Error serializing %@", error);
+                [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
             }else{
-                //DLog(@"PhotoInfo - %@",photoInfo);
-                [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                self.noPhotosView.hidden = YES;
-                self.photoCollectionView.hidden = NO;
-                if (!self.photos) {
-                    
-                    self.photos = [NSMutableArray arrayWithObject:photoInfo];
-                }else [self.photos insertObject:photoInfo atIndex:0];
                 
-                [self upDateCollectionViewWithCapturedPhoto:photoInfo];
+                DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
+                
+                if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                    self.noPhotosView.hidden = YES;
+                    self.photoCollectionView.hidden = NO;
+                    if (!self.photos) {
+                        
+                        self.photos = [NSMutableArray arrayWithObject:photoInfo];
+                    }else [self.photos insertObject:photoInfo atIndex:0];
+                    
+                    [self upDateCollectionViewWithCapturedPhoto:photoInfo];
+
+                }
             }
     });
         
@@ -765,15 +804,18 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSArray *members = self.spotInfo[@"members"];
     
     NSMutableArray *memberIds = [NSMutableArray arrayWithCapacity:1];
-    for (NSDictionary *member in members) {
-        [memberIds addObject:member[@"id"]];
+    for (NSDictionary *member in members){
+        if (![member[@"userName"] isEqualToString:[AppHelper userName]]) {
+            [memberIds addObject:member[@"id"]];
+        }
+        
     }
     
     NSDictionary *params = @{@"spotId": self.spotID,
                              @"spotName" : self.spotName,
                              @"memberIds" : [memberIds description]};
     
-    //DLog(@"Params - %@",params);
+    DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
     
     [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
                                         parameters:params
@@ -806,14 +848,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         if ([segue.destinationViewController isKindOfClass:[AlbumSettingsViewController class]]) {
             AlbumSettingsViewController *albumVC = segue.destinationViewController;
             albumVC.spotID = (NSString *)sender;
+            albumVC.spotInfo = self.spotInfo;
         }
     }
     
-    if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]) {
-        if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]) {
+    if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
+        if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]){
             AlbumMembersViewController *membersVC = segue.destinationViewController;
             membersVC.spotID = sender;
-            DLog(@"SpotID of %@ sent",membersVC.spotID);
+            //membersVC.spotInfo = self.spotInfo;
         }
     }
 }
@@ -831,7 +874,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     [coder encodeObject:self.spotID forKey:SpotIdKey];
     [coder encodeObject:self.photos forKey:SpotPhotosKey];
     //[coder encodeObject:@(selectedButton) forKey:SelectedButtonKey];
-    DLog();
+    
+    DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
 }
 
 
@@ -844,12 +888,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     self.spotID = [coder decodeObjectForKey:SpotIdKey];
     self.photos = [coder decodeObjectForKey:SpotPhotosKey];
     
-    DLog(@"SpotId - %@",self.spotID);
+   DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
     
 }
 
 -(void)applicationFinishedRestoringState
 {
+     DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
+    
     //1. Update photos
     if (self.photos) {
         [self.photoCollectionView reloadData];
@@ -869,7 +915,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     }
     
-    DLog();
+  
 }
 
 

@@ -21,9 +21,11 @@
 @property (weak, nonatomic) IBOutlet UITableView *memberTableView;
 @property (strong,nonatomic) NSArray *members;
 @property (strong,nonatomic) NSDictionary *spotInfo;
+@property (strong, nonatomic) IBOutlet UIBarButtonItem *addMembersButton;
 
 - (void)loadAlbumMembers:(NSString *)spotId;
 - (void)updateMembersData;
+- (void)showAddMembersButton:(BOOL)flag;
 
 - (IBAction)unWindToMembersFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue;
@@ -39,7 +41,7 @@
 -(IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue
 {
     [CSNotificationView showInViewController:self.navigationController style:CSNotificationViewStyleSuccess message:@"Participants added"];
-    DLog(@"Load members");
+   // DLog(@"Load members");
     [self loadAlbumMembers:self.spotID];
 }
 
@@ -51,6 +53,8 @@
     if (self.spotID){
         [self loadAlbumMembers:self.spotID];
     }
+    
+    [self showAddMembersButton:NO];
     
 }
 
@@ -87,6 +91,17 @@
     [Spot fetchSpotInfo:spotId User:[AppHelper userID] completion:^(id results, NSError *error) {
         //DLog(@"Results - %@",results);
         self.spotInfo = results;
+        //DLog(@"Spot Info - %@",self.spotInfo);
+        
+        if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
+          // If user is not creator,we need to check whether he/she can invite users
+            BOOL canUserAddMembers = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:@"ONLY_MEMBERS"])?NO:YES;
+            if (canUserAddMembers) {
+                [self showAddMembersButton:YES];
+            }else [self showAddMembersButton:NO];
+
+        }else [self showAddMembersButton:YES];
+        //[self showAddMembersButton:YES];
         self.members = results[@"members"];
         [self.memberTableView reloadData];
     }];
@@ -106,8 +121,25 @@
         [weakSelf.memberTableView stopRefreshAnimation];
         
     });
-
 }
+
+
+-(void)showAddMembersButton:(BOOL)flag
+{
+    NSMutableArray *navbarButtons = [self.navigationItem.rightBarButtonItems mutableCopy];
+    
+    if (flag) {
+        if ([navbarButtons count] != 1) {
+            [navbarButtons addObject:self.addMembersButton];
+        }
+        
+    }else{
+        [navbarButtons removeObject:self.addMembersButton];
+    }
+   
+    [self.navigationItem setRightBarButtonItems:navbarButtons animated:YES];
+}
+
 
 #pragma mark - UITableViewDatasource
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -161,6 +193,7 @@
     if ([segue.identifier isEqualToString:@"PARTICIPANTS_PROFILE_SEGUE"]) {
         UserProfileViewController *uVC = segue.destinationViewController;
         uVC.userId = sender;
+        
     }
     
     if ([segue.identifier isEqualToString:@"InviteFriendsSegue"]) {
@@ -178,7 +211,7 @@
     [coder encodeObject:self.spotID forKey:SpotIdKey];
     [coder encodeObject:self.members forKey:MembersKey];
     [coder encodeObject:self.spotInfo forKey:SpotInfoKey];
-    DLog();
+    DLog(@"Self.spotID -%@\nself.members - %@\nself.spotInfo - %@",self.spotID,self.members,self.spotInfo);
 }
 
 
@@ -189,7 +222,8 @@
     self.spotID = [coder decodeObjectForKey:SpotIdKey];
     self.members = [coder decodeObjectForKey:MembersKey];
     self.spotInfo = [coder decodeObjectForKey:SpotInfoKey];
-    DLog();
+    DLog(@"Self.spotID -%@\nself.members - %@\nself.spotInfo - %@",self.spotID,self.members,self.spotInfo);
+
 }
 
 -(void)applicationFinishedRestoringState
@@ -200,7 +234,8 @@
         [self loadAlbumMembers:self.spotID];
     }
     
-    DLog();
+    DLog(@"Self.spotID -%@\nself.members - %@\nself.spotInfo - %@",self.spotID,self.members,self.spotInfo);
+
 }
 
 @end

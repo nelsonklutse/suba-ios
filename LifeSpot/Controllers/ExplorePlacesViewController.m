@@ -38,8 +38,18 @@ static CLLocationManager *locationManager;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+    //CLLocationManager locationServicesEnabled
+    if ([locationManager location]) {
+        DLog(@"Current Location - %@",NSStringFromClass([locationManager.location class]));
+        NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
+        NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
+        
+        [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
+
+    }
     [self checkForLocation];
+    
+    
     [self fetchUserFavLocation];
     
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
@@ -59,6 +69,27 @@ static CLLocationManager *locationManager;
 
 }
 
+
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    if (locationManager) {
+        [locationManager startUpdatingLocation];
+    }
+}
+
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [locationManager stopUpdatingLocation];
+    self.locations = nil;
+}
+
+
+
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
@@ -75,7 +106,7 @@ static CLLocationManager *locationManager;
             DLog(@"Error - %@",error);
         }else {
             self.watchingLocations = [NSMutableArray arrayWithArray:(NSArray *)[results objectForKey:@"watching"]];
-            //DLog(@"Watching - %@",self.watchingLocations);
+            DLog(@"Watching - %@",self.watchingLocations);
             
         }
     }];
@@ -158,7 +189,18 @@ static CLLocationManager *locationManager;
     if ([CLLocationManager locationServicesEnabled]) {
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
-        [locationManager startMonitoringSignificantLocationChanges];
+        [locationManager startUpdatingLocation];
+        /*if ([locationManager location]) {
+             DLog(@"Location - %@",NSStringFromClass([[locationManager location] class]));
+            NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
+            NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
+            
+            [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
+
+        }*/
+       
+        
+        
         
     }else{
         [AppHelper showAlert:@"Location Services Disabled"
@@ -230,17 +272,31 @@ static CLLocationManager *locationManager;
 }
 
 
+
 #pragma mark - Location Manager Delegate
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
-    
+    DLog();
     self.currentLocation = [locations lastObject];
     if (self.currentLocation != nil){
+        if (!self.locations) {
+            NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
+            NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
+            
+            [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
+        }
         
-        NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
-        NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
-        
-        [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
     }
+}
+
+
+- (void)locationManager:(CLLocationManager *)manager
+       didFailWithError:(NSError *)error
+{
+    DLog(@"Error while getting core location : %@",[error localizedFailureReason]);
+    if ([error code] == kCLErrorDenied) {
+        //you had denied
+    }
+    [manager stopUpdatingLocation];
 }
 
 

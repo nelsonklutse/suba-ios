@@ -11,5 +11,6 @@
 @interface AlbumMembersViewController : UIViewController
 
 @property (strong,nonatomic) NSString *spotID;
+//@property (strong,nonatomic) NSDictionary *spotInfo;
 
 @end

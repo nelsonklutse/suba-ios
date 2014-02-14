@@ -38,33 +38,20 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view.
+	
     
     NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    if (![self.userId isEqualToString:[AppHelper userID]]){
+        
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+        ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:@"USER_INFO_CELL" forIndexPath:indexPath];
+        userInfoCell.userProfileImage.image = [UIImage imageNamed:@"anonymousUser"];
+    }
     [self loadSpotsCreated:userId];
      [self fetchUserInfo:userId];
     
-    
-     //DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
-    
-    //self.userSpotsCollectionView.frame = [[UIScreen mainScreen] bounds];
-    
+    DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
 }
-
- /*-(void)viewWillLayoutSubviews
-{
-    [super viewWillLayoutSubviews];
-    
-   CGRect frame = self.view.bounds;
-    frame.size.height -= (self.tabBarController.tabBar.frame.size.height + 64);
-    
-    self.userSpotsCollectionView.frame = frame;
-    
-    //self.userSpotsCollectionView.frame = self.view.bounds;
-    DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
-}*/
-
-
 
 
 -(void)viewWillAppear:(BOOL)animated
@@ -79,14 +66,15 @@
     [self.userSpotsCollectionView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
     [self.userSpotsCollectionView.pullToRefreshView setBorderWidth:6];
 
-    [self.userSpotsCollectionView.pullToRefreshView setBackgroundColor:[UIColor redColor]];
+    [self.userSpotsCollectionView.pullToRefreshView setBorderColor:[UIColor redColor]];
     
-    DLog(@"Bounds of root view - %@\nFrame of collection view - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.userSpotsCollectionView.frame));
+    DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
 }
 
 -(void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
+    
     [[NSNotificationCenter defaultCenter]
      removeObserver:self
      name:kPhotoCellTappedAtIndexNotification
@@ -216,9 +204,10 @@
         // It is the profile view
         cellIdentifier = @"USER_INFO_CELL";
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-         NSURL *profilePhotoURL = [NSURL URLWithString:[AppHelper profilePhotoURL]];
+       
+         NSURL *profilePhotoURL = nil;
         
-        [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
+        userInfoCell.userProfileImage.image = [UIImage imageNamed:@"anonymousUser"];
         
         if (self.userProfileInfo) {
             NSString *numberOfSpots = [self.userProfileInfo[@"numberOfSpots"] stringValue];
@@ -228,8 +217,9 @@
             
             self.navigationItem.title = [NSString stringWithFormat:@"@%@",userName];
             userInfoCell.numberOfSpotsLabel.text = numberOfSpots;
-            userInfoCell.spotsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Spot" : @"Spots";
+            userInfoCell.spotsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Stream" : @"Streams";
             userInfoCell.numberOfPhotosLabel.text = [self.userProfileInfo[@"photos"] stringValue];
+            userInfoCell.photosLabel.text = ([self.userProfileInfo[@"photos"] integerValue] == 1) ? @"Photo" : @"Photos";
             
             if (profilePhotoURL) {
                 [userInfoCell.userProfileImage setImageWithURL:profilePhotoURL placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
@@ -379,6 +369,8 @@
     [coder encodeObject:self.userSpots forKey:UserSpotsKey];
     [coder encodeObject:self.userProfileInfo forKey:UserProfileInfoKey];
     [coder encodeObject:self.userId forKey:UserIdKey];
+    
+    DLog();
 }
 
 
@@ -388,16 +380,23 @@
     
     self.userSpots = [coder decodeObjectForKey:UserSpotsKey];
     self.userProfileInfo = [coder decodeObjectForKey:UserProfileInfoKey];
+    self.userId = [coder decodeObjectForKey:UserIdKey];
     
+    DLog();
 }
 
 -(void)applicationFinishedRestoringState
 {
+    
     if (self.userSpots && self.userProfileInfo) {
         [self.userSpotsCollectionView reloadData];
     }else{
-        [self performSelector:@selector(loadSpotsCreated:) withObject:self.userId];
+        if (self.userId) {
+            [self loadSpotsCreated:self.userId];
+        }
     }
+    
+    DLog(@"UserId decoded - %@",self.userId);
 }
 
 

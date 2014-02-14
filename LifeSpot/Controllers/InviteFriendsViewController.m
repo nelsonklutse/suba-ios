@@ -128,14 +128,18 @@ static BOOL isFiltered = NO;
     NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"name,picture.type(large),first_name,last_name,middle_name" forKey:@"fields"];
     
     [FBRequestConnection startWithGraphPath:grapthPath parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error){
-        NSArray *FBfriends = [result valueForKey:@"data"];
-        NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
-        NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
-        NSArray *sortedFriends = [FBfriends sortedArrayUsingDescriptors:sortDescriptors];
-        self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
-        
-        [self.facebookFriendsTableView reloadData];
-        //[self showLoadingUserView:NO];
+        if (!error) {
+            NSArray *FBfriends = [result valueForKey:@"data"];
+            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+            NSArray *sortedFriends = [FBfriends sortedArrayUsingDescriptors:sortDescriptors];
+            self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
+            DLog(@"FB users - %@",self.fbUsers);
+            [self.facebookFriendsTableView reloadData];
+            //[self showLoadingUserView:NO];
+        }else{
+            DLog(@"Loading Facebook friends error %@",[error debugDescription]);
+        }
         
     }];
     
@@ -433,21 +437,22 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                           
                                           if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
                                               [self loadFacebookFriends];
-                                          }
-                                          
-                                          // Fetch FBUser Info
-                                          [[FBRequest requestForMe] startWithCompletionHandler:
-                                           ^(FBRequestConnection *connection,
-                                             NSDictionary<FBGraphUser> *user,
-                                             NSError *error){
-                                               if (!error){
-                                                   if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
-                                                       [AppHelper setFacebookID:user.id]; // set the facebook id
-                                                       [self loadFacebookFriends];
+                                          }else{
+                                              // Fetch FBUser Info
+                                              [[FBRequest requestForMe] startWithCompletionHandler:
+                                               ^(FBRequestConnection *connection,
+                                                 NSDictionary<FBGraphUser> *user,
+                                                 NSError *error){
+                                                   if (!error){
+                                                       if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
+                                                           [AppHelper setFacebookID:user.id]; // set the facebook id
+                                                           [self loadFacebookFriends];
+                                                       }
+                                                       
                                                    }
-                                                   
-                                               }
-                                           }];
+                                               }];
+                                          }
+
                                       }else{
                                           DLog(@"fbSession is not open");
                                       }
@@ -737,9 +742,19 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 -(void)applicationFinishedRestoringState
 {
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kContacts) {
-        [self performSelector:@selector(fetchContacts:failure:)];
+        [self fetchContacts:^(NSArray *contacts) {
+            // We are sorting the contacts here
+            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+            NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
+            self.phoneContacts = sortedContacts;
+            [self.phoneContactsTableView reloadData];
+        } failure:^(NSError *error) {
+            DLog(@"Error - %@",error);
+        }];
+
     }else{
-        [self performSelector:@selector(loadFacebookFriends)];
+        [self loadFacebookFriends];
     }
 }
 

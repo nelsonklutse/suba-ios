@@ -87,7 +87,9 @@
                                   NUMBER_OF_ALBUMS : @"0",
                                   PROFILE_PHOTO_URL : @""
                                 };
-    [userDefaults registerDefaults:appDefaults];
+    
+    //[userDefaults registerDefaults:appDefaults];
+    [AppHelper savePreferences:appDefaults];
     [userDefaults synchronize];
     
     // Clear facebook data if user loggedIn using facebook
@@ -244,6 +246,10 @@
         [userDefaults setValue:prefs[@"id"] forKey:FACEBOOK_ID];
     }
     
+    if ([prefs objectForKey:SESSION]) {
+        [userDefaults setValue:prefs[SESSION] forKey:SESSION];
+    }
+    
     [userDefaults synchronize];
 }
 
@@ -380,18 +386,18 @@
 
 +(void)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc
 {
-    BOOL locationEnabled = NO;
+    //BOOL locationEnabled = NO;
     if ([CLLocationManager locationServicesEnabled]) {
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = vc;
-        [locationManager startMonitoringSignificantLocationChanges];
+        [locationManager startUpdatingLocation];
         
-        locationEnabled = YES;
+        //locationEnabled = YES;
         
     }else{
        [self showAlert:@"Location Services Disabled"
                message:@"Location services is disabled for this app. Please enable location services to see nearby spots" buttons:@[@"OK"] delegate:nil];
-        locationEnabled = NO;
+        //locationEnabled = NO;
     }
     
    // return locationEnabled;

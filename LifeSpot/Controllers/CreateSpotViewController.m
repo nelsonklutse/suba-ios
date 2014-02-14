@@ -16,6 +16,7 @@
 
 @interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate>
 
+
 @property (copy,nonatomic) NSString *spotName;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
 @property (strong,nonatomic) NSArray *otherVenues;
@@ -33,6 +34,7 @@
 
 - (IBAction)joinSpotAction:(id)sender;
 - (IBAction)createSpotAction:(UIButton *)sender;
+- (IBAction)dismissKeyPad:(id)sender;
 - (IBAction)showNearbyLocations:(id)sender;
 - (void)askLocationPermission;
 - (void)foursquareVenueMatchingCurrentLocation:(Location *)here;
@@ -52,6 +54,23 @@ static CLLocationManager *locationManager;
     
     [self askLocationPermission];
 }
+
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    if (locationManager) {
+        [locationManager startUpdatingLocation];
+    }
+}
+
+
+-(void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [locationManager stopUpdatingLocation];
+}
+
 
 
 - (void)didReceiveMemoryWarning
@@ -122,7 +141,7 @@ static CLLocationManager *locationManager;
     if ([CLLocationManager locationServicesEnabled]) {
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
-        [locationManager startMonitoringSignificantLocationChanges];
+       [locationManager startUpdatingLocation];
         
     }
 }
@@ -156,13 +175,15 @@ static CLLocationManager *locationManager;
     CLLocation *here = [locations lastObject];
     
     if (here != nil){
+        if (!self.chosenVenueLocation) {
+            NSString *latitude = [NSString stringWithFormat:@"%.8f",here.coordinate.latitude];
+            NSString *longitude = [NSString stringWithFormat:@"%.8f",here.coordinate.longitude];
+            self.userLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
+            
+            // Go to Foursquare for location
+            [self foursquareVenueMatchingCurrentLocation:self.userLocation];
+        }
         
-        NSString *latitude = [NSString stringWithFormat:@"%.8f",here.coordinate.latitude];
-        NSString *longitude = [NSString stringWithFormat:@"%.8f",here.coordinate.longitude];
-        self.userLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
-        
-        // Go to Foursquare for location
-        [self foursquareVenueMatchingCurrentLocation:self.userLocation];
     }
 }
 
@@ -216,4 +237,8 @@ static CLLocationManager *locationManager;
 
 
 
+- (IBAction)dismissKeyPad:(id)sender
+{
+    [self resignFirstResponder];
+}
 @end

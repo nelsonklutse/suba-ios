@@ -187,7 +187,7 @@
     
     
     [[placesSpotsCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    
+    NSString *spotCode = self.spotsWatching[indexPath.item][@"spotCode"];
     NSString *photos = self.spotsWatching[indexPath.row][@"numberOfPhotos"];
     //DLog(@"%@ photos - %@",spotsToDisplay[indexPath.row][@"creatorName"],photos);
     placesSpotsCell.userNameLabel.text = (self.spotsWatching[indexPath.row][@"creatorName"] != NULL) ?
@@ -222,6 +222,11 @@
         [placesSpotsCell.photoGalleryView addSubview:noPhotosImageView];
     }
     
+    if ([spotCode class] == [NSNull class] || [spotCode isEqualToString:@"NONE"]) {
+        placesSpotsCell.privateStreamImageView.hidden = YES;
+    }else{
+        placesSpotsCell.privateStreamImageView.hidden = NO;
+    }
     
     return placesSpotsCell;
 }
@@ -246,14 +251,14 @@
             if (isMember){
                 // User is a member so let him view photos;
                 [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
-            }else if ([spotCode isEqualToString:@"NONE"] || spotCode == NULL) {
+            }else if ([spotCode isEqualToString:@"NONE"] || [spotCode class] == [NSNull class]) {
                 // This album has no spot code and user is not a member, so we add user to this stream
                 [[User currentlyActiveUser] joinSpot:spotID completion:^(id results, NSError *error) {
                     if (!error){
                         //DLog(@"Album is public so joining spot");
                         if ([results[STATUS] isEqualToString:ALRIGHT]){
                             [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                            [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the spot %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                            [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the stream %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
                             [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:dataPassed];
                         }else{
                             DLog(@"Server error - %@",error);

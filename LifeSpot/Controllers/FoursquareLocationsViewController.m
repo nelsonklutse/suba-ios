@@ -51,7 +51,7 @@ static CLLocationManager *locationManager;
         if ([CLLocationManager locationServicesEnabled]) {
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
-            [locationManager startMonitoringSignificantLocationChanges];
+            [locationManager startUpdatingLocation];
             
       }
     }
@@ -59,14 +59,14 @@ static CLLocationManager *locationManager;
 
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
-    [locationManager stopMonitoringSignificantLocationChanges];
+    [locationManager stopUpdatingLocation];
 }
 
 
 -(void)viewWillAppear:(BOOL)animated{
     
     [super viewWillAppear:YES];
-    [locationManager startMonitoringSignificantLocationChanges];
+    [locationManager startUpdatingLocation];
     //DLog(@"Started monitoring Locations");
     
 }

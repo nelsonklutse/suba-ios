@@ -9,7 +9,6 @@
 #import "S3PhotoFetcher.h"
 #import "DACircularProgressView.h"
 #import <SDWebImage/UIImageView+WebCache.h>
-#import "UIImage+Resize.h"
 
 @implementation S3PhotoFetcher
 
@@ -46,18 +45,7 @@
         //NSURLRequest *request = [NSURLRequest requestWithURL:photoSrc];
         //NSLog(@"Making image request from - %@",[photoSrc description]);
         dispatch_async(dispatch_get_main_queue(),^{
-            
-            /*[imgView setImageWithURLRequest:request placeholderImage:img success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-                //NSLog(@"We're setting the image now");
-                mainImageView.image = image;
-                completion(image,nil);
-                
-                
-            } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-                //NSLog(@"We're failing the request");
-                completion(nil,error);
-            }];*/
-            [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                 if (!error) {
                     mainImageView.image = image;
                     completion(image,nil);
@@ -122,7 +110,7 @@
                         progress:^(NSUInteger receivedSize, long long expectedSize){
                             
                             CGFloat progress =  (float)receivedSize/expectedSize;
-                            DLog(@"Progress - %f",progress);
+                            //DLog(@"Progress - %f",progress);
                             
                             pView.progress = progress;
                             
@@ -130,7 +118,7 @@
         } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
             if (!error) {
                 mainImageView.image = image;
-                DLog(@"Image size downlaoded - %@",NSStringFromCGSize(image.size));
+                //DLog(@"Image size downlaoded - %@",NSStringFromCGSize(image.size));
                 completion(image,nil);
             }else{
                 completion(nil,error);

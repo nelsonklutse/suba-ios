@@ -157,12 +157,11 @@
     [self.viewController setCommonPageSubTitleStyle:subStyle];
     [self.viewController setCommonPageDescriptionStyle:descStyle];
     
+    DLog(@"[AppHelper userID] : %@",[AppHelper userID]);
+    
     if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
         // First launch or from logout
         DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
-        
-        
-
         
         __unsafe_unretained typeof(self) weakSelf = self;
         
@@ -276,6 +275,15 @@
     
    
     
+}
+
+
+
+-(void)applicationDidReceiveMemoryWarning:(UIApplication *)application
+{
+     [[SDImageCache sharedImageCache] clearDisk];
+     [[SDImageCache sharedImageCache] cleanDisk];
+     [[SDImageCache sharedImageCache] clearMemory];
 }
 
 
@@ -522,7 +530,8 @@
 }
 
 
-#pragma mark - Restoration
+/*
+ #pragma mark - Restoration
 
 // store data not necessarily related to the user interface,
 // this is called when the app is suspended to the background
@@ -563,7 +572,7 @@
 }
 
 
-/*- (UIViewController *)application:(UIApplication *)application viewControllerWithRestorationIdentifierPath:(NSArray *)identifierComponents coder:(NSCoder *)coder
+- (UIViewController *)application:(UIApplication *)application viewControllerWithRestorationIdentifierPath:(NSArray *)identifierComponents coder:(NSCoder *)coder
 {
     DLog(@"View Controller identifier path - %@",identifierComponents);
     UIViewController *viewController = nil;
@@ -579,14 +588,7 @@
   //  }
     
 
-    if ([viewController isKindOfClass:[MainStreamViewController class]]) {
-        DLog(@"This VC has a tab");
-     
-        
-        //self.window.rootViewController = self.mainTabBarController;
-        
-        [self.window makeKeyAndVisible];
-    }
+   
     DLog(@"Restored View Controller class - %@\n",[viewController class]);
     return viewController;
 }*/

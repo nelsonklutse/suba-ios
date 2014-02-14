@@ -46,6 +46,7 @@
 - (IBAction)dismissKeypadOnBackgroundClick:(id)sender;
 
 - (void)updateViewWithSpotInfo;
+- (void)disableViews;
 - (void)saveAlbumInfo:(NSMutableDictionary *)spotInfo indicator:(id)indicator;
 @end
 
@@ -65,6 +66,20 @@
         self.viewPrivacySwitch.enabled = NO;
     }
     self.leaveAlbumButton.enabled = NO;
+    
+    DLog(@"Stream info - %@",self.spotInfo);
+    
+    if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
+        DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
+        
+        // User did not create this album so disable stuff that he should not do
+        [self disableViews];
+        self.leaveAlbumButton.hidden = NO;
+        [self.view viewWithTag:100].hidden = NO;
+    }else{
+        self.leaveAlbumButton.hidden = YES;
+        [self.view viewWithTag:100].hidden = YES;
+    }
 }
 
 - (void)didReceiveMemoryWarning
@@ -110,11 +125,11 @@
                          ? @"" : self.spotInfo[@"spotCode"];
                          
                 [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
-                self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
+                //self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
                          
-                self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? NO:YES;
-                self.addPrivacySwitch.on = ([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE]) ? NO:YES;
-                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:sANYONE]) ? NO:YES;
+                self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
+                self.addPrivacySwitch.on = ([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
+                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:sANYONE]) ? YES:NO;
                      }
                  }
                  self.leaveAlbumButton.enabled = YES;
@@ -138,7 +153,7 @@
         [spotInfo addEntriesFromDictionary:@{@"spotName": self.spotName}];
     }
     
-    if (![self.spotKeyField.text isEqualToString:@""] && ![self.spotKeyField.text isEqualToString:self.spotInfo[@"spotCode"]]) {
+    if (![self.spotKeyField.text isEqualToString:self.spotInfo[@"spotCode"]]) {
         self.spotKey = self.spotKeyField.text;
         [spotInfo addEntriesFromDictionary:@{@"spotKey": self.spotKey}];
     }
@@ -160,10 +175,10 @@
     }
     
     
-    if (![self.spotDescription.text isEqualToString:@""] && ![self.spotDescription.text isEqualToString:self.spotInfo[@"spotDescription"]]){
-        self.spotDesc = self.spotDescription.text;
+    /*if (![self.spotDescription.text isEqualToString:@""] && ![self.spotDescription.text isEqualToString:self.spotInfo[@"spotDescription"]]){
+        //self.spotDesc = self.spotDescription.text;
         [spotInfo addEntriesFromDictionary:@{@"description" : self.spotDesc}];
-    }
+    }*/
     
     NSString *viewPrivacy = @"0";
     NSString *addPrivacy = @"0";
@@ -175,8 +190,8 @@
         self.viewPrivacySwitch.on = YES;
     }
     viewPrivacy = (self.viewPrivacySwitch.isOn) ? @"0" : @"1";
-    addPrivacy = (self.addPrivacySwitch.isOn) ? @"1" : @"0";
-    memberInvitePrivacy = (self.memberInviteSwitch.isOn) ? @"1" : @"0";
+    addPrivacy = (self.addPrivacySwitch.isOn) ? @"0" : @"1";
+    memberInvitePrivacy = (self.memberInviteSwitch.isOn) ? @"0" : @"1";
     
     [spotInfo addEntriesFromDictionary:@{@"viewSecurity": viewPrivacy,
                                          @"addSecurity" : addPrivacy,
@@ -189,6 +204,7 @@
 
 - (void)saveAlbumInfo:(NSMutableDictionary *)spotInfo indicator:(id)indicator
 {
+    DLog(@"Spot Info - %@",spotInfo);
     //handle the save
     [Spot updateSpotInfo:spotInfo completion:^(id results, NSError *error) {
         
@@ -197,7 +213,7 @@
         }else{
             //DLog(@"Status - %@",results[STATUS]);
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                DLog(@"From save - %@",results);
+                DLog(@"New album Settings - %@",results);
                 
                 [[NSNotificationCenter defaultCenter]
                  postNotificationName:kUserReloadStreamNotification object:nil];
@@ -213,13 +229,24 @@
 }
 
 
+-(void)disableViews
+{
+    self.spotNameField.enabled = NO;
+    self.spotKeyField.enabled = NO;
+    self.locationNameButton.enabled = NO;
+    self.addPrivacySwitch.enabled = NO;
+    self.viewPrivacySwitch.enabled = NO;
+    self.memberInviteSwitch.enabled = NO;
+}
+
+
 - (IBAction)toggleViewPrivacySwitch:(UISwitch *)sender
 {
     if (self.addPrivacySwitch.isOn) {
         self.viewPrivacySwitch.on = sender.on;
     }
-    self.saveAlbumSettingsBarItem.enabled = YES;
     
+    self.saveAlbumSettingsBarItem.enabled = YES;
 }
 
 - (IBAction)toggleAddPrivacySwitch:(UISwitch *)sender
@@ -261,7 +288,7 @@
 {
     [self.spotNameField resignFirstResponder];
     [self.spotKeyField resignFirstResponder];
-    [self.spotDescription resignFirstResponder];
+    //[self.spotDescription resignFirstResponder];
 }
 
 

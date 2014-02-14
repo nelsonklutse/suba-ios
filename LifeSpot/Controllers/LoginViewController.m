@@ -71,8 +71,9 @@
 
                                     
                                 }else{
-                                    DLog(@"Error - %@",error);
-                                    [AppHelper showAlert:@"Login Failure" message:@"We could not log you in.Please check your login details" buttons:@[@"I'll check again"] delegate:nil];
+                                    DLog(@"Error localizedDescription - %@\nError Description - %@\nError localizedFailureReason - %@",error.localizedDescription,error.description,error.localizedFailureReason);
+                                    
+                                    [AppHelper showAlert:@"Login Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                                 }
                             }];
 }

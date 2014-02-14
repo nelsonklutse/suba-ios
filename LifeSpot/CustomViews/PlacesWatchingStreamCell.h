@@ -18,6 +18,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *spotNameLabel;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfPhotosLabel;
 @property (weak, nonatomic) IBOutlet UILabel *photosLabel;
+@property (weak, nonatomic) IBOutlet UIImageView *privateStreamImageView;
 
 - (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath*)indexPath;
 @end

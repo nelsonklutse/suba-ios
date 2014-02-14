@@ -14,7 +14,7 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
 //static NSString * const LifeSpotsAPIBaseURLString  =  @"http://127.0.0.1:9000/";
 
 //static NSString * const  LifeSpotsAPIBaseURLString  =  @"http://10.1.0.211:9000/";
-//static NSString * const  LifeSpotsAPIBaseURLString  = @"http://192.168.1.7:9000/";
+//static NSString * const  LifeSpotsAPIBaseURLString  = @"http://192.168.1.10:9000/";
 
 
 @implementation LifespotsAPIClient
@@ -32,6 +32,8 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
                             initWithBaseURL:[NSURL URLWithString:LifeSpotsAPIBaseURLString]
                        sessionConfiguration:configuration];
     });
+    
+    //[__sharedInstance.requestSerializer setValue:@"com.suba.subaapp" forHTTPHeaderField:@"x-suba-api-token"];
     
     return __sharedInstance;
 }

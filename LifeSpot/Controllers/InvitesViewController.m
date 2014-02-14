@@ -196,14 +196,22 @@ static BOOL isFiltered = NO;
     NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"name,picture.type(large),first_name,last_name,middle_name" forKey:@"fields"];
     
     [FBRequestConnection startWithGraphPath:grapthPath parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error){
-        NSArray *FBfriends = [result valueForKey:@"data"];
-        NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
-        NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
-        NSArray *sortedFriends = [FBfriends sortedArrayUsingDescriptors:sortDescriptors];
-        self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
-        
-        [self.facebookFriendsTableView reloadData];
-        //[self showLoadingUserView:NO];
+        if (!error) {
+            NSArray *FBfriends = [result valueForKey:@"data"];
+            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"name" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+            NSArray *sortedFriends = [FBfriends sortedArrayUsingDescriptors:sortDescriptors];
+            self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
+            
+            [self.facebookFriendsTableView reloadData];
+            //[self showLoadingUserView:NO];
+
+        }else{
+            DLog(@"FB Load - %@",[error debugDescription]);
+           
+                [AppHelper showAlert:@"Facebook Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+            
+        }
         
     }];
  
@@ -211,8 +219,7 @@ static BOOL isFiltered = NO;
 
 -(void)displaySubaUsers
 {
-    
-    //[self showLoadingUserView:YES];
+   //[self showLoadingUserView:YES];
     
    [User allUsers:^(id results, NSError *error) {
        //DLog(@"Suba Users - %@",results);
@@ -374,11 +381,11 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                             @"image" : image};
             [contacts addObject:singleContact];
             
-        } else {
+        }/* else {
             
             phone = @"[None]";
             
-        }
+        }*/
         
         
     }
@@ -525,21 +532,25 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 
             if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
                 [self loadFacebookFriends];
+            }else{
+                // Fetch FBUser Info
+                [[FBRequest requestForMe] startWithCompletionHandler:
+                 ^(FBRequestConnection *connection,
+                   NSDictionary<FBGraphUser> *user,
+                   NSError *error){
+                     if (!error){
+                         if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
+                             [AppHelper setFacebookID:user.id]; // set the facebook id
+                             [self loadFacebookFriends];
+                         }
+                         
+                     }else{
+                         [AppHelper showAlert:@"Facebook Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                     }
+                 }];
             }
             
-            // Fetch FBUser Info
-            [[FBRequest requestForMe] startWithCompletionHandler:
-             ^(FBRequestConnection *connection,
-               NSDictionary<FBGraphUser> *user,
-               NSError *error){
-                 if (!error){
-                     if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
-                         [AppHelper setFacebookID:user.id]; // set the facebook id
-                         [self loadFacebookFriends];
-                     }
-                     
-                 }
-             }];
+           
         }else{
             DLog(@"fbSession is not open");
         }
