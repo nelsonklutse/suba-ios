@@ -67,9 +67,9 @@ typedef void (^FBOSIntegratedShareDialogHandler)(FBOSIntegratedShareDialogResult
 
  */
 typedef void (^FBDialogAppCallCompletionHandler)(
-                                                 FBAppCall *call,
-                                                 NSDictionary *results,
-                                                 NSError *error);
+FBAppCall *call,
+NSDictionary *results,
+NSError *error);
 
 /*!
  @class FBDialogs
@@ -108,10 +108,10 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  @return YES if the dialog was presented, NO if not (in the case of a NO result, the handler
  will still be called, with an error indicating the reason the dialog was not displayed)
  */
-+ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController *)viewController
-                                      initialText:(NSString *)initialText
-                                            image:(UIImage *)image
-                                              url:(NSURL *)url
++ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController*)viewController
+                                      initialText:(NSString*)initialText
+                                            image:(UIImage*)image
+                                              url:(NSURL*)url
                                           handler:(FBOSIntegratedShareDialogHandler)handler;
 
 /*!
@@ -140,10 +140,10 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  @return YES if the dialog was presented, NO if not (in the case of a NO result, the handler
  will still be called, with an error indicating the reason the dialog was not displayed)
  */
-+ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController *)viewController
-                                      initialText:(NSString *)initialText
-                                           images:(NSArray *)images
-                                             urls:(NSArray *)urls
++ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController*)viewController
+                                      initialText:(NSString*)initialText
+                                           images:(NSArray*)images
+                                             urls:(NSArray*)urls
                                           handler:(FBOSIntegratedShareDialogHandler)handler;
 
 /*!
@@ -177,11 +177,11 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  @return YES if the dialog was presented, NO if not (in the case of a NO result, the handler
  will still be called, with an error indicating the reason the dialog was not displayed)
  */
-+ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController *)viewController
-                                          session:(FBSession *)session
-                                      initialText:(NSString *)initialText
-                                           images:(NSArray *)images
-                                             urls:(NSArray *)urls
++ (BOOL)presentOSIntegratedShareDialogModallyFrom:(UIViewController*)viewController
+                                          session:(FBSession*)session
+                                      initialText:(NSString*)initialText
+                                           images:(NSArray*)images
+                                             urls:(NSArray*)urls
                                           handler:(FBOSIntegratedShareDialogHandler)handler;
 
 /*!
@@ -197,11 +197,11 @@ typedef void (^FBDialogAppCallCompletionHandler)(
 
  @return YES if the dialog would be presented for the session, and NO if not
  */
-+ (BOOL)canPresentOSIntegratedShareDialogWithSession:(FBSession *)session;
++ (BOOL)canPresentOSIntegratedShareDialogWithSession:(FBSession*)session;
 
 /*!
  @abstract
- Determines whether a call to presentShareDialogWithTarget: will successfully
+ Determines whether a call to presentFBShareDialogWithTarget: will successfully
  present a dialog in the Facebook application. This is useful for applications that
  need to modify the available UI controls depending on whether the dialog is
  available on the current platform.
@@ -211,7 +211,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  @return YES if the dialog would be presented, and NO if not
 
  @discussion A return value of YES here indicates that the corresponding
- presentShareDialogWithParams method will return a non-nil FBAppCall for the same
+ presentFBShareDialogWithParams method will return a non-nil FBAppCall for the same
  params. And vice versa.
  */
 + (BOOL)canPresentShareDialogWithParams:(FBShareDialogParams *)params;
@@ -244,7 +244,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithParams method is also returning YES for the same params.
+ canPresetFBShareDialogWithParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithParams:(FBShareDialogParams *)params
                                 clientState:(NSDictionary *)clientState
@@ -274,7 +274,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithParams method is also returning YES for the same params.
+ canPresetFBShareDialogWithParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithLink:(NSURL *)link
                                   handler:(FBDialogAppCallCompletionHandler)handler;
@@ -305,7 +305,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithParams method is also returning YES for the same params.
+ canPresetFBShareDialogWithParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithLink:(NSURL *)link
                                      name:(NSString *)name
@@ -347,7 +347,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithParams method is also returning YES for the same params.
+ canPresetFBShareDialogWithParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithLink:(NSURL *)link
                                      name:(NSString *)name
@@ -359,7 +359,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
 
 /*!
  @abstract
- Determines whether a call to presentShareDialogWithOpenGraphActionParams:clientState:handler:
+ Determines whether a call to presentFBShareDialogWithOpenGraphActionParams:clientState:handler:
  will successfully present a dialog in the Facebook application. This is useful for applications
  that need to modify the available UI controls depending on whether the dialog is
  available on the current platform.
@@ -369,7 +369,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  @return YES if the dialog would be presented, and NO if not
 
  @discussion A return value of YES here indicates that the corresponding
- presentShareDialogWithOpenGraphActionParams method will return a non-nil FBAppCall for
+ presentFBShareDialogWithOpenGraphActionParams method will return a non-nil FBAppCall for
  the same params. And vice versa.
  */
 + (BOOL)canPresentShareDialogWithOpenGraphActionParams:(FBOpenGraphActionShareDialogParams *)params;
@@ -402,7 +402,7 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
+ canPresentFBShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithOpenGraphActionParams:(FBOpenGraphActionShareDialogParams *)params
                                                clientState:(NSDictionary *)clientState
@@ -439,12 +439,12 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
+ canPresentFBShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithOpenGraphAction:(id<FBOpenGraphAction>)action
                                           actionType:(NSString *)actionType
                                  previewPropertyName:(NSString *)previewPropertyName
-                                             handler:(FBDialogAppCallCompletionHandler)handler;
+                                             handler:(FBDialogAppCallCompletionHandler) handler;
 
 /*!
  @abstract
@@ -481,12 +481,12 @@ typedef void (^FBDialogAppCallCompletionHandler)(
  FBAppCallCompletionHandler.
 
  @discussion A non-nil FBAppCall object is only returned if the corresponding
- canPresentShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
+ canPresentFBShareDialogWithOpenGraphActionParams method is also returning YES for the same params.
  */
 + (FBAppCall *)presentShareDialogWithOpenGraphAction:(id<FBOpenGraphAction>)action
                                           actionType:(NSString *)actionType
                                  previewPropertyName:(NSString *)previewPropertyName
                                          clientState:(NSDictionary *)clientState
-                                             handler:(FBDialogAppCallCompletionHandler)handler;
+                                             handler:(FBDialogAppCallCompletionHandler) handler;
 
 @end

@@ -125,13 +125,8 @@ typedef enum {
  @abstract
  The list of friends that are currently selected in the veiw.
  The items in the array are <FBGraphUser> objects.
-
- @discussion
- You can set this this array to pre-select items in the picker. The objects in the array
- must be complete id<FBGraphUser> objects (i.e., fetched from a Graph query or from a
- previous picker's selection, with id and appropriate name fields).
  */
-@property (nonatomic, copy) NSArray *selection;
+@property (nonatomic, retain, readonly) NSArray *selection;
 
 /*!
  @abstract
@@ -148,10 +143,16 @@ typedef enum {
 /*!
  @abstract
  Initializes a friend picker view controller.
+ */
+- (id)init;
+
+/*!
+ @abstract
+ Initializes a friend picker view controller.
 
  @param aDecoder        An unarchiver object.
  */
-- (instancetype)initWithCoder:(NSCoder *)aDecoder;
+- (id)initWithCoder:(NSCoder *)aDecoder;
 
 /*!
  @abstract
@@ -160,7 +161,7 @@ typedef enum {
  @param nibNameOrNil            The name of the nib file to associate with the view controller. The nib file name should not contain any leading path information. If you specify nil, the nibName property is set to nil.
  @param nibBundleOrNil          The bundle in which to search for the nib file. This method looks for the nib file in the bundle's language-specific project directories first, followed by the Resources directory. If nil, this method looks for the nib file in the main bundle.
  */
-- (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
 
 /*!
  @abstract
@@ -173,7 +174,7 @@ typedef enum {
 
  @param cacheDescriptor     The <FBCacheDescriptor> containing the cache query properties.
  */
-- (void)configureUsingCachedDescriptor:(FBCacheDescriptor *)cacheDescriptor;
+- (void)configureUsingCachedDescriptor:(FBCacheDescriptor*)cacheDescriptor;
 
 /*!
  @abstract
@@ -212,7 +213,7 @@ typedef enum {
  the view controller. It may also be used to configure the `FBFriendPickerViewController`
  object.
  */
-+ (FBCacheDescriptor *)cacheDescriptor;
++ (FBCacheDescriptor*)cacheDescriptor;
 
 /*!
  @method
@@ -228,7 +229,7 @@ typedef enum {
  @param userID              The profile ID of the user whose friends will be displayed. A nil value implies a "me" alias.
  @param fieldsForRequest    The set of additional fields to include in the request for friend data.
  */
-+ (FBCacheDescriptor *)cacheDescriptorWithUserID:(NSString *)userID fieldsForRequest:(NSSet *)fieldsForRequest;
++ (FBCacheDescriptor*)cacheDescriptorWithUserID:(NSString*)userID fieldsForRequest:(NSSet*)fieldsForRequest;
 
 @end
 
@@ -275,7 +276,7 @@ typedef enum {
  @param user                An <FBGraphUser> object representing the friend.
  */
 - (BOOL)friendPickerViewController:(FBFriendPickerViewController *)friendPicker
-                 shouldIncludeUser:(id<FBGraphUser>)user;
+                 shouldIncludeUser:(id <FBGraphUser>)user;
 
 /*!
  @abstract

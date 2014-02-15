@@ -30,16 +30,16 @@
     id<FBLoginDialogDelegate> _loginDelegate;
 }
 
-- (instancetype)initWithURL:(NSString *)loginURL
-                loginParams:(NSMutableDictionary *)params
-                   delegate:(id<FBLoginDialogDelegate>)delegate;
+-(id) initWithURL:(NSString *) loginURL
+      loginParams:(NSMutableDictionary *) params
+         delegate:(id <FBLoginDialogDelegate>) delegate;
 @end
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 @protocol FBLoginDialogDelegate <NSObject>
 
-- (void)fbDialogLogin:(NSString *)token expirationDate:(NSDate *)expirationDate params:(NSDictionary *)params;
+- (void)fbDialogLogin:(NSString*)token expirationDate:(NSDate*)expirationDate;
 
 - (void)fbDialogNotLogin:(BOOL)cancelled;
 
