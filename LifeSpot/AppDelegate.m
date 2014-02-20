@@ -8,7 +8,8 @@
 
 #import "AppDelegate.h"
 #import "SubaTutorialController.h"
-#import "SignUpViewController.h"
+#import "ActivityViewController.h"
+#import "PhotoStreamViewController.h"
 #import "MainStreamViewController.h"
 #import <SDImageCache.h>
 
@@ -25,11 +26,11 @@
     return _mainTabBarController;
 }
 
--(LifespotsAPIClient *)apiBaseURL
+-(SubaAPIClient *)apiBaseURL
 {
     if (!_apiBaseURL) {
-        return [LifespotsAPIClient sharedInstance];
-    }
+        return [SubaAPIClient sharedInstance];
+    } 
     
     return _apiBaseURL;
 }
@@ -84,6 +85,12 @@
 -(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     DLog();
+    
+    DLog(@"Notifications");
+    
+    
+    
+    
     // Override point for customization after application launch.
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
@@ -99,11 +106,12 @@
     [UINavigationBar appearance].barTintColor = navbarTintColor;
     [[UINavigationBar appearance] setTintColor:[UIColor whiteColor]];
     
-    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],
-                                      
-                                      NSForegroundColorAttributeName, nil];
+    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:19.0], NSFontAttributeName,nil];
+    
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
     
+    [[UINavigationBar appearance] setShadowImage:[[UIImage alloc] init]];
+    [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
     //End of Navbar Customization
 
     
@@ -199,6 +207,9 @@
         self.window.rootViewController = self.mainTabBarController;
     }
     
+    
+    
+    
     [self.window makeKeyAndVisible];
     return YES;
 }
@@ -206,8 +217,16 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    // Make call to Appirater
+    [Appirater setAppId:kSUBA_APP_ID];
+    [Appirater setDaysUntilPrompt:5];
+    [Appirater setUsesUntilPrompt:5];
+    [Appirater setSignificantEventsUntilPrompt:-1];
+    [Appirater setTimeBeforeReminding:2];
+    [Appirater setDebug:NO];
+    [Appirater appLaunched:YES];
     
-    DLog();
+    
     /*if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
         DLog(@"userid - %@",[AppHelper userID]);
         self.window.rootViewController = self.mainTabBarController;
@@ -227,16 +246,15 @@
                                       
                                       };
     if ([[AppHelper userID] isEqualToString:@"-1"]) {
+        DLog(@"Registering App Defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
     }
     
- 
-    //}
+    // Setting up Flurry SDK
+    [Flurry setCrashReportingEnabled:YES];
+    [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
     
     
-    
-    //[[FBSession activeSession] closeAndClearTokenInformation];
-    // Override point for customization after application launch.
     
     
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
@@ -245,12 +263,35 @@
     
     [self monitorNetworkChanges];
     
+    
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
-        //DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);
+        DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);
+        
+        NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        
+        //[AppHelper showAlert:@"Notification" message:[NSString stringWithFormat:@"%@",dict[@"spotId"]] buttons:@[@"OK"] delegate:nil];
+        
+        [self.mainTabBarController setSelectedIndex:2];
+        
+        UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+        PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+        
+        pVC.spotID = dict[@"spotId"];
+        //pVC.spotName = userInfo[@"aps"][@"spotName"];
+        self.window.rootViewController = self.mainTabBarController;
+        
+        UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+        ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+        
+        //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
+        
+        //DLog(@"Userinfo - %@",userInfo[@"spotId"]);
+        [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                 sender:[NSString stringWithFormat:@"%@",dict[@"spotId"]]];
     }
     
-    
+
     /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
        
@@ -263,6 +304,15 @@
 
     
      [self.window makeKeyAndVisible];
+    
+    
+    // Check whether we have an update
+    [[Harpy sharedInstance] setAppID:kSUBA_APP_ID];
+    [[Harpy sharedInstance] setAppName:kSUBA_APP_NAME];
+    
+    // Perform check for new version of app
+    [[Harpy sharedInstance] checkVersion];
+    
     return YES;
 }
 
@@ -291,63 +341,75 @@
 -(void)applicationDidEnterBackground:(UIApplication *)application
 {
     [self unmonitorNetworkChanges];
+    
+    CLLocationManager *locManager = [[CLLocationManager alloc] init];
+    
+    [locManager stopUpdatingLocation];
+    
      //[[NSNotificationCenter defaultCenter] removeObserver:self name:kUserReloadStreamNotification object:nil];
 }
 
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
+    [Appirater appEnteredForeground:YES];
+    
     [self monitorNetworkChanges];
 }
 
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    [application setApplicationIconBadgeNumber:0];
-    /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-        
-        
-        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
-        
-    }];*/
+    
+    
+    
+    
+        /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+        */
     
     [FBAppEvents activateApp];
     
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     
     [FBAppCall handleDidBecomeActive];
-    
-    // If notifications are enabled for this app
-    
-   /*if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
-       DLog();
-        if (![[AppHelper userID] isEqualToString:@"-1"]){
+    [application setApplicationIconBadgeNumber:0];
+
+    DLog(@"Notifications");
+    // Present the PhotoStream
+    if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
+        
+        /*if (![[AppHelper userID] isEqualToString:@"-1"]){
             
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
             
-            [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [AppHelper userID]}
-                 success:^(AFHTTPRequestOperation *operation, id responseObject) {
+            [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [AppHelper userID]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 
                 //Handle all notifications
                 NSString *notifications = [responseObject[@"badge"] stringValue];
-                //DLog(@"Notifications  %@",userInfo);
+                //NSLog(@"Notifications  %@",userInfo);
                 
                 if ([notifications isEqualToString:@"0"]) {
                     [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
                 }else{
-                    [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
+                    if ([notifications integerValue] >= 3) {
+                      [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"3"];
+                    }else{
+                        [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
+                    }
+                   
                 }
                 
-                     
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 DLog(@"Error - %@", error);
                 DLog(@"%@",operation.responseString);
             }];
             
             
-        }
+        }*/
         
-    }*/
+    }
     
+    
+    [Flurry logEvent:@"App_Started_From_Background"];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -363,7 +425,7 @@
 {
     NSString *sendThis = [[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]];
     
-    [[LifespotsAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL parameters:@{@"token": sendThis, @"userId":[AppHelper userID] } success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL parameters:@{@"token": sendThis, @"userId":[AppHelper userID] } success:^(NSURLSessionDataTask *task, id responseObject) {
         // Lets give this to analytics
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         DLog(@"Error - %@",error);
@@ -378,20 +440,43 @@
     //DLog(@"RECIEVED REMOTE NOTIFS");
     
     //NSLog(@"Root View Controller - %@\nChildView Controllers - %@",[self.window.rootViewController class],[[self.window.rootViewController childViewControllers] description]);
-    if(application.applicationState == UIApplicationStateActive){
-       
-        NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
-        NSLog(@"Notifications  %@",userInfo);
-        
-        if ([notifications isEqualToString:@"0"]){
-            [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
+    
+     NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
+    DLog(@"Notifications  %@",userInfo);
+    
+    if ([notifications isEqualToString:@"0"]){
+        [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
+    }else{
+        if ([notifications integerValue] >= 3) {
+            [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"3"];
         }else{
             [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
         }
         
+    }
+
+    if(application.applicationState == UIApplicationStateActive){
         
-        //self.window.rootViewController = self.mainTabBarController;
+        [AppHelper showNotificationWithMessage:userInfo[@"aps"][@"alert"] type:kSUBANOTIFICATION_SUCCESS inViewController:[self topViewController] completionBlock:nil];
         
+    }else{
+        DLog(@"UserInfo - %@",[userInfo debugDescription]);
+        [self.mainTabBarController setSelectedIndex:2];
+        
+        UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+        PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+        
+        pVC.spotID = userInfo[@"spotId"];
+        //pVC.spotName = userInfo[@"aps"][@"spotName"];
+        self.window.rootViewController = self.mainTabBarController;
+        
+        UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+        ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+        
+        //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
+        
+        //DLog(@"Userinfo - %@",userInfo[@"spotId"]);
+        [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:[NSString stringWithFormat:@"%@",userInfo[@"spotId"]]];
     }
     
 }
@@ -464,7 +549,7 @@
 
 
 - (void)monitorNetworkChanges{
-    LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
+    SubaAPIClient *apiClient = [SubaAPIClient sharedInstance];
     
     NSOperationQueue *opQueue = apiClient.operationQueue;
     
@@ -508,7 +593,7 @@
 
 -(void)unmonitorNetworkChanges
 {
-    LifespotsAPIClient *apiClient = [LifespotsAPIClient sharedInstance];
+    SubaAPIClient *apiClient = [SubaAPIClient sharedInstance];
     [apiClient.reachabilityManager stopMonitoring];
 }
 

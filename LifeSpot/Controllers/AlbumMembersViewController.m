@@ -22,6 +22,8 @@
 @property (strong,nonatomic) NSArray *members;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong, nonatomic) IBOutlet UIBarButtonItem *addMembersButton;
+@property (weak, nonatomic) IBOutlet UIView *loadingMembersIndicatorView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingMembersIndicator;
 
 - (void)loadAlbumMembers:(NSString *)spotId;
 - (void)updateMembersData;
@@ -82,28 +84,32 @@
 #pragma mark - Helpers
 -(void)loadAlbumMembers:(NSString *)spotId
 {
-   /*[Spot fetchMembersForSpot:spotId completion:^(id results, NSError *error) {
-       DLog(@"Results - %@",results); 
-       self.members = results;
-       [self.memberTableView reloadData];
-   }];*/
+    [AppHelper showLoadingDataView:self.loadingMembersIndicatorView indicator:self.loadingMembersIndicator flag:YES];
     
     [Spot fetchSpotInfo:spotId User:[AppHelper userID] completion:^(id results, NSError *error) {
-        //DLog(@"Results - %@",results);
-        self.spotInfo = results;
-        //DLog(@"Spot Info - %@",self.spotInfo);
         
-        if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
-          // If user is not creator,we need to check whether he/she can invite users
-            BOOL canUserAddMembers = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:@"ONLY_MEMBERS"])?NO:YES;
-            if (canUserAddMembers) {
-                [self showAddMembersButton:YES];
-            }else [self showAddMembersButton:NO];
-
-        }else [self showAddMembersButton:YES];
-        //[self showAddMembersButton:YES];
-        self.members = results[@"members"];
-        [self.memberTableView reloadData];
+        [AppHelper showLoadingDataView:self.loadingMembersIndicatorView indicator:self.loadingMembersIndicator flag:NO];
+        
+        if (!error) {
+            //DLog(@"Results - %@",results);
+            self.spotInfo = results;
+            //DLog(@"Spot Info - %@",self.spotInfo);
+            
+            if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
+                // If user is not creator,we need to check whether he/she can invite users
+                BOOL canUserAddMembers = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:@"ONLY_MEMBERS"])?NO:YES;
+                if (canUserAddMembers) {
+                    [self showAddMembersButton:YES];
+                }else [self showAddMembersButton:NO];
+                
+            }else [self showAddMembersButton:YES];
+            //[self showAddMembersButton:YES];
+            self.members = results[@"members"];
+            [self.memberTableView reloadData];
+        }else{
+            [AppHelper showAlert:@"Network error" message:@"Sorry we could not load the members of this stream" buttons:@[@"Try Later"] delegate:nil];
+        }
+        
     }];
 }
 

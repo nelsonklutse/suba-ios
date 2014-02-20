@@ -19,7 +19,7 @@
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *searchingIndicator;
 
 @property (strong,nonatomic) UISearchBar *searchBar;
-@property (strong,nonatomic) NSArray *locations;
+@property (strong,nonatomic) NSMutableArray *locations;
 @property (strong,nonatomic) NSMutableArray *watchingLocations;
 @property (strong,nonatomic) NSMutableArray *filteredLocations;
 @property (strong,nonatomic) CLLocation *currentLocation;
@@ -84,10 +84,9 @@ static CLLocationManager *locationManager;
 -(void)viewWillDisappear:(BOOL)animated
 {
     [locationManager stopUpdatingLocation];
-    self.locations = nil;
+    [self.locations removeAllObjects];
+    [self.venuesTableView reloadData];
 }
-
-
 
 
 - (void)didReceiveMemoryWarning
@@ -137,7 +136,7 @@ static CLLocationManager *locationManager;
             if (error) {
                 DLog(@"error - %@",error);
             }else{
-                
+                [Flurry logEvent:@"Watch_Place"];
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                      [self.watchingLocations addObject:@{@"prettyName": location.placeName ,@"spots" : @(0)}];
                 });
@@ -163,7 +162,7 @@ static CLLocationManager *locationManager;
                 for (NSDictionary *favPlace in self.watchingLocations) {
                     if ([favPlace[@"prettyName"] isEqualToString:cell.venueNameLabel.text]) {
                         //DLog(@"Setting selected");
-                        
+                        [Flurry logEvent:@"unWatch_Place"];
                         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(), ^{
                             [self.watchingLocations removeObject:favPlace];
                             [cell.followPlaceButton setSelected:NO];
@@ -186,20 +185,18 @@ static CLLocationManager *locationManager;
 
 -(void)checkForLocation
 {
-    if ([CLLocationManager locationServicesEnabled]) {
-        locationManager = [[CLLocationManager alloc] init];
-        locationManager.delegate = self;
-        [locationManager startUpdatingLocation];
-        /*if ([locationManager location]) {
-             DLog(@"Location - %@",NSStringFromClass([[locationManager location] class]));
-            NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
-            NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
+    if ([CLLocationManager locationServicesEnabled]){
+       // if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
             
-            [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
-
+            locationManager = [[CLLocationManager alloc] init];
+            locationManager.delegate = self;
+            [locationManager startUpdatingLocation];
+       /* }else{
+            [AppHelper showAlert:@"Location Denied"
+                         message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
+                         buttons:@[@"OK"] delegate:nil];
         }*/
-       
-        
+
         
         
     }else{
@@ -231,44 +228,29 @@ static CLLocationManager *locationManager;
 }
 
 
+
 -(void)showNearbyFoursuareVenues:(NSDictionary *)latlng
 {
     DLog(@"LatLng- %@",latlng);
+    [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:YES];
+    
+    
     Location *loc = [[Location alloc] initWithLat:latlng[@"latitude"] Lng:latlng[@"longitude"]];
     
     [loc showBestMatchingFoursquareVenueCriteria:@"ll" completion:^(id results, NSError *error) {
-        if (!error) {
-            self.locations = [[results objectForKey:@"response"] objectForKey:@"venues"];
+        
+        [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:NO];
+        
+        if (!error){
+            
+            self.locations = [NSMutableArray arrayWithArray:[[results objectForKey:@"response"] objectForKey:@"venues"]];
             
             [self.venuesTableView reloadData];
         }else{
            DLog(@"Error: %@", error);
+            [AppHelper showAlert:@"Locations Error" message:@"We could fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
         }
     }];
-    
-    /*NSString *near = [NSString stringWithFormat:@"%@,%@",latlng[@"latitude"],latlng[@"longitude"]];
-    NSString *radius = @"1000";
-    NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
-    
-    AFHTTPRequestOperationManager *manager =[AFHTTPRequestOperationManager manager];
-    [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
-                                         @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
-                                         @"ll" : near,
-                                         @"radius" : radius,
-                                         @"limit" : @"50",
-                                         @"v" : @"20140108"
-                                         }
-         success:^(AFHTTPRequestOperation *operation, id responseObject) {
-             //DLog(@"Response from 4square - %@",responseObject);
-             self.locations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
-             
-             [self.venuesTableView reloadData];
-             
-         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-             DLog(@"Error: %@", error);
-             
-         }];*/
-
 }
 
 
@@ -278,13 +260,13 @@ static CLLocationManager *locationManager;
     DLog();
     self.currentLocation = [locations lastObject];
     if (self.currentLocation != nil){
-        if (!self.locations) {
+        if ([self.locations count] == 0){
+            
             NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
             
             [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
         }
-        
     }
 }
 
@@ -311,6 +293,7 @@ static CLLocationManager *locationManager;
     }else{
         
         return [self.locations count];
+        
     }
 }
 
@@ -393,7 +376,7 @@ static CLLocationManager *locationManager;
             NSArray *searchResults = [[results objectForKey:@"response"] objectForKey:@"venues"];
             if ([searchResults count] > 0){
                 
-                self.locations = searchResults;
+                self.locations = [NSMutableArray arrayWithArray:searchResults];
                 DLog(@"Locations - %@",searchResults);
                 [self.venuesTableView reloadData];
             }

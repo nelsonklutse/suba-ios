@@ -37,11 +37,16 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
+
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
 
-@property (nonatomic, readwrite) CGRect likeButtonBounds;
-@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
+@property (weak, nonatomic) IBOutlet UIView *loadingInfoIndicatorView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamInfoIndicator;
+@property (weak, nonatomic) IBOutlet UIButton *cameraButton;
+
+//@property (nonatomic, readwrite) CGRect likeButtonBounds;
+//@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
 
 
 @property (weak, nonatomic) IBOutlet UIView *noPhotosView;
@@ -67,6 +72,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (IBAction)showMembers:(id)sender;
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
+- (void)pickImage:(id)sender;
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 @end
 
@@ -75,15 +81,20 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    // Disable the camera button till we have all our info ready
+    self.cameraButton.enabled = NO;
+    
+    
 	// Do any additional setup after loading the view.
     self.noPhotosView.hidden = YES;
     
-    self.navigationItem.title = (self.spotName) ? self.spotName : @"Spot";
+    self.navigationItem.title = (self.spotName) ? self.spotName : @"Stream";
     
     self.library = [[ALAssetsLibrary alloc] init];
     
     if (!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
         // We are coming from an activity screen
+        DLog(@"Loading spotImages");
        [self loadSpotImages:self.spotID];
     }
     DLog(@"Number of photos - %ld",(long)self.numberOfPhotos);
@@ -102,6 +113,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     if (self.spotID) {
         DLog(@"SpotId - %@",self.spotID);
+        
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     }
     
@@ -135,7 +147,13 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 -(void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId
 {
+ // Show activity indicator
+    [AppHelper showLoadingDataView:self.loadingInfoIndicatorView
+                         indicator:self.loadingStreamInfoIndicator flag:YES];
+    
     [Spot fetchSpotInfo:spotId User:userId completion:^(id results, NSError *error) {
+        [AppHelper showLoadingDataView:self.loadingInfoIndicatorView
+                             indicator:self.loadingStreamInfoIndicator flag:NO];
         if (error) {
             DLog(@"Error - %@",error);
             [AppHelper showAlert:@"Network Error" message:error.localizedDescription buttons:@[@"Ok"] delegate:nil];
@@ -146,6 +164,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 self.spotName = (self.spotName) ? self.spotName : results[@"spotName"];
                 self.navigationItem.title = self.spotName;
                 [self.photoCollectionView reloadData];
+                
+                self.cameraButton.enabled = YES;
             }
             
         }
@@ -380,6 +400,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                      buttons:@[@"OK, I'll wait"]
                     delegate:nil];
     }
+    
+    
 }
 
 
@@ -510,15 +532,21 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         
         
         activityItems = @[self.albumSharePhoto,shareText];
+        [Flurry logEvent:@"Share_Stream_Tapped"];
+        
     }else if (objectOfInterest == kPhoto){
+        
         //DLog(@"Photo Cell - %@",sender.superview.superview.superview);
         PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
         shareText = [NSString stringWithFormat:@"Check out all the photos in my shared spot %@ with Suba for iOS.",self.navigationItem.title];
         
         activityItems = @[cell.photoCardImage.image,shareText];
+        [Flurry logEvent:@"Share_Photo_Tapped"];
     }
     
     UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
+    
+    activityVC.excludedActivityTypes = @[UIActivityTypePrint,UIActivityTypeCopyToPasteboard,UIActivityTypeAssignToContact,UIActivityTypeSaveToCameraRoll,UIActivityTypeAddToReadingList,UIActivityTypeAirDrop];
     
     [self presentViewController:activityVC animated:YES completion:nil];
   
@@ -529,6 +557,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
     [self.library saveImage:photo toAlbum:@"Suba Photos" completion:^(NSURL *assetURL, NSError *error) {
         [AppHelper showNotificationWithMessage:@"Image saved in camera roll" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+        [Flurry logEvent:@"Photo_Saved"];
     }failure:^(NSError *error){
         [AppHelper showAlert:@"Save image error"
                      message:@"There was an error saving the photo"
@@ -589,24 +618,23 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 
 
--(void)pickPhoto:(PhotoSourceType)sourceType
+-(void)pickImage:(id)sender
 {
+    DLog(@"Source Type - %@",sender);
+    
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
        
         UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
-        if (sourceType == kTakeCamera) {
+        if ([sender intValue] == kTakeCamera) {
             imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
             imagePicker.delegate = self;
             imagePicker.allowsEditing = NO;
-        }else if(sourceType == kGallery){
+            
+            [self presentViewController:imagePicker animated:YES completion:nil];
+        }else if([sender intValue] == kGallery){
             [self pickAssets];
         }
-        
-        
-        
-        [self presentViewController:imagePicker animated:YES completion:nil];
        
-        
     }else{
         
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Camera Error" message:@"No Camera" delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
@@ -620,7 +648,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 #pragma mark - UIActionSheet Delegate Methods
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    DLog(@"photo info - %@",self.reportInfo);
+    //DLog(@"photo info - %@",self.reportInfo);
     if (actionSheet.tag == 1000) {
         if(buttonIndex == 0){
             //User wants to save photo
@@ -657,11 +685,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     if (buttonIndex == kTakeCamera) {
         // Call the Camera here
-        [self pickPhoto:kTakeCamera];
-        
+        DLog(@"Calling camera");
+        //[self pickPhoto:kTakeCamera];
+        [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
     }else if (buttonIndex == kGallery){
         // Choose from the Gallery
-        [self pickPhoto:kGallery];
+        DLog(@"Using the assets picker");
+        //[self pickPhoto:kGallery];
+        [self performSelector:@selector(pickImage:) withObject:@(kGallery) afterDelay:0.5];
     }
 }
     //NSLog(@"Button Clicked is %li",(long)buttonIndex);
@@ -683,8 +714,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 #pragma mark - UIImagePickerController Delegate
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-   
-    UIImage *image = info[UIImagePickerControllerEditedImage];
+    [Flurry logEvent:@"Photo_Taken"];
+    
+    UIImage *image = info[UIImagePickerControllerOriginalImage];
     
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     //dateFormatter se
@@ -700,7 +732,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 
                 UIImage *newImage = compressedPhoto;
                NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
-               
+               DLog(@"Uploading Photo");
                [self uploadPhoto:imageData WithName:trimmedString];
         }];
     
@@ -720,9 +752,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSString *spotId = self.spotID;
     
     NSDictionary *params = @{@"userId": userId,@"spotId": spotId};
-    AFHTTPSessionManager *manager = [LifespotsAPIClient sharedInstance];
+    AFHTTPSessionManager *manager = [SubaAPIClient sharedInstance];
     
-    NSURL *baseURL = (NSURL *)[LifespotsAPIClient lifespotsAPIBaseURL];
+    NSURL *baseURL = (NSURL *)[SubaAPIClient subaAPIBaseURL];
     
     NSString *urlPath = [[NSURL URLWithString:@"spot/picture/add" relativeToURL:baseURL] absoluteString];
     
@@ -766,6 +798,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
                 
                 if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
+                    [Flurry logEvent:@"Photo_Upload"];
+                    
                     [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                     self.noPhotosView.hidden = YES;
                     self.photoCollectionView.hidden = NO;

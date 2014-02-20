@@ -6,12 +6,6 @@
 // project.
 
 
-// AAPullToRefresh
-#define COCOAPODS_POD_AVAILABLE_AAPullToRefresh
-#define COCOAPODS_VERSION_MAJOR_AAPullToRefresh 1
-#define COCOAPODS_VERSION_MINOR_AAPullToRefresh 0
-#define COCOAPODS_VERSION_PATCH_AAPullToRefresh 2
-
 // AFNetworking
 #define COCOAPODS_POD_AVAILABLE_AFNetworking
 #define COCOAPODS_VERSION_MAJOR_AFNetworking 2
@@ -60,6 +54,18 @@
 #define COCOAPODS_VERSION_MINOR_ALAssetsLibrary_CustomPhotoAlbum 1
 #define COCOAPODS_VERSION_PATCH_ALAssetsLibrary_CustomPhotoAlbum 4
 
+// Appirater
+#define COCOAPODS_POD_AVAILABLE_Appirater
+#define COCOAPODS_VERSION_MAJOR_Appirater 2
+#define COCOAPODS_VERSION_MINOR_Appirater 0
+#define COCOAPODS_VERSION_PATCH_Appirater 2
+
+// BDKNotifyHUD
+#define COCOAPODS_POD_AVAILABLE_BDKNotifyHUD
+#define COCOAPODS_VERSION_MAJOR_BDKNotifyHUD 1
+#define COCOAPODS_VERSION_MINOR_BDKNotifyHUD 1
+#define COCOAPODS_VERSION_PATCH_BDKNotifyHUD 0
+
 // CSNotificationView
 #define COCOAPODS_POD_AVAILABLE_CSNotificationView
 #define COCOAPODS_VERSION_MAJOR_CSNotificationView 0
@@ -72,17 +78,23 @@
 #define COCOAPODS_VERSION_MINOR_CTAssetsPickerController 3
 #define COCOAPODS_VERSION_PATCH_CTAssetsPickerController 3
 
-// CXAlertView
-#define COCOAPODS_POD_AVAILABLE_CXAlertView
-#define COCOAPODS_VERSION_MAJOR_CXAlertView 1
-#define COCOAPODS_VERSION_MINOR_CXAlertView 0
-#define COCOAPODS_VERSION_PATCH_CXAlertView 1
+// DACircularProgress
+#define COCOAPODS_POD_AVAILABLE_DACircularProgress
+#define COCOAPODS_VERSION_MAJOR_DACircularProgress 2
+#define COCOAPODS_VERSION_MINOR_DACircularProgress 1
+#define COCOAPODS_VERSION_PATCH_DACircularProgress 0
 
 // DCModalSegue
 #define COCOAPODS_POD_AVAILABLE_DCModalSegue
 #define COCOAPODS_VERSION_MAJOR_DCModalSegue 0
 #define COCOAPODS_VERSION_MINOR_DCModalSegue 0
 #define COCOAPODS_VERSION_PATCH_DCModalSegue 2
+
+// Harpy
+#define COCOAPODS_POD_AVAILABLE_Harpy
+#define COCOAPODS_VERSION_MAJOR_Harpy 2
+#define COCOAPODS_VERSION_MINOR_Harpy 5
+#define COCOAPODS_VERSION_PATCH_Harpy 2
 
 // SDWebImage
 #define COCOAPODS_POD_AVAILABLE_SDWebImage

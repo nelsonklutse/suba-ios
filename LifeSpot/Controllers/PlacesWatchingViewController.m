@@ -27,7 +27,7 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
     
-    self.navigationItem.title = [NSString stringWithFormat:@"Albums @ %@",self.locationName];
+    self.navigationItem.title = [NSString stringWithFormat:@"Streams @ %@",self.locationName];
     
     if (!self.locationName) {
         //[self fetchUserWatchingSpotsAtLocation];

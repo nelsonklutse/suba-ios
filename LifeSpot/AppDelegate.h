@@ -16,7 +16,7 @@
 @property (strong, nonatomic) SubaTutorialController *viewController;
 @property (strong,nonatomic) UINavigationController *rootNavController;
 @property (strong,nonatomic) UITabBarController *mainTabBarController;
-@property (strong,nonatomic) LifespotsAPIClient *apiBaseURL;
+@property (strong,nonatomic) SubaAPIClient *apiBaseURL;
 
 - (UIViewController *)topViewController;
 - (void)resetMainViewController;

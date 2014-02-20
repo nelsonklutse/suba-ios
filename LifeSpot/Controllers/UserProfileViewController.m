@@ -24,6 +24,8 @@
 @property (strong,nonatomic) NSArray *userSpots;
 @property (strong,nonatomic) NSDictionary *userProfileInfo;
 //@property (strong,nonatomic) NSString *spotID;
+@property (weak, nonatomic) IBOutlet UIView *loadingUserStreamsIndicatorView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingUserStreamsIndicator;
 
 - (void)loadSpotsCreated:(NSString *)userId;
 - (void)fetchUserInfo:(NSString *)userId;
@@ -102,9 +104,11 @@
 
 -(void)loadSpotsCreated:(NSString *)userId
 {
+    [AppHelper showLoadingDataView:self.loadingUserStreamsIndicatorView indicator:self.loadingUserStreamsIndicator flag:YES];
     [[User currentlyActiveUser]
         fetchCreatedSpotsCompletion:userId
                          completion:^(id results, NSError *error) {
+                             [AppHelper showLoadingDataView:self.loadingUserStreamsIndicatorView indicator:self.loadingUserStreamsIndicator flag:NO];
                             if (error) {
                                     DLog(@"Error - %@",error);
                             }else{

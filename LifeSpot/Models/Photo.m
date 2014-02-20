@@ -34,7 +34,7 @@
     NSMutableDictionary *requestParams = [NSMutableDictionary dictionaryWithDictionary:params];
     [requestParams addEntriesFromDictionary:@{@"updateFlag": updateFlag}];
     
-    [[LifespotsAPIClient sharedInstance] POST:path parameters:requestParams success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:path parameters:requestParams success:^(NSURLSessionDataTask *task, id responseObject) {
         NSDictionary *serverResponse = responseObject;
         block(serverResponse,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {

@@ -13,6 +13,9 @@
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
 @property (weak, nonatomic) IBOutlet UITableView *notificationsTableView;
+@property (weak, nonatomic) IBOutlet UIView *loadingActivityIndicatorView;
+
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingActivityIndicator;
 @end
 
 @implementation ActivityViewController
@@ -39,17 +42,25 @@
 -(void)fetchNotificationsFromProvider
 {
     DLog(@"Fetch notifications");
+    [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:YES];
+    
     [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications" parameters:@{@"userId": [AppHelper userID]}
                                           success:^(NSURLSessionDataTask *task, id responseObject){
-                                              
+                
+                [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:NO];
+                
                 NSArray *attachments = [responseObject objectForKey:@"notifs"];
                                               self.notifications = attachments;
                 if ([attachments count] > 0) {
                     DLog(@"Notifications - %@",attachments);
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
+                    if ([badgeValue integerValue] >= 3) {
+                        [self.tabBarController.tabBar.items[2] setBadgeValue:@"3"];
+                    }else{
+                      [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];  
+                    }
                     
-                    [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];
                     [self.notificationsTableView reloadData];
                     }else{
                         DLog(@"There are no notifications for this user");
@@ -125,7 +136,7 @@
 
 
 #pragma mark - Segue Methods
--(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender 
 {
     if ([segue.identifier isEqualToString:@"ACTIVITY_PHOTO_STREAM"]) {
         PhotoStreamViewController *pvc = segue.destinationViewController;

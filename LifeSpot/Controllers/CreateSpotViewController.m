@@ -16,7 +16,6 @@
 
 @interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate>
 
-
 @property (copy,nonatomic) NSString *spotName;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
 @property (strong,nonatomic) NSArray *otherVenues;
@@ -31,6 +30,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *createSpotButton;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *creatingSpotIndicator;
 @property (weak, nonatomic) IBOutlet UITextField *joinSpotId;
+
 
 - (IBAction)joinSpotAction:(id)sender;
 - (IBAction)createSpotAction:(UIButton *)sender;
@@ -62,12 +62,15 @@ static CLLocationManager *locationManager;
     if (locationManager) {
         [locationManager startUpdatingLocation];
     }
+    
+    [Flurry logEvent:@"Create_Stream_Button_Tapped"];
 }
 
 
 -(void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
+    
     [locationManager stopUpdatingLocation];
 }
 
@@ -83,6 +86,7 @@ static CLLocationManager *locationManager;
 - (IBAction)joinSpotAction:(id)sender
 {
     [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:YES];
+    
     DLog(@"joining");
     [[User currentlyActiveUser] joinSpotCompletionCode:self.joinSpotId.text completion:^(id results, NSError *error) {
         DLog(@"Result - %@",results);
@@ -99,11 +103,17 @@ static CLLocationManager *locationManager;
                                    completionBlock:nil];
         }
         
-        [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:NO];
+        [AppHelper showLoadingDataView:self.loadingDataView
+                             indicator:self.joiningSpotIndicator flag:NO];
     }];
 }
 
+
+
 - (IBAction)createSpotAction:(UIButton *)sender {
+    // Log this event with Flurry
+    [Flurry logEvent:@"Create_Stream_Action"];
+    
     // 1. View Privacy  2. Add Privacy 3. Location 4.
     [self.creatingSpotIndicator startAnimating];
     NSString *viewPrivacy = @"0";
@@ -138,11 +148,14 @@ static CLLocationManager *locationManager;
 
 -(void)askLocationPermission
 {
-    if ([CLLocationManager locationServicesEnabled]) {
-        locationManager = [[CLLocationManager alloc] init];
-        locationManager.delegate = self;
-       [locationManager startUpdatingLocation];
-        
+    if ([CLLocationManager locationServicesEnabled]){
+        //if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
+            
+            locationManager = [[CLLocationManager alloc] init];
+            locationManager.delegate = self;
+            [locationManager startUpdatingLocation];
+            
+       // }
     }
 }
 
@@ -221,8 +234,8 @@ static CLLocationManager *locationManager;
 }
 
 #pragma mark - Unwind Segue
-- (IBAction)unWindToCreateSpotFromCancel:(UIStoryboardSegue *)segue{
-    
+- (IBAction)unWindToCreateSpotFromCancel:(UIStoryboardSegue *)segue
+{
 }
 
 -(IBAction)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue

@@ -44,6 +44,7 @@
 - (void)showPhotoOptions;
 - (void)userInfo;
 - (void)pickAssets;
+- (void)pickPhoto:(id)sender;
 @end
 
 @implementation ProfileSettingsViewController
@@ -245,7 +246,7 @@
     ALAsset *asset = (ALAsset *)assets[0];
     ALAssetRepresentation *representation = asset.defaultRepresentation;
     UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage                                                       scale:1.0f
-                                                 orientation:(UIImageOrientation)representation.orientation];
+                                                 orientation:(UIImageOrientation)ALAssetOrientationUp];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     //dateFormatter se
     
@@ -275,11 +276,13 @@
 {
     if (buttonIndex == kTakePhotoWithCamera) {
         // Call the Camera here
-        [self pickPhoto:kTakePhotoWithCamera];
-        
+        //[self pickPhoto:kTakePhotoWithCamera];
+        [self performSelector:@selector(pickPhoto:) withObject:@(kTakePhotoWithCamera) afterDelay:0.5];
     }else if (buttonIndex == kChooseFromGallery){
         // Choose from the Gallery
-        [self pickPhoto:kChooseFromGallery];
+        //[self pickPhoto:kChooseFromGallery];
+        
+        [self performSelector:@selector(pickPhoto:) withObject:@(kChooseFromGallery) afterDelay:0.5];
     }
     //NSLog(@"Button Clicked is %li",(long)buttonIndex);
     [actionSheet dismissWithClickedButtonIndex:buttonIndex animated:YES];
@@ -288,7 +291,7 @@
 
 
 
--(void)pickPhoto:(PhotoSourceType)sourceType
+-(void)pickPhoto:(id)sourceType
 {
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
         
@@ -297,20 +300,17 @@
          if ([mediaTypes containsObject:@"public.image"]){
         
         UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
-        if (sourceType == kTakePhotoWithCamera) {
+        if ([sourceType intValue] == kTakePhotoWithCamera) {
             imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
             imagePicker.delegate = self;
             //imagePicker.allowsEditing = YES;
 
             [self presentViewController:imagePicker animated:YES completion:nil];
-        }else if(sourceType == kChooseFromGallery){
+        }else if([sourceType intValue] == kChooseFromGallery){
             //imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
             [self pickAssets];
             //[self presentViewController:imagePicker animated:YES completion:nil];
         }
-        
-        //imagePicker.mediaTypes = @[(NSString *)kUTTypeImage];
-        
         
     }
         

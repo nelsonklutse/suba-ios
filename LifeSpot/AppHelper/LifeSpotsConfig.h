@@ -65,6 +65,8 @@
 #define kNoInternetAccessNotification @"kNoInternetNotification"
 #define kSEXUALLY_EXPLICIT @"SEXUALLY_EXPLICIT"
 #define kUNRELATED_PHOTO @"UNRELATED_PHOTO"
+#define kSUBA_APP_ID @"792733899"
+#define kSUBA_APP_NAME @"Suba"
 
 
 // Notifications
@@ -77,5 +79,6 @@
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
 #define kUserReloadStreamNotification @"kUserJoinedSpot"
+
 
 #endif

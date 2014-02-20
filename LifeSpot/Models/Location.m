@@ -45,7 +45,7 @@
 
 +(void)fetchNearbySpots:(NSDictionary *)location completionBlock:(NearbySpotsLoadedCompletionBlock)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"spot/nearby" parameters:location success:^(NSURLSessionDataTask *task, id responseObject){
+    [[SubaAPIClient sharedInstance] GET:@"spot/nearby" parameters:location success:^(NSURLSessionDataTask *task, id responseObject){
         
         completion(responseObject,nil);
         

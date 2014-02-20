@@ -50,7 +50,7 @@
 
 + (void)fetchMembersForSpot:(NSString *)spotId completion:(SpotMembersLoadedCompletionBlock)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"spot/members/all"
+    [[SubaAPIClient sharedInstance] GET:@"spot/members/all"
                                   parameters:@{@"spotId": spotId}
                                      success:^(NSURLSessionDataTask *task, id responseObject) {
         NSArray *serverPesponse = (NSArray *)responseObject[@"members"];
@@ -63,7 +63,7 @@
 +(void)fetchSpotInfo:(NSString *)spotId User:(NSString *)userId completion:(SpotInfoLoadedCompletion)completion
 {
     //DLog(@"SpotId - %@\nUserId - %@",spotId,userId);
-    [[LifespotsAPIClient sharedInstance] GET:@"spot/info"
+    [[SubaAPIClient sharedInstance] GET:@"spot/info"
                                   parameters:@{@"spotId":spotId, @"userId":userId}
                                      success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
@@ -74,7 +74,7 @@
 
 +(void)fetchSpotImagesUsingSpotId:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -83,7 +83,7 @@
 
 +(void)updateSpotInfo:(NSDictionary *)info completion:(SpotInfoChangedCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance] POST:@"spot/info/edit" parameters:info success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:@"spot/info/edit" parameters:info success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);

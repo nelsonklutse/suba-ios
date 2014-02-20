@@ -48,11 +48,19 @@ static CLLocationManager *locationManager;
     self.filteredLocations = [NSMutableArray arrayWithCapacity:[self.locations count]];
     
     
-        if ([CLLocationManager locationServicesEnabled]) {
+    if ([CLLocationManager locationServicesEnabled]){
+        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized){
+            
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
             [locationManager startUpdatingLocation];
-            
+        }else{
+            [AppHelper showAlert:@"Location Denied"
+                         message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
+                         buttons:@[@"OK"] delegate:nil];
+        }
+
+        
       }
     }
 

@@ -227,6 +227,20 @@ bool isUserNameAvailable = NO;
                          completion:^(id results, NSError *error){
             [self.signUpActivityIndicator stopAnimating];
         if (!error){
+            NSMutableDictionary *analyticsParams = [NSMutableDictionary dictionaryWithDictionary:@{USER_NAME: [AppHelper userName]}];
+            //[analyticsParams addEntriesFromDictionary:@{EMAIL: [AppHelper userEmail]}];
+            
+             /*if ([CLLocationManager locationServicesEnabled]) {
+                 if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized) {
+                     DLog(@"Location is authorized for this app");
+                     CLGeocoder *geoCoder = [[CLGeocoder alloc] init];
+                     CLLocationManager *location
+                     geoCoder reverseGeocodeLocation:<#(CLLocation *)#> completionHandler:<#^(NSArray *placemarks, NSError *error)completionHandler#>
+                     //[analyticsParams]
+                 }
+            }*/
+            
+            [Flurry logEvent:@"Native_SignUp" withParameters:analyticsParams];
             [self performSegueWithIdentifier:@"FromSignUpPersonalSpotsTab" sender:nil];
         }else{
             DLog(@"Error : %@",error);

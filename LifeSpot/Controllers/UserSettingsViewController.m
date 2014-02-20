@@ -56,7 +56,7 @@
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
     
     self.accountSettings = @[@"Edit Profile",@"Invite Friends To Suba"];
-    self.help = @[@"Help",@"Send Feedback",@"About Suba"];
+    self.help = @[@"Help",@"Send Feedback",@"Licenses"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
     
     
@@ -187,6 +187,7 @@
         //PushNotificationsViewController *pushNVC = segue.destinationViewController;
         //pushNVC.navigationItem.title = (NSString *)sender;
     }else if([segue.identifier isEqualToString:@"TERMS_SEGUE"]){
+        
         NSURL *url = nil;
         TermsViewController *tVC = segue.destinationViewController;
         
@@ -200,8 +201,8 @@
             url = [NSURL URLWithString:@"http://www.subaapp.com/support.html"];
             tVC.navigationItem.title = @"Support";
         }
+       
         
-        DLog(@"Sender - %@\nurl - %@",sender,url);
         tVC.urlToLoad = url;
         
     }    
@@ -211,7 +212,7 @@
 
 -(void)logout{
     [AppHelper logout];
-    
+    //[[FBSession activeSession] closeAndClearTokenInformation];
     AppDelegate *appDelegate = [UIApplication sharedApplication].delegate;
     
     UIViewController *topVC = [appDelegate topViewController];
@@ -230,7 +231,7 @@
     }];
     [[[self.presentingViewController.parentViewController.navigationController viewControllers] objectAtIndex:0] popToRootViewControllerAnimated:YES];*/
     
-    
+    [Flurry logEvent:@"Logout"];
 }
 
 

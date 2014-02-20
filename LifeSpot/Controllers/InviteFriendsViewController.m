@@ -89,6 +89,12 @@ static BOOL isFiltered = NO;
     } failure:^(NSError *error) {
         DLog(@"Error - %@",error);
     }];
+    
+    
+    
+    
+    
+    
 }
 
 
@@ -230,7 +236,11 @@ static BOOL isFiltered = NO;
             // ABAddressBook doesn't gaurantee execution of this block on main thread, but we want our callbacks to be
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (!granted) {
-                    failure((__bridge NSError *)error);
+                    //failure((__bridge NSError *)error);
+                    DLog(@"Access to contacts refused");
+                    [AppHelper showAlert:@"Contacts Access Denied"
+                                 message:@"We do not have access to your contacts. To allow us to access your contacts,please go to Settings->Privacy->Contacts"
+                                 buttons:@[@"OK"] delegate:nil];
                 } else {
                     
                     readAddressBookContacts(addressBook, success);
@@ -310,13 +320,16 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     switch (result)
     {
         case MessageComposeResultCancelled:
-            DLog(@"SMS sending failed");
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"SMS_Invite_Cancelled"];
             break;
         case MessageComposeResultSent:
-            DLog(@"SMS sent");
+            //DLog(@"SMS sent");
+            [Flurry logEvent:@"SMS_Invite_Sent"];
             break;
         case MessageComposeResultFailed:
-            DLog(@"SMS sending failed");
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"SMS_Invite_Failed"];
             break;
         default:
             DLog(@"SMS not sent");
@@ -386,14 +399,14 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     
     if (canShare) {
         [FBDialogs presentShareDialogWithParams:params clientState:nil handler:^(FBAppCall *call, NSDictionary *results, NSError *error) {
-            //NSLog(@"FbAppCall - %@\nFBShare results -%@",[call debugDescription],[results[@"completionGesture"] class]);
-            
-            if (error) {
+            if (!error) {
+            [Flurry logEvent:@"Facebook_Share_Completed"];
+        }else if (error) {
                 UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Failed share" message:@"We could not share your album to your facebook contacts" delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK" , nil];
                 [alert show];
             }else if ([results[@"completionGesture"] isEqualToString:@"cancel"]){
                 //NSLog(@"Share didComplete");
-                
+                [Flurry logEvent:@"Facebook_Share_Cancelled"];
                 [self.facebookRecipients removeAllObjects];
             }
             [self refreshTableView:self.facebookFriendsTableView];
@@ -435,9 +448,9 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                           
                                           DLog(@"About to load FB friends");
                                           
-                                          if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
-                                              [self loadFacebookFriends];
-                                          }else{
+                                         // if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
+                                           //   [self loadFacebookFriends];
+                                          //}else{
                                               // Fetch FBUser Info
                                               [[FBRequest requestForMe] startWithCompletionHandler:
                                                ^(FBRequestConnection *connection,
@@ -451,7 +464,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                                        
                                                    }
                                                }];
-                                          }
+                                       //   }
 
                                       }else{
                                           DLog(@"fbSession is not open");

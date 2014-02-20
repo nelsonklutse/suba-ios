@@ -14,7 +14,7 @@
 #import "LSPushProviderAPIClient.h"
 #import <AddressBook/AddressBook.h>
 #import <MessageUI/MessageUI.h>
-//#import ""
+#import "FacebookAPIClient.h"
 
 #define PhoneContactsKey @"PhoneContactsKey"
 #define FacebookUsersKey @"FacebookUsersKey"
@@ -104,31 +104,6 @@ static BOOL isFiltered = NO;
         [self publishStory];
         
     }else if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba){
-        //NSString *requestURL = [NSString stringWithFormat:@"%@invitedtoalbum",PUSH_PROVIDER_BASE_URL];
-        
-        /*NSString *senderId = [AppHelper userID];
-        
-        NSDictionary *params = @{@"senderId": senderId,
-                                 @"recipientIds" : [self.invitedSubaUsers description],
-                                 @"spotOwner" : [AppHelper userName],
-                                 @"spotId" : self.spotToInviteUserTo[@"spotId"],
-                                 @"spotName" : self.spotToInviteUserTo[@"spotName"]};
-       
-       
-        DLog(@"Invited users - %@",self.invitedSubaUsers);
-        [[LSPushProviderAPIClient sharedInstance] POST:
-         @"invitedtoalbum" parameters:params constructingBodyWithBlock:nil success:^(NSURLSessionDataTask *task, id responseObject){
-             
-             // Add invited user to spot automagically
-             
-             DLog(@"Server response - %@",responseObject);
-         } failure:^(NSURLSessionDataTask *task, NSError *error){
-             
-              DLog(@"Request _ %@\nError - %@",[task.currentRequest debugDescription],error);
-             
-         }];*/
-        
-        
         
         NSDictionary *invitedUsers = nil;
         if ([self.invitedSubaUsers count] == 1) {
@@ -137,10 +112,11 @@ static BOOL isFiltered = NO;
             invitedUsers = @{@"userIds" : self.invitedSubaUsers,@"streamId" : self.spotToInviteUserTo[@"spotId"],@"senderId" : [AppHelper userID]};
         }
         DLog(@"Invited users - %@",invitedUsers);
-        [[LifespotsAPIClient sharedInstance] POST:@"spot/members/add" parameters:invitedUsers success:^(NSURLSessionDataTask *task, id responseObject) {
+        [[SubaAPIClient sharedInstance] POST:@"spot/members/add" parameters:invitedUsers success:^(NSURLSessionDataTask *task, id responseObject) {
             //UIColor *tintColor = [UIColor colorWithRed:0.00 green:0.8 blue:0.2 alpha:1];
             if([responseObject[STATUS] isEqualToString:ALRIGHT]){
                 //self.partcipants = (NSArray *)responseObject[@"members"];
+                [Flurry logEvent:@"Suba_User_Invited_To_Stream"];
                 [self performSegueWithIdentifier:@"FromAddToMembersSegue" sender:nil];
                 
             }
@@ -149,7 +125,23 @@ static BOOL isFiltered = NO;
             DLog(@"Failure reason - %@",error.localizedFailureReason);
         }];
         
+        NSDictionary *params = @{@"senderId": [AppHelper userID],
+                                 @"recipientIds" : [self.invitedSubaUsers description],
+                                 @"spotOwner" : [AppHelper userName],
+                                 @"spotId" : self.spotToInviteUserTo[@"spotId"],
+                                 @"spotName" : self.spotToInviteUserTo[@"spotName"]};
+        DLog(@"params - %@",params);
         
+        [[LSPushProviderAPIClient sharedInstance] POST:@"invitedtoalbum" parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+            
+        } success:^(NSURLSessionDataTask *task, id responseObject) {
+            DLog(@"Response from Push Provider - %@",responseObject);
+        } failure:^(NSURLSessionDataTask *task, NSError *error) {
+            DLog(@"Error from Push - %@",error);
+
+        }];
+        
+               
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
     }else if(self.inviteSegmentedControl.selectedSegmentIndex == kPhoneContacts) {
                [self sendSMSToRecipients:self.smsRecipients];
@@ -190,6 +182,8 @@ static BOOL isFiltered = NO;
     
     //[self showLoadingUserView:YES];
     NSString *fbID = [AppHelper facebookID];
+    DLog(@"Facebook ID - %@",fbID);
+    //NSString *grapthPath = [NSString stringWithFormat:@"%@?fields=id,name,friends.fields(name,picture.type(large),first_name,last_name,middle_name)",fbID];
     NSString *grapthPath = [NSString stringWithFormat:@"%@/friends",fbID];
     //NSLog(@"FBID - %@",fbID);
     
@@ -209,11 +203,18 @@ static BOOL isFiltered = NO;
         }else{
             DLog(@"FB Load - %@",[error debugDescription]);
            
-                [AppHelper showAlert:@"Facebook Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
-            
+                [AppHelper showAlert:@"Facebook Error" message:error.localizedDescription buttons:@[@"OK"]      delegate:nil];
         }
-        
     }];
+    
+  /*[[FacebookAPIClient sharedInstance] GET:[NSString stringWithFormat:@"%@",grapthPath]
+                               parameters:nil
+                                  success:^(NSURLSessionDataTask *task, id responseObject) {
+                                      DLog(@"Success - %@",responseObject);
+                                  }failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                      DLog(@"Error - %@",error);
+                                  }];*/
+    
  
 }
 
@@ -324,7 +325,11 @@ static BOOL isFiltered = NO;
             // ABAddressBook doesn't gaurantee execution of this block on main thread, but we want our callbacks to be
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (!granted) {
-                    failure((__bridge NSError *)error);
+                    //failure((__bridge NSError *)error);
+                    DLog(@"Access to contacts refused");
+                    [AppHelper showAlert:@"Contacts Access Denied"
+                                 message:@"We do not have access to your contacts. To allow us to access your contacts,please go to Settings->Privacy->Contacts"
+                                 buttons:@[@"OK"] delegate:nil];
                 } else {
                     
                     readAddressBookContacts(addressBook, success);
@@ -404,13 +409,16 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     switch (result)
     {
         case MessageComposeResultCancelled:
-            DLog(@"SMS sending failed");
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"SMS_Invite_Cancelled"];
             break;
         case MessageComposeResultSent:
-            DLog(@"SMS sent");
+            //DLog(@"SMS sent");
+            [Flurry logEvent:@"SMS_Invite_Sent"];
             break;
         case MessageComposeResultFailed:
-            DLog(@"SMS sending failed");
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"SMS_Invite_Failed"];
             break;
         default:
             DLog(@"SMS not sent");
@@ -481,14 +489,15 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     
     if (canShare) {
         [FBDialogs presentShareDialogWithParams:params clientState:nil handler:^(FBAppCall *call, NSDictionary *results, NSError *error) {
-            //NSLog(@"FbAppCall - %@\nFBShare results -%@",[call debugDescription],[results[@"completionGesture"] class]);
+            if (!error) {
+              [Flurry logEvent:@"Facebook_Share_Completed"];  
+            }else if (error){
             
-            if (error) {
                 UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Failed share" message:@"We could not share your album to your facebook contacts" delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK" , nil];
                 [alert show];
             }else if ([results[@"completionGesture"] isEqualToString:@"cancel"]){
                 //NSLog(@"Share didComplete");
-                
+                [Flurry logEvent:@"Facebook_Share_Cancelled"];
                 [self.facebookRecipients removeAllObjects];
             }
             [self refreshTableView:self.facebookFriendsTableView];
@@ -528,27 +537,33 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             self.fbConnectView.hidden =YES;
             self.facebookFriendsTableView.alpha = 1;
 
-            DLog(@"About to load FB friends");
+            
 
-            if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
+           /* if (![[AppHelper facebookID] isEqualToString:@"-1"]){
+                
+                DLog(@"Loading friends coz facebook ID is set");
                 [self loadFacebookFriends];
-            }else{
+                
+            }else{*/
+                
                 // Fetch FBUser Info
                 [[FBRequest requestForMe] startWithCompletionHandler:
                  ^(FBRequestConnection *connection,
                    NSDictionary<FBGraphUser> *user,
                    NSError *error){
                      if (!error){
-                         if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
+                        // if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
                              [AppHelper setFacebookID:user.id]; // set the facebook id
+                         DLog(@"Just set the facebook ID");
+                         DLog(@"About to load FB friends with AppHelper Facebook ID - %@",[AppHelper facebookID]);
                              [self loadFacebookFriends];
-                         }
+                         //}
                          
                      }else{
                          [AppHelper showAlert:@"Facebook Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                      }
                  }];
-            }
+           // }
             
            
         }else{
@@ -576,12 +591,14 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
              if (result == FBWebDialogResultDialogNotCompleted) {
                  // User clicked the "x" icon
                  //NSLog(@"User canceled story publishing.");
+                 [Flurry logEvent:@"Facebook_Share_NotCompleted"];
              } else {
                  // Handle the publish feed callback
                  NSDictionary *urlParams = [self parseURLParams:[resultURL query]];
                  if (![urlParams valueForKey:@"post_id"]) {
                      // User clicked the Cancel button
                      //NSLog(@"User canceled story publishing.");
+                     [Flurry logEvent:@"Facebook_Share_Cancelled"];
                  } else {
                      // User clicked the Share button
                      NSString *msg = [NSString stringWithFormat:
@@ -595,6 +612,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                        cancelButtonTitle:@"OK!"
                                        otherButtonTitles:nil]
                       show];
+                     [Flurry logEvent:@"Facebook_Share_Completed"];
                  }
              }
          }

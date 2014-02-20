@@ -25,7 +25,7 @@
 {
     static NSArray *__photos;
     
-    [[LifespotsAPIClient sharedInstance] GET:@"album/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"album/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
         __photos = responseObject[@"spotPhotos"];
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         DLog(@"Error - %@",error);

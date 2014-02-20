@@ -33,6 +33,8 @@
 @property (weak, nonatomic) IBOutlet UISwitch *addPrivacySwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *memberInviteSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *leaveAlbumButton;
+@property (weak, nonatomic) IBOutlet UIView *loadStreamSettingsIndicatorView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamSettingsOndicator;
 
 - (IBAction)unWindToSpotSettingsFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToSpotSettingsFromDone:(UIStoryboardSegue *)segue;
@@ -55,16 +57,17 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view.
-    // [self.view setUserInteractionEnabled:NO];
+	
     self.saveAlbumSettingsBarItem.enabled = NO;
     // self.navigationItem.title = self.spotName
+    
     [self updateViewWithSpotInfo];
     
     if (!self.addPrivacySwitch.isOn) {
         self.viewPrivacySwitch.on = YES;
         self.viewPrivacySwitch.enabled = NO;
     }
+    
     self.leaveAlbumButton.enabled = NO;
     
     DLog(@"Stream info - %@",self.spotInfo);
@@ -113,8 +116,14 @@
 
 -(void)updateViewWithSpotInfo
 {
+    // Show activity indicator
+    [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView indicator:self.loadingStreamSettingsOndicator flag:YES];
+    DLog(@"Showing");
     [Spot fetchSpotInfo:self.spotID User:[User currentlyActiveUser].userID
-             completion:^(id results, NSError *error) {
+             completion:^(id results, NSError *error){
+                 
+                 [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView indicator:self.loadingStreamSettingsOndicator flag:NO];
+                 DLog(@"Hiding");
                  //DLog(@"Spot Info - %@",results);
                  if (!error) {
                      if ([results[STATUS] isEqualToString:ALRIGHT]) {
@@ -130,9 +139,26 @@
                 self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
                 self.addPrivacySwitch.on = ([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
                 self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:sANYONE]) ? YES:NO;
+                         
+                         if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
+                             DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
+                             
+                             // User did not create this album so disable stuff that he should not do
+                             [self disableViews];
+                             self.leaveAlbumButton.hidden = NO;
+                             [self.view viewWithTag:100].hidden = NO;
+                         }else{
+                             self.leaveAlbumButton.hidden = YES;
+                             [self.view viewWithTag:100].hidden = YES;
+                         }
+
                      }
+                     
+                   self.leaveAlbumButton.enabled = YES;
+                 }else{
+                     [AppHelper showAlert:@"Stream Settings Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                  }
-                 self.leaveAlbumButton.enabled = YES;
+                 
              }];
 }
 

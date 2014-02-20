@@ -7,7 +7,7 @@
 //
 
 #import "User.h"
-#import "LifespotsAPIClient.h"
+#import "SubaAPIClient.h"
 #import "Spot.h"
 #import "Privacy.h"
 #import "Location.h"
@@ -70,7 +70,7 @@
 // Make it block based later
 - (void)loadPersonalSpotsWithCompletion:(PersonalSpotsLoadedCompletionBlock)completion{
     
-    [[LifespotsAPIClient sharedInstance] GET:@"user/spots/personal" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject){
+    [[SubaAPIClient sharedInstance] GET:@"user/spots/personal" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject){
         NSArray *albums = (NSArray *)responseObject;
         completion(albums,nil);
         
@@ -85,7 +85,7 @@
 -(void)fetchCreatedSpotsCompletion:(NSString *)userId completion:(CreatedSpotsLoadedCompletionBlock)completion
 {
     DLog(@"UserId - %@",userId); 
-    [[LifespotsAPIClient sharedInstance] GET:@"user/spots/created" parameters:@{@"userId": userId} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"user/spots/created" parameters:@{@"userId": userId} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -113,6 +113,7 @@
                             @"albumVenue" : @"NONE"
                             };
     }
+    
     NSDictionary *albumDetailsParams = @{
                           @"userId": spot.creator.userID,
                           @"albumName" : spot.name,
@@ -126,7 +127,7 @@
     requestparams = [NSMutableDictionary dictionaryWithDictionary:albumDetailsParams];
     [requestparams addEntriesFromDictionary:locationDetails];
     
-    [[LifespotsAPIClient sharedInstance] POST:@"spot/create" parameters:requestparams success:^(NSURLSessionDataTask *task, id responseObject){
+    [[SubaAPIClient sharedInstance] POST:@"spot/create" parameters:requestparams success:^(NSURLSessionDataTask *task, id responseObject){
         
         if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
             [AppHelper updateNumberOfAlbums:1];
@@ -144,7 +145,7 @@
 {
     DLog(@"User info - %@",userInfo[@"form-encoded"]);
     if([userInfo[@"picName"] isEqualToString:@"UNCHANGED"]){
-        [[LifespotsAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+        [[SubaAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
             
     } success:^(NSURLSessionDataTask *task, id responseObject){
             completion(responseObject,nil);
@@ -153,7 +154,7 @@
         }];
         
     }else{
-    [[LifespotsAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+    [[SubaAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         
         [formData appendPartWithFileData:userInfo[@"imageData"] name:@"profilePicture" fileName:userInfo[@"picName"] mimeType:@"image/jpeg"];
         
@@ -169,7 +170,7 @@
 
 +(void)fetchUserProfileInfoCompletion:(NSString *)userId completion:(ProfileInfoLoadedCompletionBlock)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"user/info"
+    [[SubaAPIClient sharedInstance] GET:@"user/info"
                                   parameters:@{@"userId": userId}
                                      success:^(NSURLSessionDataTask *task, id responseObject) {
                                          
@@ -183,7 +184,7 @@
 
 - (void)fetchFavoriteLocationsCompletions:(FavoriteLocationsCompletionBlock)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"user/locations/watching" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"user/locations/watching" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -198,7 +199,7 @@
                              @"longitude": location.longitude,
                              @"userId" : self.userID};
     
-    [[LifespotsAPIClient sharedInstance] POST:@"user/location/watch" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:@"user/location/watch" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -211,7 +212,7 @@
     NSDictionary *params = @{@"place": locationName,
                              @"userId" : self.userID};
     
-    [[LifespotsAPIClient sharedInstance] POST:@"user/location/unwatch" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:@"user/location/unwatch" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -221,7 +222,7 @@
 
 -(void)loadFriendsSpotsWithCompletion:(FriendSpotsCompletionBlock)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"user/friendspots" parameters:@{@"userId": self.userID} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"user/friendspots" parameters:@{@"userId": self.userID} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -229,7 +230,7 @@
 }
 
 -(void)joinSpotCompletionCode:(NSString *)code completion:(SpotJoinedCompletionBlock)completion
-{    [[LifespotsAPIClient sharedInstance] GET:@"spot/join"
+{    [[SubaAPIClient sharedInstance] GET:@"spot/join"
                                   parameters:@{ @"userId":self.userID, @"albumCode":code}
                                      success:^(NSURLSessionDataTask *task, id responseObject){
                                          DLog(@"Back from server - %@",responseObject);
@@ -246,7 +247,7 @@
 
 
 -(void)joinSpot:(NSString *)spotId completion:(SpotJoinedCompletionBlock)completion
-{    [[LifespotsAPIClient sharedInstance] GET:@"spot/join"
+{    [[SubaAPIClient sharedInstance] GET:@"spot/join"
                                    parameters:@{ @"userId":self.userID, @"spotId": spotId}
                                       success:^(NSURLSessionDataTask *task, id responseObject){
                                           DLog(@"Back from server - %@",responseObject);
@@ -264,7 +265,7 @@
 
 -(void)leaveSpot:(NSString *)spotId completion:(GeneralCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance] POST:@"spot/leave"
+    [[SubaAPIClient sharedInstance] POST:@"spot/leave"
                                    parameters:@{ @"userId":self.userID, @"albumId":spotId}
                                       success:^(NSURLSessionDataTask *task, id responseObject){
                                           
@@ -297,7 +298,7 @@
         NSLog(@"Error -  %@",error);
     }];
     
-    [[LifespotsAPIClient sharedInstance] POST:@"user/follow" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
+    [[SubaAPIClient sharedInstance] POST:@"user/follow" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
         
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error){
@@ -308,7 +309,7 @@
 
 -(void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance]
+    [[SubaAPIClient sharedInstance]
                         POST:@"user/account/changepass"
      
      parameters:@{@"userId": self.userID,@"oldPassword": oldPass ,@"newPassword" : newPass}
@@ -322,7 +323,7 @@
 
 -(void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"user/follows" parameters:@{@"userId": self.userID, @"otherUserId" : otherUserId} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"user/follows" parameters:@{@"userId": self.userID, @"otherUserId" : otherUserId} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -332,7 +333,7 @@
 
 -(void)likePhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance] POST:@"picture/like" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:@"picture/like" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error); 
@@ -342,7 +343,7 @@
 
 +(void)allUsers:(GeneralCompletion)completion
 {
-    [[LifespotsAPIClient sharedInstance] GET:@"users/all" parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"users/all" parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -353,7 +354,7 @@
 + (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
 {
     //DLog(@"Params - %@",params);
-    [[LifespotsAPIClient sharedInstance] POST:@"user/photo/report"
+    [[SubaAPIClient sharedInstance] POST:@"user/photo/report"
                                    parameters:params
                                       success:^(NSURLSessionDataTask *task, id responseObject) {
                                           completion(responseObject,nil);

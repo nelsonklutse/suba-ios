@@ -16,7 +16,7 @@
     #import <AFNetworking.h>
     #import <UIKit+AFNetworking.h>
     #import <FacebookSDK/FacebookSDK.h>
-    #import "LifespotsAPIClient.h"
+    #import "SubaAPIClient.h"
     #import "AppHelper.h"
     #import "LifeSpotsConfig.h"
     #import "UIScrollView+UzysCircularProgressPullToRefresh.h"
@@ -24,6 +24,9 @@
     #import "UIPhotoItemView.h"
     #import "UIPhotoGalleryViewController.h"
     #import <CSNotificationView.h>
+    #import "Flurry.h"
+    #import <Harpy.h>
+#import <Appirater.h>
 #endif
 
 

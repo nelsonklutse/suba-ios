@@ -7,7 +7,7 @@
 //
 
 #import "AppHelper.h"
-#import "LifespotsAPIClient.h"
+#import "SubaAPIClient.h"
 #import "User.h"
 
 @interface AppHelper()
@@ -90,9 +90,13 @@
     
     //[userDefaults registerDefaults:appDefaults];
     [AppHelper savePreferences:appDefaults];
+    [userDefaults setValue:@"-1" forKey:FACEBOOK_ID];
     [userDefaults synchronize];
     
     // Clear facebook data if user loggedIn using facebook
+    if ([FBSession activeSession]) {
+        [[FBSession activeSession] closeAndClearTokenInformation];
+    }
 }
 
 
@@ -289,7 +293,7 @@
         
         //Do Facebook Login
         
-        [[LifespotsAPIClient sharedInstance]
+        [[SubaAPIClient sharedInstance]
          POST:@"authenticate"
          parameters:@{
                       @"id" : user[@"id"],
@@ -304,14 +308,14 @@
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
              DLog(@"This is straight from the server\n%@",responseObject);
              if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
-                 
+                 [Flurry logEvent:@"Facebook_SignUp"];
                  [self savePreferences:responseObject];
                  
                  [self setFacebookID:user[@"id"]];
                  [self setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
                  //DLog(@"User Prefs now -\n%@",[AppHelper userPreferences]);
                  
-                 DLog(@"User defaults - %@",NSStringFromClass([[NSUserDefaults standardUserDefaults] class]));
+                // DLog(@"User defaults - %@",NSStringFromClass([[NSUserDefaults standardUserDefaults] class]));
                  
                  
                  completionBlock(responseObject,nil);
@@ -326,7 +330,7 @@
     }else{
         
         // Do Native Sign Up
-        [[LifespotsAPIClient sharedInstance]
+        [[SubaAPIClient sharedInstance]
          POST:@"signUp"
          parameters:user
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
@@ -344,7 +348,7 @@
 }
 
 +(void)checkUserName:(NSString *)userName completionBlock:(UserNameCheckerCompletion)completionBlock{
-    [[LifespotsAPIClient sharedInstance] GET:@"user/checkUserName" parameters:@{@"userName": userName} success:^(NSURLSessionDataTask *task, id responseObject){
+    [[SubaAPIClient sharedInstance] GET:@"user/checkUserName" parameters:@{@"userName": userName} success:^(NSURLSessionDataTask *task, id responseObject){
         completionBlock(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completionBlock(nil,error);
@@ -355,7 +359,7 @@
 
 +(void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName AndPassword:(NSString *)password completionBlock:(UserLoggedInCompletion)completionBlock{
     
-     [[LifespotsAPIClient sharedInstance]
+     [[SubaAPIClient sharedInstance]
             POST:@"login"
       parameters:@{
             EMAIL: emailOrUserName,
@@ -387,12 +391,18 @@
 +(void)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc
 {
     //BOOL locationEnabled = NO;
-    if ([CLLocationManager locationServicesEnabled]) {
-        locationManager = [[CLLocationManager alloc] init];
-        locationManager.delegate = vc;
-        [locationManager startUpdatingLocation];
-        
-        //locationEnabled = YES;
+    if ([CLLocationManager locationServicesEnabled]){
+        //if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
+            
+            locationManager = [[CLLocationManager alloc] init];
+            locationManager.delegate = vc;
+            [locationManager startUpdatingLocation];
+       /* }else{
+            [AppHelper showAlert:@"Location Denied"
+                         message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
+                         buttons:@[@"OK"] delegate:nil];
+        }*/
+
         
     }else{
        [self showAlert:@"Location Services Disabled"
