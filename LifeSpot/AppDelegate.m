@@ -377,7 +377,7 @@
     // Present the PhotoStream
     if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
         
-        /*if (![[AppHelper userID] isEqualToString:@"-1"]){
+        if (![[AppHelper userID] isEqualToString:@"-1"]){
             
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
             
@@ -404,7 +404,7 @@
             }];
             
             
-        }*/
+        }
         
     }
     
