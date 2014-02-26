@@ -143,7 +143,8 @@
 
 - (void)updateProfileInfo:(NSDictionary *)userInfo completion:(UserProfileInfoUpdatedCompletion)completion
 {
-    DLog(@"User info - %@",userInfo[@"form-encoded"]);
+    //DLog(@"User info - %@",userInfo[@"form-encoded"]);
+    
     if([userInfo[@"picName"] isEqualToString:@"UNCHANGED"]){
         [[SubaAPIClient sharedInstance] POST:@"user/account/update" parameters:userInfo[@"form-encoded"] constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
             

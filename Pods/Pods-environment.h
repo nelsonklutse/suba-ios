@@ -120,3 +120,9 @@
 #define COCOAPODS_VERSION_MINOR_UzysCircularProgressPullToRefresh 0
 #define COCOAPODS_VERSION_PATCH_UzysCircularProgressPullToRefresh 4
 
+// WSCoachMarksView
+#define COCOAPODS_POD_AVAILABLE_WSCoachMarksView
+#define COCOAPODS_VERSION_MAJOR_WSCoachMarksView 0
+#define COCOAPODS_VERSION_MINOR_WSCoachMarksView 2
+#define COCOAPODS_VERSION_PATCH_WSCoachMarksView 0
+

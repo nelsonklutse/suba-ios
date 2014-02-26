@@ -84,14 +84,7 @@
 
 -(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    DLog();
-    
-    DLog(@"Notifications");
-    
-    
-    
-    
-    // Override point for customization after application launch.
+        // Override point for customization after application launch.
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
     
@@ -113,23 +106,26 @@
     [[UINavigationBar appearance] setShadowImage:[[UIImage alloc] init]];
     [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
     //End of Navbar Customization
-
+    
     
     // Init the pages texts, and pictures.
-    ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@"Create"
-                                                            description:@"Create a stream and add your location"
-                                                            pictureName:@"1.png"];
-    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@"Join"
-                                                            description:@"Or join an already existing one"
+    ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@""
+        description:@"Ever been to a party or event and\n wished you could access the pictures others\n took without waiting a decade for them?"
+        pictureName:@"1.png"];
+    
+    //DLog(@"Layer 1 frame - %@",NSStringFromCGRect(layer1.));
+    
+    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@""
+            description:@"What if you could see all those great\n photos people took with their phones?"
                                                             pictureName:@"2.png"];
-    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Invite"
-                                                            description:@"Invite via Suba, Facebook or SMS"
+    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@""
+                                                            description:@"Suba gathers them all into an album\n as they are taken. We call this a stream"
                                                             pictureName:@"3.png"];
-    ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@"Capture"
-                                                            description:@"Capture moments in your stream"
+    ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@""
+                description:@"You can see nearby streams or\n streams from your favourite locations"
                                                             pictureName:@"4.png"];
-    ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@"Share"
-                                                            description:@"Share your stream on social media."
+    ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@""
+                                                            description:@"And you can enjoy and\n share the whole experience"
                                                             pictureName:@"5.png"];
     
     
@@ -145,6 +141,8 @@
     [descStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
     [descStyle setLinesNumber:TUTORIAL_DESC_LINES_NUMBER];
     [descStyle setOffset:TUTORIAL_DESC_OFFSET];
+    
+    DLog(@"");
     
     // Load into an array.
     NSArray *tutorialLayers = @[layer1,layer2,layer3,layer4,layer5];
@@ -175,7 +173,7 @@
         
         // Set button 1 action.
         [self.viewController setButton1Block:^(UIButton *button){
-            //DLog(@"Facebook Button pressed.");
+            DLog(@"Facebook Button pressed.");
             [weakSelf openFBSession];
             [weakSelf.viewController stopScrolling];
         }];
@@ -219,7 +217,7 @@
 {
     // Make call to Appirater
     [Appirater setAppId:kSUBA_APP_ID];
-    [Appirater setDaysUntilPrompt:5];
+    [Appirater setDaysUntilPrompt:3];
     [Appirater setUsesUntilPrompt:5];
     [Appirater setSignificantEventsUntilPrompt:-1];
     [Appirater setTimeBeforeReminding:2];
@@ -238,13 +236,13 @@
                                       LAST_NAME : @"",
                                       USER_NAME : @"",
                                       EMAIL : @"",
-                                      SESSION : @"lout",
+                                      SESSION : @"inactive",
                                       API_TOKEN : @"-1",
                                       PROFILE_PHOTO_URL : @"-1",
                                       FACEBOOK_ID : @"-1",
                                       NUMBER_OF_ALBUMS : @"0"
-                                      
                                       };
+    
     if ([[AppHelper userID] isEqualToString:@"-1"]) {
         DLog(@"Registering App Defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
@@ -298,12 +296,32 @@
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
     }];*/
-   // [[SDImageCache sharedImageCache] clearDisk];
-    //[[SDImageCache sharedImageCache] cleanDisk];
-    //[[SDImageCache sharedImageCache] clearMemory];
-
+   
+    if (![[AppHelper placesCoachMarkSeen] isEqualToString:@"YES"]) {
+       [AppHelper setPlacesCoachMark:@"NO"];
+    }
     
-     [self.window makeKeyAndVisible];
+    if (![[AppHelper nearbyCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setNearbyCoachMark:@"NO"];
+    }
+    
+    if (![[AppHelper placesCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setMyStreamCoachMark:@"NO"];
+    }
+    
+    if (![[AppHelper createSpotCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setCreateSpotCoachMark:@"NO"];
+    }
+    
+    if (![[AppHelper exploreCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setExploreCoachMark:@"NO"];
+    }
+    
+    if (![[AppHelper watchLocationCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setWatchLocation:@"NO"]; 
+    }
+    
+    [self.window makeKeyAndVisible];
     
     
     // Check whether we have an update
@@ -373,41 +391,44 @@
     [FBAppCall handleDidBecomeActive];
     [application setApplicationIconBadgeNumber:0];
 
-    DLog(@"Notifications");
-    // Present the PhotoStream
+    
+    
     if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
-        
-        if (![[AppHelper userID] isEqualToString:@"-1"]){
+        DLog();
+        if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
+            
+        }else{
             
             AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            
+            //DLog(@"UserId before notifs - %@",[AppHelper userID]);
             
             [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [AppHelper userID]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 
                 //Handle all notifications
-                NSString *notifications = [responseObject[@"badge"] stringValue];
-                //NSLog(@"Notifications  %@",userInfo);
+                NSString *notifications = [responseObject[@"badgeCount"] stringValue];
+               // NSLog(@"Notifications  - %@",[responseObject debugDescription]);
                 
                 if ([notifications isEqualToString:@"0"]) {
                     [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
-                }else{
-                    if ([notifications integerValue] >= 3) {
-                      [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"3"];
-                    }else{
+                }/*else{
+                    if ([notifications integerValue] >= 5) {
+                        [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"5"];
+                    }*/
+                
+                  else{
                         [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
                     }
-                   
-                }
+                    
+               // }
                 
             } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
                 DLog(@"Error - %@", error);
                 DLog(@"%@",operation.responseString);
             }];
-            
-            
         }
         
     }
-    
     
     [Flurry logEvent:@"App_Started_From_Background"];
 }
@@ -416,7 +437,7 @@
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     
-    [FBSession.activeSession close];
+    //[FBSession.activeSession close];
     
 }
 
@@ -493,8 +514,11 @@
 - (void)openFBSession{
     //[self.fbLoginIndicator startAnimating];
     
+    
     [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
-        if (status == FBSessionStateOpen){
+        DLog(@"Opening FB Session with error - %@\nSession - %@",error,[session debugDescription]);
+        
+        if (session.isOpen){
             
             //[self.fbLoginIndicator stopAnimating];
             

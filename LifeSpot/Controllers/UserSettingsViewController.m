@@ -158,9 +158,11 @@
         if (indexPath.row == 0) {
             [self performSegueWithIdentifier:@"TERMS_SEGUE" sender:@(2)];
         }
-        if (indexPath.row == 1) {
+        else if (indexPath.row == 1) {
             // NSLog(@"User with email address is sending feedback");
             [self sendFeedback:[AppHelper userEmail]];
+        }else{
+            [self performSegueWithIdentifier:@"TERMS_SEGUE" sender:@(10)];
         }
         
         
@@ -200,6 +202,9 @@
         }else if([sender integerValue] == 2){
             url = [NSURL URLWithString:@"http://www.subaapp.com/support.html"];
             tVC.navigationItem.title = @"Support";
+        }else if ([sender integerValue] == 10){
+            url = [NSURL URLWithString:@"http://www.subaapp.com/ioslicenses.html"];
+            tVC.navigationItem.title = @"Licenses";
         }
        
         

@@ -14,7 +14,7 @@
 #import "Privacy.h"
 #import "Spot.h"
 
-@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate>
+@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
 
 @property (copy,nonatomic) NSString *spotName;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
@@ -38,6 +38,7 @@
 - (IBAction)showNearbyLocations:(id)sender;
 - (void)askLocationPermission;
 - (void)foursquareVenueMatchingCurrentLocation:(Location *)here;
+- (void)joinStream:(NSString *)code;
 - (IBAction)unWindToCreateSpotFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue;
 @end
@@ -85,27 +86,50 @@ static CLLocationManager *locationManager;
 
 - (IBAction)joinSpotAction:(id)sender
 {
+    
+   UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join A Stream" message:@"Enter code for the stream you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
+    
+    alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    
+    
+    [alertView show];
+    //[self performSegueWithIdentifier:@"JOIN_STREAM_SEGUE" sender:@"1"];
+    
+}
+
+
+-(void)joinStream:(NSString *)code
+{
     [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:YES];
     
     DLog(@"joining");
-    [[User currentlyActiveUser] joinSpotCompletionCode:self.joinSpotId.text completion:^(id results, NSError *error) {
+    [[User currentlyActiveUser] joinSpotCompletionCode:code completion:^(id results, NSError *error) {
         DLog(@"Result - %@",results);
+        [AppHelper showLoadingDataView:self.loadingDataView
+                             indicator:self.joiningSpotIndicator flag:NO];
+        
         if ([results[STATUS] isEqualToString:ALRIGHT]){
+            
+            [Flurry logEvent:@"Join_Stream_With_Code"];
+            
             // Joined successfully
-            NSString *spotId = results[@"spotId"];
-            [self performSegueWithIdentifier:@"JOIN_SPOT_SEGUE" sender:spotId];
+            NSString *spotId = [results[@"spotId"] stringValue];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+            
+            [self performSegueWithIdentifier:@"JOIN_STREAM_SEGUE" sender:spotId];
             
         }else if ([results[STATUS] isEqualToString:@"error"]){
             // There is no spot with this code
-            [AppHelper showNotificationWithMessage:@"We could find a spot with this code"
+            [AppHelper showNotificationWithMessage:@"We could not find a stream with the entered code"
                                               type:kSUBANOTIFICATION_ERROR
                                   inViewController:self
                                    completionBlock:nil];
         }
         
-        [AppHelper showLoadingDataView:self.loadingDataView
-                             indicator:self.joiningSpotIndicator flag:NO];
+        
     }];
+    
+
 }
 
 
@@ -201,6 +225,20 @@ static CLLocationManager *locationManager;
 }
 
 
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 1){
+        
+        NSString *passcode = [alertView textFieldAtIndex:0].text;
+        
+        [alertView dismissWithClickedButtonIndex:buttonIndex animated:YES];
+        
+        [self performSelector:@selector(joinStream:) withObject:passcode afterDelay:1.0];
+    }
+}
+
+
+
 
 #pragma mark - TextField Delegate Methods
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
@@ -227,9 +265,11 @@ static CLLocationManager *locationManager;
         
     }
     
-    if ([segue.identifier isEqualToString:@"JOIN_SPOT_SEGUE"]) {
+    if ([segue.identifier isEqualToString:@"JOIN_STREAM_SEGUE"]) {
         PhotoStreamViewController *pVC = segue.destinationViewController;
+        
         pVC.spotID = sender;
+        DLog(@"SpotID - %@",pVC.spotID);
     }
 }
 

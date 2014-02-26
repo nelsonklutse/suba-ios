@@ -12,6 +12,7 @@
 #import "PlacesWatchingCell.h"
 #import "PersonalSpotCell.h"
 #import "User.h"
+#import "UserProfileViewController.h"
 #import "Location.h"
 #import "AlbumSettingsViewController.h"
 #import "PlacesWatchingViewController.h"
@@ -31,6 +32,16 @@ typedef enum{
     kAllSpotsButton
 }SelectedButton;
 
+
+typedef enum{
+    kPlacesCoachMark = 555,
+    kNearbyCoachMark = 777,
+    kMyStreamCoachMark = 888,
+    kCreateSpotCoachMark = 999,
+    kExploreCoachMark = 444
+}CoachMark;
+
+
 #define PlacesWatchingKey @"PlacesWatchingKey"
 #define NearbySpotsKey @"NearbySpotsKey"
 #define AllSpotsKey @"AllSpotsKey"
@@ -40,12 +51,14 @@ typedef enum{
 
 @interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
 
+@property (weak, nonatomic) IBOutlet UIView *coachMarkView;
 @property (strong,nonatomic) NSMutableArray *placesBeingWatched;
 @property (strong,nonatomic) NSMutableArray *nearbySpots;
 @property (strong,nonatomic) NSMutableArray *allSpots;
 @property (strong,nonatomic) NSDictionary *currentSelectedSpot;
 @property (strong,nonatomic) NSIndexPath *currentIndexPath;
 //@property (strong,nonatomic) NSArray *images;
+@property (weak, nonatomic) IBOutlet UIButton *gotItButton;
 @property (retain,nonatomic) CLLocation *currentLocation;
 @property (weak, nonatomic) IBOutlet UILabel *noDataLabel;
 
@@ -58,6 +71,7 @@ typedef enum{
 @property (weak, nonatomic) IBOutlet UICollectionView *nearbySpotsCollectionView;
 @property (weak, nonatomic) IBOutlet UICollectionView *allSpotsCollectionView;
 
+@property (weak, nonatomic) IBOutlet UIImageView *coachMarkImage;
 @property (weak, nonatomic) IBOutlet UIView *noDataView;
 
 
@@ -75,11 +89,14 @@ typedef enum{
 - (void)fetchNearbySpots:(NSDictionary *)latLng;
 - (void)showPlacesBeingWatchedView:(BOOL)flag;
 - (void)updateData;
-- (void)refreshAllStream;
+- (void)refreshAllStreams;
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)indexPaths updateType:(ColectionViewUpdateType)updateType;
 - (void)checkForLocation;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
 //- (void)networkChanged:(NSNotification *)aNotification;
+- (IBAction)switchCoachMark:(UIButton *)sender;
+- (IBAction)showuserProfile:(UIButton *)sender;
+- (IBAction)actionBtn:(id)sender;
 @end
 
 @implementation MainStreamViewController
@@ -127,8 +144,6 @@ static NSInteger selectedButton = 10;
                                                   @"You are no longer a member of the stream %@",albumName]
                                         duration:5.0f];
         
-        
-        
     }
     
     
@@ -151,6 +166,8 @@ static NSInteger selectedButton = 10;
 {
     [super viewDidLoad];
 	
+    [self.coachMarkView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"overlay"]]];
+    
     [Flurry logAllPageViews:self.tabBarController];
     
     UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
@@ -198,8 +215,21 @@ static NSInteger selectedButton = 10;
     //Register remote notification types
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateData) name:kUserReloadStreamNotification object:nil];
-    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshAllStreams) name:kUserReloadStreamNotification object:nil];
+   
+    /*[AppHelper setPlacesCoachMark:@"NO"];
+    [AppHelper setNearbyCoachMark:@"NO"];
+    [AppHelper setMyStreamCoachMark:@"NO"];*/
+    DLog(@"[AppHelper placesCoachMarkSeen] - %@",[AppHelper placesCoachMarkSeen]);
+    if ([[AppHelper placesCoachMarkSeen] isEqualToString:@"NO"]) {
+        // Show the places coachmark
+        self.coachMarkView.alpha = 1;
+        self.gotItButton.alpha = 1;
+        [AppHelper setPlacesCoachMark:@"YES"];
+        //DLog(@"Showing places coachmark");
+        self.coachMarkImage.alpha = 1;
+        [self.coachMarkImage setTag:kPlacesCoachMark];
+    }
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -347,6 +377,127 @@ static NSInteger selectedButton = 10;
         });
     }];
     
+}
+
+
+-(IBAction)switchCoachMark:(UIButton *)sender
+{
+    //UIImageView *exploreImgView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"explore_arrow"]];
+    //exploreImgView.contentMode = UIViewContentModeScaleAspectFill;
+    
+    
+    //DLog(@"CoachMark - %i",self.coachMarkImage.tag);
+    if (self.coachMarkImage.tag == kExploreCoachMark) {
+        [UIView animateWithDuration:1.0 animations:^{
+            // My Coach Mark is showing.Switch to create spot
+            self.coachMarkImage.alpha = 0;
+            self.gotItButton.alpha = 0;
+            self.coachMarkView.alpha = 0;
+            //exploreImgView.alpha = 0;
+            //[exploreImgView removeFromSuperview];
+            [self.coachMarkImage setTag:1000];
+        }];
+        
+    }else if (self.coachMarkImage.tag == kCreateSpotCoachMark) {
+        [UIView animateWithDuration:1.0 animations:^{
+            // My Coach Mark is showing.Switch to create spot
+            self.coachMarkImage.alpha = 0;
+            NSString *deviceType = [UIDevice currentDevice].model;
+            DLog(@"devicetype - %@",deviceType);
+            
+            
+            if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
+                CGSize result = [[UIScreen mainScreen] bounds].size;
+                CGFloat scale = [UIScreen mainScreen].scale;
+                result = CGSizeMake(result.width * scale, result.height * scale);
+                
+                if(result.height == 960){
+                    DLog(@"Using 4");
+                    
+                    //CODE IF IPHONE 4
+                self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-iphone4"];
+                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-60, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
+                    
+                    self.gotItButton.frame = btnFrame;
+                }
+                if(result.height == 1136){
+                    DLog(@"Using 5");
+                    //CODE IF iPHONE 5
+                   self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
+                }
+            }
+            
+            
+            
+            //self.coachMarkImage.image = [UIImage imageNamed:@"filter"];
+            //CGRect coachMarkFrame = CGRectMake(75 ,self.coachMarkImage.frame.size.height-150, 150,150);
+            //exploreImgView.frame = coachMarkFrame;
+            //[self.view addSubview:exploreImgView];
+            [self.coachMarkImage setTag:kExploreCoachMark];
+            [AppHelper setExploreCoachMark:@"YES"];
+            self.coachMarkImage.alpha = 1;
+        }];
+        
+    }else if (self.coachMarkImage.tag == kMyStreamCoachMark) {
+        [UIView animateWithDuration:1.0 animations:^{
+            // My Coach Mark is showing.Switch to create spot
+            self.coachMarkImage.alpha = 0;
+            self.coachMarkImage.image = [UIImage imageNamed:@"create-new-stream"];
+            [self.coachMarkImage setTag:kCreateSpotCoachMark];
+            [AppHelper setCreateSpotCoachMark:@"YES"];
+            self.coachMarkImage.alpha = 1;
+        }];
+        
+    }else if (self.coachMarkImage.tag == kNearbyCoachMark) {
+        
+        [UIView animateWithDuration:1.0 animations:^{
+            self.coachMarkImage.alpha = 0;
+            self.coachMarkImage.image = [UIImage imageNamed:@"streams-involved-in"];
+            [self.coachMarkImage setTag:kMyStreamCoachMark];
+            [AppHelper setMyStreamCoachMark:@"YES"];
+            self.coachMarkImage.alpha = 1;
+        }];
+    }else if (self.coachMarkImage.tag == kPlacesCoachMark) {
+        [UIView animateWithDuration:1.0 animations:^{
+            
+            // Places Coach Mark is showing.Switch to nearby
+            self.coachMarkImage.alpha = 0;
+            self.coachMarkImage.image = [UIImage imageNamed:@"streams-near-you"];
+            [self.coachMarkImage setTag:kNearbyCoachMark];
+            [AppHelper setNearbyCoachMark:@"YES"];
+            self.coachMarkImage.alpha = 1;
+        }];
+    }
+    
+    
+    
+    
+}
+
+- (IBAction)showuserProfile:(UIButton *)sender
+{
+    if (self.nearbySpotsCollectionView.alpha == 1) {
+        DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
+        PersonalSpotCell *pCell = (PersonalSpotCell *)sender.superview.superview;
+        NSIndexPath *indexPath = [self.nearbySpotsCollectionView indexPathForCell:pCell];
+        NSDictionary *cellInfo = self.nearbySpots[indexPath.item];
+        NSString *streamCreatorId = cellInfo[@"creatorId"];
+        [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:streamCreatorId];
+        
+        DLog(@"Cell info - %@",cellInfo);
+    }else if (self.allSpotsCollectionView.alpha == 1){
+       DLog(@"Moving to user profile from my streams");
+        DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
+        PersonalSpotCell *pCell = (PersonalSpotCell *)sender.superview.superview;
+         NSIndexPath *indexPath = [self.allSpotsCollectionView indexPathForCell:pCell];
+        NSDictionary *cellInfo = self.allSpots[indexPath.item];
+        NSString *streamCreatorId = cellInfo[@"creatorId"];
+        [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:streamCreatorId];
+        DLog(@"Cell info - %@",cellInfo);
+    }
+}
+
+- (IBAction)actionBtn:(id)sender {
 }
 
 
@@ -596,6 +747,7 @@ static NSInteger selectedButton = 10;
         NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
         NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
         NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
+        
         // NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
         
         DLog(@"Is user Member - %@",isMember);
@@ -609,7 +761,7 @@ static NSInteger selectedButton = 10;
                     DLog(@"Album is public so joining spot");
                     if ([results[STATUS] isEqualToString:ALRIGHT]){
                         
-                        [AppHelper showNotificationWithMessage:@"You are now a member of this stream" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                        /*[AppHelper showNotificationWithMessage:@"You are now a member of this stream" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];*/
                         
                         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
                     }else{
@@ -668,7 +820,11 @@ static NSInteger selectedButton = 10;
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    
+    
     PlacesWatchingCell *placeCell = [self.placesBeingWatchedTableView dequeueReusableCellWithIdentifier:@"PlacesWatchingCell"];
+    
+    placeCell.accessoryType = UITableViewCellAccessoryNone;
     
     placeCell.placeName.text = [self.placesBeingWatched[indexPath.row] objectForKey:@"prettyName"];
     
@@ -701,7 +857,6 @@ static NSInteger selectedButton = 10;
                                   sender:@{@"spotName": self.placesBeingWatched[indexPath.row][@"prettyName"],
                                            @"spots" : self.placesBeingWatched[indexPath.row][@"spots"]}];
     }
-    
 }
 
 
@@ -866,7 +1021,7 @@ static NSInteger selectedButton = 10;
                         //DLog(@"Album is public so joining spot");
                         if ([results[STATUS] isEqualToString:ALRIGHT]){
                             [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                            [AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the stream %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                            /*[AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the stream %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];*/
                             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
                         }else{
                             DLog(@"Server error - %@",error);
@@ -897,7 +1052,7 @@ static NSInteger selectedButton = 10;
     
     if (self.currentLocation != nil){
         //DLog(@"nearby spots - %@",self.nearbySpots);
-        if ([self.nearbySpots count] == 0){
+        if (!self.nearbySpots){
             NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
             
@@ -947,9 +1102,11 @@ static NSInteger selectedButton = 10;
 }
 
 
-- (void)refreshAllStream
+- (void)refreshAllStreams
 {
     [self fetchUserSpots];
+    [self fetchUserFavoriteLocations];
+    
     if (self.currentLocation != nil){
         
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
@@ -984,6 +1141,9 @@ static NSInteger selectedButton = 10;
         PlacesWatchingViewController *placesVC = segue.destinationViewController;
         placesVC.spotsWatching = sender[@"spots"];
         placesVC.locationName = sender[@"spotName"];
+    }else if([segue.identifier isEqualToString:@"MAINSTREAM_USERPROFILE_SEGUE"]){
+        UserProfileViewController *uVC = segue.destinationViewController;
+        uVC.userId = sender;
     }
 }
 

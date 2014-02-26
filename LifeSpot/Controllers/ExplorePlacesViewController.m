@@ -17,6 +17,7 @@
 @property (weak, nonatomic) IBOutlet UITableView *venuesTableView;
 @property (weak, nonatomic) IBOutlet UIView *searchingLocationsView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *searchingIndicator;
+@property (weak, nonatomic) IBOutlet UIImageView *coachMarkImageView;
 
 @property (strong,nonatomic) UISearchBar *searchBar;
 @property (strong,nonatomic) NSMutableArray *locations;
@@ -24,6 +25,7 @@
 @property (strong,nonatomic) NSMutableArray *filteredLocations;
 @property (strong,nonatomic) CLLocation *currentLocation;
 
+- (IBAction)hideCoachMark:(id)sender;
 
 - (IBAction)followPlace:(UIButton *)sender;
 - (void)checkForLocation;
@@ -57,14 +59,13 @@ static CLLocationManager *locationManager;
     self.searchBar.delegate = self;
     
     self.venuesTableView.tableHeaderView = self.searchBar;
-    
 }
 
 -(void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
         [UIView animateWithDuration:0.8 animations:^{
-        [self.venuesTableView setContentOffset:CGPointMake(0, 44)];
+        [self.venuesTableView setContentOffset:CGPointMake(0, 40)];
     } completion:nil];
 
 }
@@ -113,6 +114,14 @@ static CLLocationManager *locationManager;
 
 }
 
+
+- (IBAction)hideCoachMark:(id)sender
+{
+   [UIView animateWithDuration:1.0 animations:^{
+       self.coachMarkImageView.alpha = 0;
+       [self.view viewWithTag:10000].alpha = 0;
+   }];
+}
 
 - (IBAction)followPlace:(UIButton *)sender{
     
@@ -246,6 +255,13 @@ static CLLocationManager *locationManager;
             self.locations = [NSMutableArray arrayWithArray:[[results objectForKey:@"response"] objectForKey:@"venues"]];
             
             [self.venuesTableView reloadData];
+            
+            if ([[AppHelper watchLocationCoachMarkSeen] isEqualToString:@"NO"]) {
+                self.coachMarkImageView.alpha = 1;
+                [self.view viewWithTag:10000].alpha = 1;
+                [AppHelper setWatchLocation:@"YES"];
+            }
+
         }else{
            DLog(@"Error: %@", error);
             [AppHelper showAlert:@"Locations Error" message:@"We could fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];

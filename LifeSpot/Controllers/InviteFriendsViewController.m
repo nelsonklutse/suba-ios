@@ -40,6 +40,8 @@ typedef enum{
 @property (weak, nonatomic) IBOutlet UIView *fbConnectView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *fbConnectIndicator;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *inviteBarButtonItem;
+@property (weak, nonatomic) IBOutlet UIView *loadingDataView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingDataActivityIndicator;
 
 
 
@@ -91,10 +93,6 @@ static BOOL isFiltered = NO;
     }];
     
     
-    
-    
-    
-    
 }
 
 
@@ -109,15 +107,15 @@ static BOOL isFiltered = NO;
 #pragma mark - Helpers
 -(void)refreshTableView:(UITableView *)tableView
 {
-    for (NSIndexPath *indexPath in [tableView indexPathsForSelectedRows]) {
-        //NSLog(@"IndexPath.row - %i",indexPath.row);
+    for (NSIndexPath *indexPath in [tableView indexPathsForRowsInRect:tableView.bounds]){
+        
         UITableViewCell *cell = (UITableViewCell *)[tableView cellForRowAtIndexPath:indexPath];
         cell.accessoryType = UITableViewCellAccessoryNone;
         [tableView deselectRowAtIndexPath:indexPath animated:NO];
         
     }
-    
 }
+
 
 
 - (void)loadFacebookFriends
@@ -142,13 +140,16 @@ static BOOL isFiltered = NO;
             self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
             DLog(@"FB users - %@",self.fbUsers);
             [self.facebookFriendsTableView reloadData];
-            //[self showLoadingUserView:NO];
+            
+            [AppHelper showLoadingDataView:self.loadingDataView
+                                 indicator:self.loadingDataActivityIndicator flag:NO];
         }else{
             DLog(@"Loading Facebook friends error %@",[error debugDescription]);
+            [AppHelper showAlert:@"Facebook Error"
+                         message:error.localizedDescription
+                         buttons:@[@"OK"] delegate:nil];
         }
-        
     }];
-    
 }
 
 
@@ -156,18 +157,25 @@ static BOOL isFiltered = NO;
 - (IBAction)inviteSegmentSelected:(UISegmentedControl *)sender {
     if (sender.selectedSegmentIndex == kFacebook){
        
+        if (self.facebookFriendsTableView.alpha == 0){
+            self.invitesSearchBar.showsCancelButton = NO;
+            isFiltered = NO;
+            [self.facebookFriendsTableView reloadData];
+        }
+
         self.phoneContactsTableView.alpha = 0;
         
         // Is Facebook Session Open
-        if ([FBSession activeSession].state == FBSessionStateOpen) {
-            
+        if ([FBSession activeSession].isOpen) {
+            DLog(@"FBSession is Open with Token - %@\nAnd FBID - %@",[[FBSession activeSession].accessTokenData debugDescription],[AppHelper facebookID]);
             //self.fbConnectButton.hidden = YES;
+            
             self.fbConnectView.hidden = YES;
             self.facebookFriendsTableView.alpha = 1;
             
-            if (!self.fbUsers) {
+            //if (!self.fbUsers) {
                 [self loadFacebookFriends];
-            }
+            //}
             
         }else{
             self.facebookFriendsTableView.alpha = 0;
@@ -175,8 +183,15 @@ static BOOL isFiltered = NO;
             self.fbConnectView.hidden = NO;
         }
         
-        
     }else if(sender.selectedSegmentIndex == kContacts){
+        
+        if (self.phoneContactsTableView.alpha == 0){
+            self.invitesSearchBar.showsCancelButton = NO;
+            isFiltered = NO;
+            
+            [self.phoneContactsTableView reloadData];
+        }
+
         
         self.fbConnectView.hidden = YES;
         self.facebookFriendsTableView.alpha = 0;
@@ -196,16 +211,16 @@ static BOOL isFiltered = NO;
             [self.phoneContactsTableView reloadData];
         } failure:^(NSError *error) {
             DLog(@"Error - %@",error);
-            
         }];
-        
-        
     }
-
 }
+
+
 
 - (IBAction)inviteUsers:(UIBarButtonItem *)sender
 {
+    isFiltered = NO;
+    
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kFacebook){
         [self publishStory];
         
@@ -439,14 +454,14 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email"]
                                        allowLoginUI:YES
                                   completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
-                                      
+                                      DLog(@"FBSession object - %@",[session debugDescription]);
                                       if (session.isOpen){
                                           DLog();
                                           //[self.fbConnectIndicator stopAnimating];
                                           self.fbConnectView.hidden =YES;
                                           self.facebookFriendsTableView.alpha = 1;
                                           
-                                          DLog(@"About to load FB friends");
+                                          [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:YES];
                                           
                                          // if (![[AppHelper facebookID] isEqualToString:@"-1"]) {
                                            //   [self loadFacebookFriends];

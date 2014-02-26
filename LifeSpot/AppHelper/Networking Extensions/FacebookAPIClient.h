@@ -9,6 +9,9 @@
 #import "AFHTTPSessionManager.h"
 
 @interface FacebookAPIClient : AFHTTPSessionManager
+
 + (instancetype)sharedInstance;
 + (instancetype)facebookAPIBaseURL;
+
 @end
+

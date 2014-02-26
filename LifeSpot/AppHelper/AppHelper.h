@@ -33,6 +33,13 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)userID;
 + (NSString *)userEmail;
 + (NSString *)facebookID;
++ (NSString *)placesCoachMarkSeen;
++ (NSString *)nearbyCoachMarkSeen;
++ (NSString *)myStreamsCoachMarkSeen;
++ (NSString *)createSpotCoachMarkSeen;
++ (NSString *)exploreCoachMarkSeen;
++ (NSString *)watchLocationCoachMarkSeen;
+
 + (void)setFacebookID:(NSString *)fid;
 + (void)logout;
 + (NSInteger)numberOfAlbums;
@@ -44,6 +51,12 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)activeSpotId;
 + (void)setActiveSpotID:(NSString *)spotId;
 
++ (void)setPlacesCoachMark:(NSString *)flag;
++ (void)setNearbyCoachMark:(NSString *)flag;
++ (void)setMyStreamCoachMark:(NSString *)flag;
++ (void)setCreateSpotCoachMark:(NSString *)flag;
++ (void)setExploreCoachMark:(NSString *)flag;
++ (void)setWatchLocation:(NSString *)flag;
 
 + (void)setFirstName:(NSString *)firstName;
 + (void)setLastName:(NSString *)lastName;

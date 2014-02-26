@@ -169,7 +169,7 @@
     
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         
-        [weakSelf loadSpotsCreated:[AppHelper userID]];
+        [weakSelf loadSpotsCreated:(self.userId) ? self.userId:[AppHelper userID]];
         [weakSelf.userSpotsCollectionView stopRefreshAnimation];
     });
 }

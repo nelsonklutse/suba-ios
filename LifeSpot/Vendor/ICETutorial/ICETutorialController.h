@@ -15,9 +15,9 @@
 #define TUTORIAL_SUB_TITLE_LINES_NUMBER         1
 #define TUTORIAL_SUB_TITLE_OFFSET               180
 #define TUTORIAL_DESC_FONT                      [UIFont fontWithName:@"Helvetica" size:15.0f]
-#define TUTORIAL_DESC_LINES_NUMBER              2
-#define TUTORIAL_DESC_OFFSET                    150
-#define TUTORIAL_DEFAULT_DURATION_ON_PAGE       3.0f
+#define TUTORIAL_DESC_LINES_NUMBER              3
+#define TUTORIAL_DESC_OFFSET                    170
+#define TUTORIAL_DEFAULT_DURATION_ON_PAGE       4.0f
 
 // Scrolling state.
 typedef NS_OPTIONS(NSUInteger, ScrollingState) {

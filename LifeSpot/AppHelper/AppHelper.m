@@ -271,6 +271,95 @@
     return [userDefaults valueForKey:SPOT_ID];
 }
 
+
++(void)setPlacesCoachMark:(NSString *)flag
+{
+   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+   [userDefaults setObject:flag forKey:kSUBA_PLACES_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
+
++(NSString *)placesCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_PLACES_COACHMARK_SEEN];
+}
+
+
++(void)setNearbyCoachMark:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_NEARBY_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
+
++(NSString *)nearbyCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_NEARBY_COACHMARK_SEEN];
+}
+
+
++(void)setMyStreamCoachMark:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_MY_STREAM_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
+
++(NSString *)myStreamsCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_MY_STREAM_COACHMARK_SEEN];
+}
+
+
++(void)setCreateSpotCoachMark:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_CREATE_SPOT_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
++(NSString *)createSpotCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_CREATE_SPOT_COACHMARK_SEEN];
+}
+
+
++(void)setExploreCoachMark:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_EXPLORE_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
+
++(NSString *)exploreCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_EXPLORE_COACHMARK_SEEN]; 
+}
+
+
++(void)setWatchLocation:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_WATCH_LOCATION_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
++(NSString *)watchLocationCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_WATCH_LOCATION_COACHMARK_SEEN]; 
+}
+
+
 /*+ (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *userPrefs = @{API_TOKEN : [userDefaults valueForKey:API_TOKEN],
@@ -448,9 +537,13 @@
      tintColor: tintColor
      image:nil
      message:msg
-     duration:1.8f];
+     duration:3.5f];
 
 }
+
+
+
+
 
 @end
 

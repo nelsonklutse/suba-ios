@@ -43,6 +43,8 @@
 //@property (weak, nonatomic) IBOutlet UITableView *fbConnectButton;
 @property (weak, nonatomic) IBOutlet UIView *fbConnectView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *fbConnectIndicator;
+@property (weak, nonatomic) IBOutlet UIView *loadingDataView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingDataActivityIndicator;
 
 - (IBAction)inviteSegmentSelected:(UISegmentedControl *)sender;
 - (IBAction)inviteUsers:(id)sender;
@@ -68,7 +70,6 @@ static BOOL isFiltered = NO;
 	// Do any additional setup after loading the view.
     //self.fbConnectButton.hidden = YES;
     self.fbConnectView.hidden = YES;
-    [self displaySubaUsers];
     
     self.smsRecipients = [NSMutableArray arrayWithCapacity:[self.phoneContacts count]];
     self.facebookRecipients = [NSMutableArray arrayWithCapacity:[self.fbUsers count]];
@@ -88,6 +89,17 @@ static BOOL isFiltered = NO;
 }
 
 
+-(void)viewWillAppear:(BOOL)animated
+{
+    if (self.subaUsers) {
+        DLog(@"Suba Users - %@",self.subaUsers);
+    }else{
+        DLog(@"Suba is not set");
+    }
+    
+    [self displaySubaUsers];
+
+}
 
 
 - (void)didReceiveMemoryWarning
@@ -100,6 +112,8 @@ static BOOL isFiltered = NO;
 
 - (IBAction)inviteUsers:(id)sender
 {
+    isFiltered = NO;
+    
     if (self.inviteSegmentedControl.selectedSegmentIndex == kFacebook){
         [self publishStory];
         
@@ -163,7 +177,10 @@ static BOOL isFiltered = NO;
 
 -(void)refreshTableView:(UITableView *)tableView
 {
-    for (NSIndexPath *indexPath in [tableView indexPathsForSelectedRows]) {
+    //DLog(@"Table View Bounds - %@",NSStringFromCGRect(tableView.bounds));
+    
+    for (NSIndexPath *indexPath in [tableView indexPathsForRowsInRect:tableView.bounds]){
+        
         //NSLog(@"IndexPath.row - %i",indexPath.row);
         UITableViewCell *cell = (UITableViewCell *)[tableView cellForRowAtIndexPath:indexPath];
         cell.accessoryType = UITableViewCellAccessoryNone;
@@ -198,7 +215,7 @@ static BOOL isFiltered = NO;
             self.fbUsers = [NSMutableArray arrayWithArray:sortedFriends];
             
             [self.facebookFriendsTableView reloadData];
-            //[self showLoadingUserView:NO];
+           [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:NO];
 
         }else{
             DLog(@"FB Load - %@",[error debugDescription]);
@@ -218,9 +235,10 @@ static BOOL isFiltered = NO;
  
 }
 
+
 -(void)displaySubaUsers
 {
-   //[self showLoadingUserView:YES];
+    [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:YES];
     
    [User allUsers:^(id results, NSError *error) {
        //DLog(@"Suba Users - %@",results);
@@ -235,11 +253,16 @@ static BOOL isFiltered = NO;
            self.subaUsers = [NSMutableArray arrayWithArray:sortedUsers];
            NSDictionary *userToRemove = nil;
            for (NSDictionary *user in self.subaUsers){
-               if ([user[@"userName"] isEqualToString:[AppHelper userName]]) {
-                   userToRemove = user;
-               }
+               //if ([user[@"userName"] class] != [NSNull class]) {
+                   if ([user[@"userName"] isEqualToString:[AppHelper userName]]) {
+                       userToRemove = user;
+                   }
+              // }
+               
            }
-           //[self showLoadingUserView:NO];
+          
+           [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:NO];
+           
            [self.subaUsers removeObject:userToRemove];
            [self.subaUsersTableView reloadData];
 
@@ -256,6 +279,13 @@ static BOOL isFiltered = NO;
     [self.invitesSearchBar resignFirstResponder];
     if (sender.selectedSegmentIndex == kSuba) {
         
+        if (self.subaUsersTableView.alpha == 0){
+            self.invitesSearchBar.showsCancelButton = NO;
+            isFiltered = NO;
+            [self.subaUsersTableView reloadData];
+        }
+        
+        
         // Hide the other TableViews
         self.facebookFriendsTableView.alpha = 0;
         self.contactsTableView.alpha = 0;
@@ -263,6 +293,12 @@ static BOOL isFiltered = NO;
         self.fbConnectView.hidden =YES;
         
     }else if (sender.selectedSegmentIndex == kFacebook){
+        if (self.facebookFriendsTableView.alpha == 0){
+            self.invitesSearchBar.showsCancelButton = NO;
+            isFiltered = NO;
+            [self.facebookFriendsTableView reloadData];
+        }
+
         
         self.subaUsersTableView.alpha = 0;
         self.contactsTableView.alpha = 0;
@@ -279,6 +315,7 @@ static BOOL isFiltered = NO;
             }
 
         }else{
+            
            self.facebookFriendsTableView.alpha = 0;
            //self.fbConnectButton.hidden = NO;
            self.fbConnectView.hidden = NO;
@@ -287,12 +324,18 @@ static BOOL isFiltered = NO;
         
     }else if(sender.selectedSegmentIndex == kPhoneContacts){
         
+        if (self.contactsTableView.alpha == 0){
+            self.invitesSearchBar.showsCancelButton = NO;
+            isFiltered = NO;
+            [self.contactsTableView reloadData];
+        }
+        
+        
         self.fbConnectView.hidden = YES;
         self.facebookFriendsTableView.alpha = 0;
         self.subaUsersTableView.alpha = 0;
         self.contactsTableView.alpha = 1;
         
-       
         
         [self fetchContacts:^(NSArray *contacts){
             
@@ -303,6 +346,7 @@ static BOOL isFiltered = NO;
                 self.phoneContacts = sortedContacts;
             
                 [self.contactsTableView reloadData];
+            
             } failure:^(NSError *error) {
                 DLog(@"Error - %@",error);
 
@@ -537,7 +581,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             self.fbConnectView.hidden =YES;
             self.facebookFriendsTableView.alpha = 1;
 
-            
+           [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:YES];
 
            /* if (![[AppHelper facebookID] isEqualToString:@"-1"]){
                 
@@ -671,12 +715,13 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
        
         SubaUsersInviteCell *subaUserCell = (SubaUsersInviteCell *)[self.subaUsersTableView dequeueReusableCellWithIdentifier:cellIdentifier];
         if (isFiltered) {
-            //DLog(@"is filtered -");
+            DLog(@"is filtered -");
             userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
             photoURL = (NSString *)[self.subaUsersFilteredArray[indexPath.row] objectForKey:@"photo"];
         }else{
             userName = [self.subaUsers[indexPath.row] objectForKey:@"userName"];
             photoURL = (NSString *)[self.subaUsers[indexPath.row] objectForKey:@"photo"];
+            DLog(@"User name - %@",userName);
         }
         subaUserCell.userNameLabel.text = userName;
         
@@ -768,7 +813,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         subaUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
         NSString *recipientSelectedId = nil;
         
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
+        if (isFiltered){
             recipientSelectedId = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"id"];
         }else{
             recipientSelectedId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
@@ -781,7 +826,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         FacebookUsersCell *fbUserCell = (FacebookUsersCell *)[self.facebookFriendsTableView cellForRowAtIndexPath:indexPath];
         fbUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
         NSDictionary *friendInfo =  nil;
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
+        if (isFiltered) {
             friendInfo = self.fbUsersFilteredArray[indexPath.row];
         }else{
             friendInfo = self.fbUsers[indexPath.row];
@@ -794,7 +839,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         smsUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
         
         NSString *phoneNumber = nil;
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
+        if (isFiltered){
             phoneNumber = self.phoneContactsFilteredArray[indexPath.row][@"phoneNumber"];
         }else{
             phoneNumber = self.phoneContacts[indexPath.row][@"phoneNumber"];

@@ -8,12 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
-#import "TFScroller.h"
 
 @interface PersonalSpotCell : UICollectionViewCell
 
 @property (retain,nonatomic) UIPhotoGalleryView *pGallery;
-//@property(nonatomic,retain)	TFScroller *mScroller;
 
 @property (weak, nonatomic) IBOutlet UIView *photoGalleryView;
 @property (weak, nonatomic) IBOutlet UILabel *spotVenueLabel;

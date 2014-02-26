@@ -20,3 +20,4 @@ pod 'DACircularProgress', '~> 2.1.0'
 pod 'Harpy'
 
 pod "Appirater"
+

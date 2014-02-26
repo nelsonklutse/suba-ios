@@ -67,6 +67,13 @@
 #define kUNRELATED_PHOTO @"UNRELATED_PHOTO"
 #define kSUBA_APP_ID @"792733899"
 #define kSUBA_APP_NAME @"Suba"
+#define kSUBA_PLACES_COACHMARK_SEEN @"placesCoachMarkSeen"
+#define kSUBA_NEARBY_COACHMARK_SEEN @"nearbyCoachMarkSeen"
+#define kSUBA_MY_STREAM_COACHMARK_SEEN @"myStreamCoachMarkSeen"
+#define kSUBA_CREATE_SPOT_COACHMARK_SEEN @"createSpotCoachMarkSeen"
+#define kSUBA_EXPLORE_COACHMARK_SEEN @"exploreLocationCoachMarkSeen"
+#define kSUBA_WATCH_LOCATION_COACHMARK_SEEN @"watchLocationCoachMarkSeen"
+
 
 
 // Notifications

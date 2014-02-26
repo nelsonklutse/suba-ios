@@ -55,8 +55,8 @@
                     DLog(@"Notifications - %@",attachments);
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
-                    if ([badgeValue integerValue] >= 3) {
-                        [self.tabBarController.tabBar.items[2] setBadgeValue:@"3"];
+                    if ([badgeValue integerValue] >= 5) {
+                        [self.tabBarController.tabBar.items[2] setBadgeValue:@"5"];
                     }else{
                       [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];  
                     }

@@ -73,6 +73,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
 - (void)pickImage:(id)sender;
+-(NSString *)getRandomPINString:(NSInteger)length;
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 @end
 
@@ -83,7 +84,6 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     [super viewDidLoad];
     // Disable the camera button till we have all our info ready
     self.cameraButton.enabled = NO;
-    
     
 	// Do any additional setup after loading the view.
     self.noPhotosView.hidden = YES;
@@ -177,6 +177,24 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+
+-(NSString *)getRandomPINString:(NSInteger)length
+{
+    NSMutableString *returnString = [NSMutableString stringWithCapacity:length];
+    
+    NSString *numbers = @"0123456789";
+    
+    // First number cannot be 0
+    [returnString appendFormat:@"%C", [numbers characterAtIndex:(arc4random() % ([numbers length]-1))+1]];
+    
+    for (int i = 1; i < length; i++)
+    {
+        [returnString appendFormat:@"%C", [numbers characterAtIndex:arc4random() % [numbers length]]];
+    }
+    
+    return returnString;
 }
 
 
@@ -528,7 +546,9 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     NSString *shareText = nil;
     if (objectOfInterest == kSpot) {
         DLog(@"SpotId - %@",self.spotID);
-        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared album %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navigationItem.title,self.spotID];
+        NSString *randomString = [self getRandomPINString:5];
+        DLog(@"Random String - %@",randomString);
+        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navigationItem.title,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
         
         
         activityItems = @[self.albumSharePhoto,shareText];
@@ -538,7 +558,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         
         //DLog(@"Photo Cell - %@",sender.superview.superview.superview);
         PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared spot %@ with Suba for iOS.",self.navigationItem.title];
+        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS.",self.navigationItem.title];
         
         activityItems = @[cell.photoCardImage.image,shareText];
         [Flurry logEvent:@"Share_Photo_Tapped"];

@@ -10,10 +10,14 @@
 #import "User.h"
 #import "PlacesWatchingStreamCell.h"
 #import "PhotoStreamViewController.h"
+#import "UserProfileViewController.h"
 
 @interface PlacesWatchingViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIAlertViewDelegate>
 @property (weak, nonatomic) IBOutlet UICollectionView *placesWatchingSpotsCollectionView;
 @property (strong,nonatomic) NSDictionary *currentSelectedSpot;
+
+- (IBAction)actionBtn:(id)sender;
+- (IBAction)moveToUserProfile:(UIButton *)sender;
 
 - (void)fetchUserWatchingSpotsAtLocation;
 - (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data;
@@ -76,6 +80,21 @@
     }];
 }
 
+
+-(IBAction)moveToUserProfile:(UIButton *)sender
+{
+    PlacesWatchingStreamCell *placesSpotsCell = (PlacesWatchingStreamCell *)sender.superview.superview;
+    NSIndexPath *indexPath = [self.placesWatchingSpotsCollectionView indexPathForCell:placesSpotsCell];
+    NSDictionary *cellInfo = self.spotsWatching[indexPath.item];
+    NSString *creatorId = cellInfo[@"creatorId"];
+    
+    [self performSegueWithIdentifier:@"PLACES_USERPROFILE_SEGUE" sender:creatorId];
+}
+
+
+
+- (IBAction)actionBtn:(id)sender {
+}
 
 -(void)fetchUserWatchingSpotsAtLocation
 {
@@ -334,6 +353,9 @@
             }
         }
         
+    }else if ([segue.identifier isEqualToString:@"PLACES_USERPROFILE_SEGUE"]){
+        UserProfileViewController *uVC = segue.destinationViewController;
+        uVC.userId = sender;
     }
 }
 

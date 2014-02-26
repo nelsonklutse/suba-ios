@@ -31,6 +31,7 @@ PODS:
   - UIPhotoGallery (0.1.2):
     - SDWebImage (~> 3.0)
   - UzysCircularProgressPullToRefresh (1.0.4)
+  - WSCoachMarksView (0.2)
 
 DEPENDENCIES:
   - AFNetworking (~> 2.0)
@@ -44,6 +45,7 @@ DEPENDENCIES:
   - Harpy
   - UIPhotoGallery (~> 0.1.2)
   - UzysCircularProgressPullToRefresh (~> 1.0.4)
+  - WSCoachMarksView (~> 0.2)
 
 SPEC CHECKSUMS:
   AFNetworking: e499052cbf3d743e9bb727bb37adb9dc2547ba15
@@ -58,5 +60,6 @@ SPEC CHECKSUMS:
   SDWebImage: fe7ce01ae4e0a884d168f59c9dd82d35baf8429e
   UIPhotoGallery: f054e2dae658cf324b7b202d5c5f4b39457dce1c
   UzysCircularProgressPullToRefresh: 6e8a0deaa881bd62615d50cb462c766c0d650f2f
+  WSCoachMarksView: 93657355c87e88d0fea622ee45e9733d2242b080
 
 COCOAPODS: 0.29.0
