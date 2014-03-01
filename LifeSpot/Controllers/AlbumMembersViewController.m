@@ -42,8 +42,9 @@
 
 -(IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue
 {
-    [CSNotificationView showInViewController:self.navigationController style:CSNotificationViewStyleSuccess message:@"Participants added"];
-   // DLog(@"Load members");
+    [CSNotificationView showInViewController:self
+                                       style:CSNotificationViewStyleSuccess message:@"Participants added"];
+   
     [self loadAlbumMembers:self.spotID];
 }
 

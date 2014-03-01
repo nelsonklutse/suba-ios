@@ -15,6 +15,7 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
 #import "LSPushProviderAPIClient.h"
+#import "UserProfileViewController.h"
 #import "Photo.h"
 #import "User.h"
 #import "Spot.h"
@@ -38,8 +39,10 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
 
+@property (weak, nonatomic) IBOutlet UIImageView *coachMarkImageView;
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
+@property (weak, nonatomic) IBOutlet UIButton *gotItButton;
 
 @property (weak, nonatomic) IBOutlet UIView *loadingInfoIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamInfoIndicator;
@@ -73,8 +76,10 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
 - (void)pickImage:(id)sender;
+- (IBAction)moveToProfile:(UIButton *)sender;
 -(NSString *)getRandomPINString:(NSInteger)length;
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
+-(IBAction)dismissCoachMark:(UIButton *)sender;
 @end
 
 @implementation PhotoStreamViewController
@@ -82,6 +87,34 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
+        if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
+            CGSize result = [[UIScreen mainScreen] bounds].size;
+            CGFloat scale = [UIScreen mainScreen].scale;
+            result = CGSizeMake(result.width * scale, result.height * scale);
+            
+            if(result.height == 960){
+            self.coachMarkImageView.image = [UIImage imageNamed:@"share-stream_iphone4"];
+            CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-100, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
+                
+                self.gotItButton.frame = btnFrame;
+            }
+            if(result.height == 1136){
+                //  DLog(@"Using 5");
+                //CODE IF iPHONE 5
+                //self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
+                self.coachMarkImageView.image = [UIImage imageNamed:@"share-stream_new"];
+                
+               // self.gotItButton.frame = btnFrame;
+            }
+        }
+
+        self.coachMarkImageView.alpha = 1;
+        [self.view viewWithTag:10000].alpha = 1;
+        [AppHelper setShareStreamCoachMark:@"YES"];
+    }
+    
     // Disable the camera button till we have all our info ready
     self.cameraButton.enabled = NO;
     
@@ -117,9 +150,11 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     }
     
+    
+    
 }
 
-         
+
 -(void)loadSpotImages:(NSString *)spotId
 {
    [Spot fetchSpotImagesUsingSpotId:spotId completion:^(id results, NSError *error) {
@@ -128,7 +163,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
            NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
            NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
            self.photos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
-           
+           DLog(@"Photos - %@",results);
            if ([self.photos count] > 0) {
                DLog(@"Photos in spot - %@",self.photos);
                self.noPhotosView.hidden = YES;
@@ -177,6 +212,16 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+-(IBAction)dismissCoachMark:(UIButton *)sender
+{
+    [UIView animateWithDuration:1.0 animations:^{
+        self.coachMarkImageView.alpha = 0;
+        [self.view viewWithTag:10000].alpha = 0;
+        [[self.view viewWithTag:10000] removeFromSuperview];
+    }];
+  
 }
 
 
@@ -258,7 +303,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     photoCardCell.pictureTakerView.image = [UIImage imageNamed:@"anonymousUser"];
     //DLog(@"Photos - %@",self.photos[indexPath.row]);
     NSString *photoURLstring = self.photos[indexPath.row][@"s3name"];
-    
+    DLog(@"Photos - %@",self.photos[indexPath.item]);
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
         
@@ -591,6 +636,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 {
     
     CTAssetsPickerController *picker = [[CTAssetsPickerController alloc] init];
+    picker.navigationBar.translucent = NO;
+    picker.navigationItem.rightBarButtonItem.tintColor = [UIColor whiteColor];
+    //picker.navigationItem.rightBarButtonItem. = [UIColor whiteColor];
+    picker.showsCancelButton = YES;
+    //picker.navigationBar.barTintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                                     //green:(77.0f/255.0f)
+                                                      //blue:(20.0f/255.0f)
+                                                     //alpha:1];
     picker.maximumNumberOfSelection = 1;
     picker.assetsFilter = [ALAssetsFilter allPhotos];
     picker.delegate = self;
@@ -640,7 +693,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 -(void)pickImage:(id)sender
 {
-    DLog(@"Source Type - %@",sender);
+    //DLog(@"Source Type - %@",sender);
     
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
        
@@ -661,6 +714,18 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         [alert show];
         
     }
+}
+
+- (IBAction)moveToProfile:(UIButton *)sender
+{
+    DLog(@"sender.superview.superview.superview - %@",[sender.superview.superview.superview class]);
+    PhotoStreamCell *pCell = (PhotoStreamCell *)sender.superview.superview.superview;
+    NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:pCell];
+    NSDictionary *cellInfo = self.photos[indexPath.item];
+    NSString *picTakerId = cellInfo[@"pictureTakerId"];
+    
+    [self performSegueWithIdentifier:@"PHOTOSTREAM_USERPROFILE" sender:picTakerId];
+    DLog(@"Cell info -  %@\nUserId -%@",cellInfo,picTakerId);
 }
 
 
@@ -904,14 +969,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
             albumVC.spotID = (NSString *)sender;
             albumVC.spotInfo = self.spotInfo;
         }
-    }
-    
-    if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
+    }else if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
         if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]){
             AlbumMembersViewController *membersVC = segue.destinationViewController;
             membersVC.spotID = sender;
             //membersVC.spotInfo = self.spotInfo;
         }
+    }else if ([segue.identifier isEqualToString:@"PHOTOSTREAM_USERPROFILE"]){
+        UserProfileViewController *uVC = segue.destinationViewController;
+        uVC.userId = sender;
     }
 }
 
@@ -949,7 +1015,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 -(void)applicationFinishedRestoringState
 {
      DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
-    
+    [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     //1. Update photos
     if (self.photos) {
         [self.photoCollectionView reloadData];

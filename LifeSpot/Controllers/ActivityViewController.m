@@ -41,7 +41,8 @@
 #pragma mark - Remote Notifications methods
 -(void)fetchNotificationsFromProvider
 {
-    DLog(@"Fetch notifications");
+    //DLog(@"Fetch notifications");
+    
     [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:YES];
     
     [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications" parameters:@{@"userId": [AppHelper userID]}
@@ -55,11 +56,12 @@
                     DLog(@"Notifications - %@",attachments);
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
-                    if ([badgeValue integerValue] >= 5) {
-                        [self.tabBarController.tabBar.items[2] setBadgeValue:@"5"];
-                    }else{
+                   // if ([badgeValue integerValue] >= 5) {
+                     //   [self.tabBarController.tabBar.items[2] setBadgeValue:@"5"];
+                //    }
+               // else{
                       [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];  
-                    }
+                 //   }
                     
                     [self.notificationsTableView reloadData];
                     }else{
@@ -88,7 +90,8 @@
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *cellIdentifier = nil;//@"ACTIVITY_CELL";
+    static NSString *cellIdentifier = nil;   //@"ACTIVITY_CELL";
+    
     UITableViewCell *cell = nil;
     
     if ([self.notifications[indexPath.row][@"readStatus"] isEqualToString:@"unread"]){
@@ -96,7 +99,6 @@
     }else{
         cellIdentifier = @"ACTIVITY_CELL";
     }
-    
     
     cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     

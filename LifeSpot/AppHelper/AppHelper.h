@@ -39,6 +39,7 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)createSpotCoachMarkSeen;
 + (NSString *)exploreCoachMarkSeen;
 + (NSString *)watchLocationCoachMarkSeen;
++ (NSString *)shareStreamCoachMarkSeen;
 
 + (void)setFacebookID:(NSString *)fid;
 + (void)logout;
@@ -57,6 +58,7 @@ typedef void (^NotificationCompletion) ();
 + (void)setCreateSpotCoachMark:(NSString *)flag;
 + (void)setExploreCoachMark:(NSString *)flag;
 + (void)setWatchLocation:(NSString *)flag;
++ (void)setShareStreamCoachMark:(NSString *)flag;
 
 + (void)setFirstName:(NSString *)firstName;
 + (void)setLastName:(NSString *)lastName;

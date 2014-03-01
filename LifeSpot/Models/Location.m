@@ -84,13 +84,14 @@
 
 - (void)showBestMatchingFoursquareVenueCriteria:(NSString *)searchType completion:(ExactFoursquareLocationFoundCompletionBlock)completion{
     
-    DLog(@"Latitiude - %@\nLongitude - %@",self.latitude,self.longitude);
+    //DLog(@"Latitiude - %@\nLongitude - %@",self.latitude,self.longitude);
     NSString *near = [NSString stringWithFormat:@"%@,%@",self.latitude,self.longitude];
     NSString *radius = @"1000";
     
     NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
     
     AFHTTPRequestOperationManager *manager =[AFHTTPRequestOperationManager manager];
+    
     [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
                                          @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
                                          searchType : near,

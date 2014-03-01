@@ -31,7 +31,6 @@ typedef enum{
 @property (strong,nonatomic) NSArray *phoneContacts;
 @property (strong,nonatomic) NSMutableArray *contactsFilteredArray;
 @property (strong,nonatomic) NSMutableArray *messageRecipients;
-@property (strong,nonatomic) NSMutableArray *phoneContactsInvitees;
 @property (strong,nonatomic) NSMutableArray *facebookRecipients;
 
 @property (weak, nonatomic) IBOutlet UISegmentedControl *inviteContactsSegmentedControl;
@@ -83,11 +82,14 @@ static BOOL isFiltered = NO;
     
     [self fetchContacts:^(NSArray *contacts) {
         // We are sorting the contacts here
-        NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
-        NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
-        NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
-        self.phoneContacts = sortedContacts;
-        [self.phoneContactsTableView reloadData];
+        if ([contacts count] > 0) {
+            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+            NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
+            self.phoneContacts = sortedContacts;
+            [self.phoneContactsTableView reloadData];
+        }
+        
     } failure:^(NSError *error) {
         DLog(@"Error - %@",error);
     }];
@@ -201,14 +203,16 @@ static BOOL isFiltered = NO;
         
         
         [self fetchContacts:^(NSArray *contacts){
+            if ([contacts count] > 0) {
+                // We are sorting the contacts here
+                NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
+                NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+                NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
+                self.phoneContacts = sortedContacts;
+                
+                [self.phoneContactsTableView reloadData];
+            }
             
-            // We are sorting the contacts here
-            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
-            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
-            NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
-            self.phoneContacts = sortedContacts;
-            
-            [self.phoneContactsTableView reloadData];
         } failure:^(NSError *error) {
             DLog(@"Error - %@",error);
         }];
@@ -366,7 +370,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         smsComposer.recipients = recipients ;
         
         smsComposer.body = [NSString stringWithFormat:@"Hi.I've found this cool app we can use to share albums\nDownload @ http://subaapp.com"];
-        
+        smsComposer.navigationBar.translucent = NO;
         
         [self presentViewController:smsComposer animated:NO completion:nil];
         //}];
@@ -579,6 +583,13 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             phoneNumber = [self.phoneContacts[indexPath.row] objectForKey:@"phoneNumber"];
         }
         
+        if ([self.messageRecipients containsObject:phoneNumber]) {
+            DLog(@"Contains object at row - %i",indexPath.row);
+            contactCell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }else if(![self.messageRecipients containsObject:phoneNumber]){
+            contactCell.accessoryType = UITableViewCellAccessoryNone;
+        }
+        
         contactCell.contactImageView.image = contactImage;
         contactCell.contactNameLabel.text = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
         contactCell.phoneNumberLabel.text = phoneNumber;
@@ -594,6 +605,13 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             friendInfo = self.facebookFriendsFilteredArray[indexPath.row];
         }else{
             friendInfo = self.fbUsers[indexPath.row];
+        }
+        
+        if ([self.facebookRecipients containsObject:friendInfo]) {
+            DLog(@"Contains object at row - %i",indexPath.row);
+            fbUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }else if(![self.facebookRecipients containsObject:friendInfo]){
+            fbUserCell.accessoryType = UITableViewCellAccessoryNone;
         }
         
         NSString *friendPicURL = [[[friendInfo
@@ -641,6 +659,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         NSDictionary *friendInfo =  nil;
         if (isFiltered) {
             friendInfo = self.facebookFriendsFilteredArray[indexPath.row];
+            
         }else{
             friendInfo = self.fbUsers[indexPath.row];
         }
@@ -771,12 +790,15 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 {
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kContacts) {
         [self fetchContacts:^(NSArray *contacts) {
-            // We are sorting the contacts here
-            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
-            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
-            NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
-            self.phoneContacts = sortedContacts;
-            [self.phoneContactsTableView reloadData];
+            if ([contacts count] > 0) {
+                // We are sorting the contacts here
+                NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
+                NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+                NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
+                self.phoneContacts = sortedContacts;
+                [self.phoneContactsTableView reloadData];
+            }
+           
         } failure:^(NSError *error) {
             DLog(@"Error - %@",error);
         }];

@@ -321,6 +321,10 @@
         [AppHelper setWatchLocation:@"NO"]; 
     }
     
+    if (![[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"YES"]) {
+        [AppHelper setShareStreamCoachMark:@"NO"];
+    }
+    
     [self.window makeKeyAndVisible];
     
     

@@ -103,11 +103,16 @@ static CLLocationManager *locationManager;
 {
     static NSString *CellIdentifier = @"VenueCell";
     FoursquareVenueCell *cell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-    
-    // Configure the cell...
+        // Configure the cell...
     if (tableView == self.searchDisplayController.searchResultsTableView) {
         cell.textLabel.text = [self.filteredLocations[indexPath.row] objectForKey:@"name"];
     }else{
+        if (self.lastSelected.row == indexPath.row){ 
+            DLog(@"Last selected row - %i",indexPath.row);
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            
+        }else cell.accessoryType = UITableViewCellAccessoryNone;
+        
         //DLog(@"Class of venue - %@",[self.locations[indexPath.row] class]);
         NSArray *venueDets = [self retrieveVenueDetails:(NSDictionary *)self.locations[indexPath.row]];
         
@@ -131,6 +136,7 @@ static CLLocationManager *locationManager;
     if (tableView == self.venuesTableView) {
         if (self.lastSelected != indexPath) {
             FoursquareVenueCell *oldCell = (FoursquareVenueCell *)[self.venuesTableView cellForRowAtIndexPath:self.lastSelected];
+            
             oldCell.accessoryType = UITableViewCellAccessoryNone;
             
             FoursquareVenueCell *cell = (FoursquareVenueCell *)[self.venuesTableView cellForRowAtIndexPath:indexPath];
@@ -144,7 +150,9 @@ static CLLocationManager *locationManager;
             self.venueChosen.city = (city != nil) ? city : nil ;
             self.venueChosen.country = (country != nil) ? country : nil;
             cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            
             self.lastSelected = indexPath;
+            DLog(@"Last selected - %@",indexPath);
             
         }
     }else if(tableView == self.searchDisplayController.searchResultsTableView){

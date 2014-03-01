@@ -359,6 +359,19 @@
     return [userDefaults valueForKey:kSUBA_WATCH_LOCATION_COACHMARK_SEEN]; 
 }
 
++(void)setShareStreamCoachMark:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:kSUBA_SHARE_STREAM_COACHMARK_SEEN];
+    [userDefaults synchronize];
+}
+
++(NSString *)shareStreamCoachMarkSeen
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_SHARE_STREAM_COACHMARK_SEEN];
+}
+
 
 /*+ (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];

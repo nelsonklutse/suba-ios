@@ -221,14 +221,14 @@ static NSInteger selectedButton = 10;
     [AppHelper setNearbyCoachMark:@"NO"];
     [AppHelper setMyStreamCoachMark:@"NO"];*/
     DLog(@"[AppHelper placesCoachMarkSeen] - %@",[AppHelper placesCoachMarkSeen]);
-    if ([[AppHelper placesCoachMarkSeen] isEqualToString:@"NO"]) {
+    if ([[AppHelper myStreamsCoachMarkSeen] isEqualToString:@"NO"]) {
         // Show the places coachmark
         self.coachMarkView.alpha = 1;
         self.gotItButton.alpha = 1;
         [AppHelper setPlacesCoachMark:@"YES"];
         //DLog(@"Showing places coachmark");
         self.coachMarkImage.alpha = 1;
-        [self.coachMarkImage setTag:kPlacesCoachMark];
+        [self.coachMarkImage setTag:kMyStreamCoachMark];
     }
 }
 
@@ -412,26 +412,25 @@ static NSInteger selectedButton = 10;
                 result = CGSizeMake(result.width * scale, result.height * scale);
                 
                 if(result.height == 960){
-                    DLog(@"Using 4");
+                   // DLog(@"Using 4");
                     
                     //CODE IF IPHONE 4
-                self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-iphone4"];
-                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-60, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
+                self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-IPhone4"];
+                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-100, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
                     
                     self.gotItButton.frame = btnFrame;
                 }
                 if(result.height == 1136){
-                    DLog(@"Using 5");
+                  //  DLog(@"Using 5");
                     //CODE IF iPHONE 5
-                   self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
+                   //self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
+                    self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-IPhone5"];
+                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-60, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
+                    
+                    self.gotItButton.frame = btnFrame;
                 }
             }
             
-            
-            
-            //self.coachMarkImage.image = [UIImage imageNamed:@"filter"];
-            //CGRect coachMarkFrame = CGRectMake(75 ,self.coachMarkImage.frame.size.height-150, 150,150);
-            //exploreImgView.frame = coachMarkFrame;
             //[self.view addSubview:exploreImgView];
             [self.coachMarkImage setTag:kExploreCoachMark];
             [AppHelper setExploreCoachMark:@"YES"];
@@ -442,9 +441,9 @@ static NSInteger selectedButton = 10;
         [UIView animateWithDuration:1.0 animations:^{
             // My Coach Mark is showing.Switch to create spot
             self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"create-new-stream"];
-            [self.coachMarkImage setTag:kCreateSpotCoachMark];
-            [AppHelper setCreateSpotCoachMark:@"YES"];
+            self.coachMarkImage.image = [UIImage imageNamed:@"streams-near-you"];
+            [self.coachMarkImage setTag:kNearbyCoachMark];
+            [AppHelper setNearbyCoachMark:@"YES"];
             self.coachMarkImage.alpha = 1;
         }];
         
@@ -452,9 +451,9 @@ static NSInteger selectedButton = 10;
         
         [UIView animateWithDuration:1.0 animations:^{
             self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"streams-involved-in"];
-            [self.coachMarkImage setTag:kMyStreamCoachMark];
-            [AppHelper setMyStreamCoachMark:@"YES"];
+            self.coachMarkImage.image = [UIImage imageNamed:@"locations-you-are-watching"];
+            [self.coachMarkImage setTag:kPlacesCoachMark];
+            [AppHelper setPlacesCoachMark:@"YES"];
             self.coachMarkImage.alpha = 1;
         }];
     }else if (self.coachMarkImage.tag == kPlacesCoachMark) {
@@ -462,9 +461,9 @@ static NSInteger selectedButton = 10;
             
             // Places Coach Mark is showing.Switch to nearby
             self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"streams-near-you"];
-            [self.coachMarkImage setTag:kNearbyCoachMark];
-            [AppHelper setNearbyCoachMark:@"YES"];
+            self.coachMarkImage.image = [UIImage imageNamed:@"create-new-stream"];
+            [self.coachMarkImage setTag:kCreateSpotCoachMark];
+            [AppHelper setCreateSpotCoachMark:@"YES"];
             self.coachMarkImage.alpha = 1;
         }];
     }
@@ -546,6 +545,8 @@ static NSInteger selectedButton = 10;
                         updateType:kCollectionViewUpdateInsert];
         
     }*/
+    
+    [self refreshAllStreams];
     
 }
 
@@ -1047,7 +1048,7 @@ static NSInteger selectedButton = 10;
 
 #pragma mark - Location Manager Delegate
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
-    DLog(@"Current location updated - %@",[[locations lastObject] debugDescription]);
+    //DLog(@"Current location updated - %@",[[locations lastObject] debugDescription]);
     self.currentLocation = [locations lastObject];
     
     if (self.currentLocation != nil){

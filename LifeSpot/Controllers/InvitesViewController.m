@@ -33,7 +33,6 @@
 @property (strong,nonatomic) NSMutableArray *smsRecipients;
 @property (strong,nonatomic) NSMutableArray *facebookRecipients;
 
-
 @property (retain, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *inviteBarButtonItem;
 @property (weak, nonatomic) IBOutlet UITableView *subaUsersTableView;
@@ -79,13 +78,6 @@ static BOOL isFiltered = NO;
     self.subaUsersFilteredArray = [NSMutableArray arrayWithCapacity:[self.subaUsers count]];
     self.fbUsersFilteredArray = [NSMutableArray arrayWithCapacity:[self.fbUsers count]];
     self.phoneContactsFilteredArray = [NSMutableArray arrayWithCapacity:[self.phoneContacts count]];
-    
-    //self.invitesSearchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
-    //self.invitesSearchBar.showsCancelButton = YES;
-    //self.invitesSearchBar.delegate = self;
-    //self.subaUsersTableView.tableHeaderView = self.invitesSearchBar;
-    
-    //self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = YES;
 }
 
 
@@ -98,6 +90,7 @@ static BOOL isFiltered = NO;
     }
     
     [self displaySubaUsers];
+    
 
 }
 
@@ -338,14 +331,15 @@ static BOOL isFiltered = NO;
         
         
         [self fetchContacts:^(NSArray *contacts){
-            
+            if ([contacts count] > 0) {
                 // We are sorting the contacts here
                 NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"firstName" ascending:YES];
                 NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
                 NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
                 self.phoneContacts = sortedContacts;
-            
+                
                 [self.contactsTableView reloadData];
+            }
             
             } failure:^(NSError *error) {
                 DLog(@"Error - %@",error);
@@ -375,7 +369,7 @@ static BOOL isFiltered = NO;
                                  message:@"We do not have access to your contacts. To allow us to access your contacts,please go to Settings->Privacy->Contacts"
                                  buttons:@[@"OK"] delegate:nil];
                 } else {
-                    
+                    DLog(@"Reading contacts");
                     readAddressBookContacts(addressBook, success);
                 }
                 CFRelease(addressBook);
@@ -482,6 +476,12 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         
         smsComposer.messageComposeDelegate = self;
         smsComposer.recipients = recipients ;
+        smsComposer.navigationBar.translucent = NO;
+        smsComposer.navigationItem.title = @"Invite by SMS";
+        smsComposer.navigationBar.barTintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                                        green:(77.0f/255.0f)
+                                                        blue:(20.0f/255.0f)
+                                                        alpha:1];
         
         smsComposer.body = [NSString stringWithFormat:@"Hi.I've found this cool app we can use to share albums\nDownload @ http://subaapp.com"];
         
@@ -711,18 +711,32 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba) {
         NSString *userName = nil;
         NSString *photoURL = nil;
+        NSString *userId = nil;
         cellIdentifier = @"SubaInvitesCell";
        
         SubaUsersInviteCell *subaUserCell = (SubaUsersInviteCell *)[self.subaUsersTableView dequeueReusableCellWithIdentifier:cellIdentifier];
+        
         if (isFiltered) {
-            DLog(@"is filtered -");
+            //DLog(@"is filtered -");
             userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
             photoURL = (NSString *)[self.subaUsersFilteredArray[indexPath.row] objectForKey:@"photo"];
         }else{
+            
             userName = [self.subaUsers[indexPath.row] objectForKey:@"userName"];
             photoURL = (NSString *)[self.subaUsers[indexPath.row] objectForKey:@"photo"];
-            DLog(@"User name - %@",userName);
+            userId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
         }
+        
+        // Check whether this cell is contained in last selected indexPaths
+        if ([self.invitedSubaUsers containsObject:userId]){
+            DLog(@"%@ is part of invites",userName);
+            subaUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }else if(![self.invitedSubaUsers containsObject:userId]){
+            DLog(@"%@ has not been invited so removing the checkmark",userName);
+            subaUserCell.accessoryType = UITableViewCellAccessoryNone;
+        }
+
+        
         subaUserCell.userNameLabel.text = userName;
         
         if(![photoURL isKindOfClass:[NSNull class]]){
@@ -752,6 +766,12 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             phoneNumber = [self.phoneContacts[indexPath.row] objectForKey:@"phoneNumber"];
         }
         
+        if ([self.smsRecipients containsObject:phoneNumber]) {
+            contactCell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }else if(![self.smsRecipients containsObject:phoneNumber]){
+            contactCell.accessoryType = UITableViewCellAccessoryNone;
+        }
+        
         contactCell.contactImageView.image = contactImage;
         contactCell.contactNameLabel.text = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
         contactCell.phoneNumberLabel.text = phoneNumber;
@@ -765,8 +785,16 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         if (isFiltered) {
             friendInfo = self.fbUsersFilteredArray[indexPath.row];
         }else{
-           friendInfo = self.fbUsers[indexPath.row]; 
+           friendInfo = self.fbUsers[indexPath.row];
         }
+        
+        if ([self.facebookRecipients containsObject:friendInfo]) {
+            DLog(@"Contains object at row - %i",indexPath.row);
+            fbUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
+        }else if(![self.facebookRecipients containsObject:friendInfo]){
+            fbUserCell.accessoryType = UITableViewCellAccessoryNone;
+        }
+        
         
         NSString *friendPicURL = [[[friendInfo
                                     valueForKey:@"picture"]
@@ -853,18 +881,20 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
     
     
     if (self.inviteSegmentedControl.selectedSegmentIndex == kSuba){
-        SubaUsersInviteCell *cell = (SubaUsersInviteCell *)[tableView cellForRowAtIndexPath:indexPath];
+               SubaUsersInviteCell *cell = (SubaUsersInviteCell *)[tableView cellForRowAtIndexPath:indexPath];
         cell.accessoryType = UITableViewCellAccessoryNone;
         NSString *recipientSelectedId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
         [self.invitedSubaUsers removeObject:recipientSelectedId];
         self.inviteBarButtonItem.enabled = ([self.invitedSubaUsers count] != 0);
     }
     else if (self.inviteSegmentedControl.selectedSegmentIndex == kPhoneContacts){
+        
         SMSContactsCell *cell = (SMSContactsCell *)[tableView cellForRowAtIndexPath:indexPath];
         cell.accessoryType = UITableViewCellAccessoryNone;
         [self.smsRecipients removeObject:cell.phoneNumberLabel.text];
         self.inviteBarButtonItem.enabled = ([self.smsRecipients count] != 0);
     }else{
+        
         FacebookUsersCell *fbUserCell = (FacebookUsersCell *)[tableView cellForRowAtIndexPath:indexPath];
         fbUserCell.accessoryType = UITableViewCellAccessoryNone;
         NSDictionary *personSelected = self.fbUsers[indexPath.row];

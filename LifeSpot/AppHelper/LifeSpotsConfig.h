@@ -73,6 +73,8 @@
 #define kSUBA_CREATE_SPOT_COACHMARK_SEEN @"createSpotCoachMarkSeen"
 #define kSUBA_EXPLORE_COACHMARK_SEEN @"exploreLocationCoachMarkSeen"
 #define kSUBA_WATCH_LOCATION_COACHMARK_SEEN @"watchLocationCoachMarkSeen"
+#define kSUBA_SHARE_STREAM_COACHMARK_SEEN @"shareStreamCoachMarkSeen"
+
 
 
 

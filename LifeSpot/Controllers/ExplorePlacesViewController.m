@@ -49,6 +49,7 @@ static CLLocationManager *locationManager;
         [self showNearbyFoursuareVenues:@{ @"latitude":latitude,@"longitude" :longitude}];
 
     }
+    
     [self checkForLocation];
     
     
@@ -56,19 +57,20 @@ static CLLocationManager *locationManager;
     
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, 320, 44)];
     self.searchBar.placeholder = @"Search Places";
+    //self.searchBar.showsCancelButton = YES;
     self.searchBar.delegate = self;
     
     self.venuesTableView.tableHeaderView = self.searchBar;
 }
 
--(void)viewWillLayoutSubviews
+/*-(void)viewWillLayoutSubviews
 {
     [super viewWillLayoutSubviews];
         [UIView animateWithDuration:0.8 animations:^{
         [self.venuesTableView setContentOffset:CGPointMake(0, 40)];
     } completion:nil];
 
-}
+}*/
 
 
 
@@ -106,7 +108,7 @@ static CLLocationManager *locationManager;
             DLog(@"Error - %@",error);
         }else {
             self.watchingLocations = [NSMutableArray arrayWithArray:(NSArray *)[results objectForKey:@"watching"]];
-            DLog(@"Watching - %@",self.watchingLocations);
+           // DLog(@"Watching - %@",self.watchingLocations);
             
         }
     }];
@@ -240,7 +242,7 @@ static CLLocationManager *locationManager;
 
 -(void)showNearbyFoursuareVenues:(NSDictionary *)latlng
 {
-    DLog(@"LatLng- %@",latlng);
+    //DLog(@"LatLng- %@",latlng);
     [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:YES];
     
     
@@ -264,7 +266,9 @@ static CLLocationManager *locationManager;
 
         }else{
            DLog(@"Error: %@", error);
-            [AppHelper showAlert:@"Locations Error" message:@"We could fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
+            [AppHelper showAlert:@"Locations Error" message:@"We could not fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
+            
+            return;
         }
     }];
 }
@@ -360,6 +364,12 @@ static CLLocationManager *locationManager;
 
 
 #pragma mark - UISearchBar Delegate
+-(BOOL)searchBarShouldBeginEditing:(UISearchBar *)searchBar
+{
+    searchBar.showsCancelButton = YES;
+    return YES;
+}
+
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
 {
     //DLog(@"First Responder - %@",searchBar);
@@ -380,7 +390,7 @@ static CLLocationManager *locationManager;
 
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    
+    searchBar.showsCancelButton = NO;
     [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:YES];
     
     [Location searchFourquareWithSearchTerm:searchBar.text completionBlock:^(id results, NSError *error) {
@@ -388,6 +398,10 @@ static CLLocationManager *locationManager;
         
         if (error) {
             DLog(@"Error - %@",error);
+            [AppHelper showAlert:@"Matching Locations Error"
+                         message:@"We could not retrieve matching locations for your search term.If you searched for a specific place ,try adding city name and/or country after your search term for better results"
+                         buttons:@[@"OK"]
+                        delegate:nil];
         }else{
             NSArray *searchResults = [[results objectForKey:@"response"] objectForKey:@"venues"];
             if ([searchResults count] > 0){
