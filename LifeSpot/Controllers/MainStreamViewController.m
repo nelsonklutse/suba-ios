@@ -166,7 +166,7 @@ static NSInteger selectedButton = 10;
 {
     [super viewDidLoad];
 	
-    [self.coachMarkView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"overlay"]]];
+    //[self.coachMarkView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"overlay"]]];
     
     [Flurry logAllPageViews:self.tabBarController];
     
@@ -225,7 +225,7 @@ static NSInteger selectedButton = 10;
         // Show the places coachmark
         self.coachMarkView.alpha = 1;
         self.gotItButton.alpha = 1;
-        [AppHelper setPlacesCoachMark:@"YES"];
+        [AppHelper setMyStreamCoachMark:@"YES"];
         //DLog(@"Showing places coachmark");
         self.coachMarkImage.alpha = 1;
         [self.coachMarkImage setTag:kMyStreamCoachMark];
@@ -402,8 +402,8 @@ static NSInteger selectedButton = 10;
         [UIView animateWithDuration:1.0 animations:^{
             // My Coach Mark is showing.Switch to create spot
             self.coachMarkImage.alpha = 0;
-            NSString *deviceType = [UIDevice currentDevice].model;
-            DLog(@"devicetype - %@",deviceType);
+           // NSString *deviceType = [UIDevice currentDevice].model;
+            //DLog(@"devicetype - %@",deviceType);
             
             
             if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
