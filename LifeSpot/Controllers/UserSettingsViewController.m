@@ -214,27 +214,16 @@
 }
 
 
-
 -(void)logout{
     [AppHelper logout];
-    //[[FBSession activeSession] closeAndClearTokenInformation];
+    
     AppDelegate *appDelegate = [UIApplication sharedApplication].delegate;
     
     UIViewController *topVC = [appDelegate topViewController];
-    //DLog(@"TopVC class - %@",[topVC class]);
     [topVC.navigationController popToRootViewControllerAnimated:YES];
     
     [topVC removeFromParentViewController];
     [appDelegate resetMainViewController];
-    
-    // Move to the main view controller
-    /*UINavigationController *rvc = (UINavigationController *)[[[UIApplication sharedApplication] keyWindow] rootViewController];
-    DLog(@"Class- %@",[[[[UIApplication sharedApplication] keyWindow] rootViewController] class]);
-    
-    [self dismissViewControllerAnimated:YES completion:^{
-        [rvc popToRootViewControllerAnimated:NO];
-    }];
-    [[[self.presentingViewController.parentViewController.navigationController viewControllers] objectAtIndex:0] popToRootViewControllerAnimated:YES];*/
     
     [Flurry logEvent:@"Logout"];
 }

@@ -20,4 +20,5 @@
 
 - (UIViewController *)topViewController;
 - (void)resetMainViewController;
+- (BOOL)fbUserInfoChanged:(NSDictionary<FBGraphUser> *)user;
 @end

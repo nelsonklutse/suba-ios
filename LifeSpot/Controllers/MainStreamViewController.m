@@ -1051,10 +1051,12 @@ static NSInteger selectedButton = 10;
     //DLog(@"Current location updated - %@",[[locations lastObject] debugDescription]);
     self.currentLocation = [locations lastObject];
     
-    if (self.currentLocation != nil){
+    if (self.currentLocation != nil ){
         //DLog(@"nearby spots - %@",self.nearbySpots);
-        if (!self.nearbySpots){
-            NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
+        if (!self.nearbySpots || [[AppHelper userSession] isEqualToString:@"l-out"]){
+            DLog(@"userSession - %@",[AppHelper userSession]);
+            
+            NSString *latitude  =  [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
             
             [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]}];
@@ -1062,6 +1064,19 @@ static NSInteger selectedButton = 10;
         }
     }
 }
+
+
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    
+}
+
+-(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    
+}
+
+
 
 
 #pragma mark - Pull to refresh updates

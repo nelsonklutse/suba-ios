@@ -52,6 +52,15 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)activeSpotId;
 + (void)setActiveSpotID:(NSString *)spotId;
 
++ (NSString *)facebookLogin;
++ (void)setFacebookLogin:(NSString *)fbLogin;
+
++ (NSString *)facebookSession;
++ (void)setFacebookSession:(NSString *)flag;
+
++ (NSString *)userSession;
++ (void)setUserSession:(NSString *)flag;
+
 + (void)setPlacesCoachMark:(NSString *)flag;
 + (void)setNearbyCoachMark:(NSString *)flag;
 + (void)setMyStreamCoachMark:(NSString *)flag;

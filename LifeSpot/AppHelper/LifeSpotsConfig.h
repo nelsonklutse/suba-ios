@@ -39,6 +39,7 @@
 #define FBLOGIN @"FBLogin"
 #define NATIVE_LOGIN @"loggedIn"
 #define FACEBOOK_LOGIN @"1"
+#define FB_SESSION @"FacebookSession"
 #define NATIVE @"0"
 #define IS_SPOT_ACTIVE @"ACTIVE_ALBUM"
 #define ACTIVE_SPOT_ID @"ActiveSpotId"

@@ -163,17 +163,17 @@
     [self.viewController setCommonPageSubTitleStyle:subStyle];
     [self.viewController setCommonPageDescriptionStyle:descStyle];
     
-    DLog(@"[AppHelper userID] : %@",[AppHelper userID]);
+    //DLog(@"[AppHelper userID] : %@",[AppHelper userID]);
     
     if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
         // First launch or from logout
-        DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
+      //  DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
         
         __unsafe_unretained typeof(self) weakSelf = self;
         
         // Set button 1 action.
         [self.viewController setButton1Block:^(UIButton *button){
-            DLog(@"Facebook Button pressed.");
+           // DLog(@"Facebook Button pressed.");
             [weakSelf openFBSession];
             [weakSelf.viewController stopScrolling];
         }];
@@ -375,6 +375,111 @@
 {
     [Appirater appEnteredForeground:YES];
     
+    // Check for changes in facebook user info
+    if ([FBSession activeSession]) { // Do we have an active fbSession
+        DLog(@"FBSession already active");
+        if ([[AppHelper facebookLogin] isEqualToString:@"YES"]) {
+        // User signed up with facebook
+        DLog(@"User signed up with facebook");
+            [[FBRequest requestForMe] startWithCompletionHandler:
+             ^(FBRequestConnection *connection,
+               NSDictionary<FBGraphUser> *user,
+               NSError *error){
+                 if (error) {
+                     DLog(@"Updating user fb info error - %@",error);
+                 }
+                 else if (!error){
+                     
+                     [AppHelper setFacebookID:user.id]; // set the facebook id
+                     DLog(@"User facebook Info fetched again - %@",user);
+                     NSString *pictureURL = [[[user valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+                     if ([self fbUserInfoChanged:user]) {
+                         //NSDictionary *params =
+                         // Make api request to update user profile if any details change
+                        [[SubaAPIClient sharedInstance]
+                          POST:@"fbUser/info/update"
+                          parameters:@{
+                                    @"id" : user.id,
+                                    FIRST_NAME : user.first_name,
+                                    LAST_NAME : user.last_name,
+                                    USER_NAME: user.username,
+                                    EMAIL : [user valueForKey:@"email"],
+                                    @"profilePhoto" : pictureURL
+                                    
+                            } success:^(NSURLSessionDataTask *task, id responseObject) {
+                             if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+                                 [AppHelper savePreferences:responseObject];
+                                 [AppHelper setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
+                                 [AppHelper setFacebookLogin:@"YES"];
+                                 [AppHelper setFacebookSession:@"YES"];
+                             } 
+                         } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                             
+                         }];
+                     }
+                 }
+                 
+                 
+             }];
+ 
+        }else{
+            // Session is not open so open the session
+            if ([[AppHelper facebookLogin] isEqualToString:@"YES"] || [[AppHelper facebookSession] isEqualToString:@"YES"]){
+                
+                [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email"] allowLoginUI:NO completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
+                    if (session.isOpen) {
+                        DLog(@"FBSession Open");
+                        if ([[AppHelper facebookLogin] isEqualToString:@"YES"]){
+                            DLog(@"User signed up with facebook");
+                            
+                            [[FBRequest requestForMe] startWithCompletionHandler:
+                             ^(FBRequestConnection *connection,
+                               NSDictionary<FBGraphUser> *user,
+                               NSError *error){
+                                 if (error) {
+                                     DLog(@"Updating user fb info error - %@",error);
+                                 }
+                                 else if (!error){
+                                     [AppHelper setFacebookID:user.id]; // set the facebook id
+                                     DLog(@"User facebook Info fetched again - %@",user);
+                                     
+                                     if ([self fbUserInfoChanged:user]) {
+                                         // Make api request to update user profile if any details change
+                                         DLog(@"Updating fb info - %@",user);
+                                         NSString *pictureURL = [[[user valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+                                         [[SubaAPIClient sharedInstance]
+                                          POST:@"fbUser/info/update"
+                                          parameters:@{
+                                                       @"id" : user.id,
+                                                       FIRST_NAME : user.first_name,
+                                                       LAST_NAME : user.last_name,
+                                                       USER_NAME: user.username,
+                                                       EMAIL : [user valueForKey:@"email"],
+                                                       @"profilePhoto" : pictureURL
+                                                       } success:^(NSURLSessionDataTask *task, id responseObject) {
+                                                           if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+                                                               [AppHelper savePreferences:responseObject];
+                                                               [AppHelper setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
+                                                               [AppHelper setFacebookLogin:@"YES"];
+                                                               [AppHelper setFacebookSession:@"YES"];
+                                                           } 
+                                                       } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                                           
+                                                       }];
+                                     }
+                                 }
+                                 
+                                 
+                             }];
+                        }
+                    }
+                    
+                    
+                }];
+            }
+        }
+    }
+    
     [self monitorNetworkChanges];
 }
 
@@ -523,7 +628,7 @@
         DLog(@"Opening FB Session with error - %@\nSession - %@",error,[session debugDescription]);
         
         if (session.isOpen){
-            
+            [AppHelper setFacebookSession:@"YES"];
             //[self.fbLoginIndicator stopAnimating];
             
             
@@ -732,62 +837,7 @@
 -(void)resetMainViewController
 {
     self.window.rootViewController = nil;
-    //[self.window.rootViewController removeFromParentViewController];
-    
-    // Init the pages texts, and pictures.
-    /*ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@"Create"
-                                                            description:@"Create a stream and add your location"
-                                                            pictureName:@"1.png"];
-    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@"Join"
-                                                            description:@"Or join an already existing one"
-                                                            pictureName:@"2.png"];
-    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@"Invite"
-                                                            description:@"Invite via Suba, Facebook or SMS"
-                                                            pictureName:@"3.png"];
-    ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@"Capture"
-                                                            description:@"Capture moments in your stream"
-                                                            pictureName:@"4.png"];
-    ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@"Share"
-                                                            description:@"Share your stream on social media."
-                                                            pictureName:@"5.png"];
-    
-    
-    // Set the common style for SubTitles and Description (can be overrided on each page).
-    ICETutorialLabelStyle *subStyle = [[ICETutorialLabelStyle alloc] init];
-    [subStyle setFont:TUTORIAL_SUB_TITLE_FONT];
-    [subStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
-    [subStyle setLinesNumber:TUTORIAL_SUB_TITLE_LINES_NUMBER];
-    [subStyle setOffset:TUTORIAL_SUB_TITLE_OFFSET];
-    
-    ICETutorialLabelStyle *descStyle = [[ICETutorialLabelStyle alloc] init];
-    [descStyle setFont:TUTORIAL_DESC_FONT];
-    [descStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
-    [descStyle setLinesNumber:TUTORIAL_DESC_LINES_NUMBER];
-    [descStyle setOffset:TUTORIAL_DESC_OFFSET];
-    
-    // Load into an array.
-    NSArray *tutorialLayers = @[layer1,layer2,layer3,layer4,layer5];
-    
-    UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
-    self.rootNavController = [mainStoryboard instantiateInitialViewController];
-    
-    
-    self.rootNavController = [mainStoryboard instantiateInitialViewController];
-    
-    self.viewController = (SubaTutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
-    
-    self.viewController.autoScrollEnabled = YES;
-    self.viewController.autoScrollLooping = YES;
-    self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
-    
-    [self.viewController setPages:tutorialLayers];
-    
-    
-    // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
-    [self.viewController setCommonPageSubTitleStyle:subStyle];
-    [self.viewController setCommonPageDescriptionStyle:descStyle];*/
-
-    __unsafe_unretained typeof(self) weakSelf = self;
+        __unsafe_unretained typeof(self) weakSelf = self;
     
     // Set button 1 action.
     [self.viewController setButton1Block:^(UIButton *button){
@@ -799,14 +849,7 @@
     // Set button 2 action, stop the scrolling.
     
     [self.viewController setButton2Block:^(UIButton *button){
-        //DLog(@"Button 2 pressed.");
-        //DLog(@"Auto-scrolling stopped.");
-        
-        //[weakSelf.viewController stopScrolling];
-        
-        [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
-        
-        //weakSelf.viewController per
+     [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
         
     }];
     
@@ -818,6 +861,29 @@
     
     [self.window makeKeyAndVisible];
 }
+
+
+-(BOOL)fbUserInfoChanged:(NSDictionary<FBGraphUser> *)user
+{
+    BOOL infoChanged = NO;
+     NSString *pictureURL = [[[user valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+    
+    if (![user.username isEqualToString:[AppHelper userName]] ||
+        ![user.first_name isEqualToString:[AppHelper firstName]] ||
+        ![user.last_name isEqualToString:[AppHelper lastName]] ||
+        ![[user valueForKey:@"email"] isEqualToString:[AppHelper userEmail]] ||
+        ![pictureURL isEqualToString:[AppHelper profilePhotoURL]]){
+        
+        DLog(@"User changed facebook info");
+        infoChanged = YES;
+        
+    }
+    
+    
+    
+    return infoChanged;
+}
+
 
 
 @end

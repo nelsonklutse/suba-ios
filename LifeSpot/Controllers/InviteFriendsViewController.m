@@ -460,7 +460,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                   completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
                                       DLog(@"FBSession object - %@",[session debugDescription]);
                                       if (session.isOpen){
-                                          DLog();
+                                          [AppHelper setFacebookSession:@"YES"];
                                           //[self.fbConnectIndicator stopAnimating];
                                           self.fbConnectView.hidden =YES;
                                           self.facebookFriendsTableView.alpha = 1;

@@ -50,7 +50,7 @@
         if (error) {
             DLog(@"Facebook Error - %@\nFriendly Error - %@",[error debugDescription],error.localizedDescription);
         }else if (session.isOpen){
-            
+            [AppHelper setFacebookSession:@"YES"];
             //[self.fbLoginIndicator stopAnimating];
             
             

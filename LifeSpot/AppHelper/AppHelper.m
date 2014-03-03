@@ -70,6 +70,7 @@
 + (void)logout
 {
     [self clearUserSession];
+    [self setUserSession:@"l-out"];
 }
 
 
@@ -96,6 +97,8 @@
     // Clear facebook data if user loggedIn using facebook
     if ([FBSession activeSession]) {
         [[FBSession activeSession] closeAndClearTokenInformation];
+        [AppHelper setFacebookSession:@"NO"];
+        [AppHelper setFacebookLogin:@"NO"];
     }
 }
 
@@ -272,6 +275,37 @@
 }
 
 
++ (NSString *)facebookLogin
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:FBLOGIN];
+}
+
+
++(void)setFacebookLogin:(NSString *)fbLogin
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:fbLogin forKey:FBLOGIN];
+    
+    [userDefaults synchronize];
+}
+
+
++ (NSString *)facebookSession
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:FB_SESSION];
+}
+
++(void)setFacebookSession:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:FB_SESSION];
+    
+    [userDefaults synchronize];
+}
+
+
 +(void)setPlacesCoachMark:(NSString *)flag
 {
    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -353,24 +387,40 @@
     [userDefaults synchronize];
 }
 
-+(NSString *)watchLocationCoachMarkSeen
++ (NSString *)watchLocationCoachMarkSeen
 {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return [userDefaults valueForKey:kSUBA_WATCH_LOCATION_COACHMARK_SEEN]; 
 }
 
-+(void)setShareStreamCoachMark:(NSString *)flag
++ (void)setShareStreamCoachMark:(NSString *)flag
 {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     [userDefaults setObject:flag forKey:kSUBA_SHARE_STREAM_COACHMARK_SEEN];
     [userDefaults synchronize];
 }
 
-+(NSString *)shareStreamCoachMarkSeen
++ (NSString *)shareStreamCoachMarkSeen
 {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return [userDefaults valueForKey:kSUBA_SHARE_STREAM_COACHMARK_SEEN];
 }
+
+
++ (NSString *)userSession
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:SESSION];
+}
+
+
++ (void)setUserSession:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:flag forKey:SESSION];
+    [userDefaults synchronize];
+}
+
 
 
 /*+ (NSDictionary *)userPreferences{
@@ -415,6 +465,9 @@
                  
                  [self setFacebookID:user[@"id"]];
                  [self setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
+                 [self setFacebookLogin:@"YES"];
+                 //[self setUserSession:@"login"];
+                 
                  //DLog(@"User Prefs now -\n%@",[AppHelper userPreferences]);
                  
                 // DLog(@"User defaults - %@",NSStringFromClass([[NSUserDefaults standardUserDefaults] class]));
@@ -439,6 +492,8 @@
              if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
                  
                  [AppHelper savePreferences:responseObject];
+                 [self setFacebookLogin:@"NO"];
+                 //[self setUserSession:@"login"];
                  completionBlock(responseObject,nil);
              }
          }
@@ -468,8 +523,8 @@
             PASSWORD : password
        } success:^(NSURLSessionDataTask *task, id responseObject) {
             DLog(@"Response - %@",responseObject);
-           
-               completionBlock(responseObject,nil);
+           //[self setUserSession:@"login"];
+           completionBlock(responseObject,nil);
            
 
        } failure:^(NSURLSessionDataTask *task, NSError *error) {
