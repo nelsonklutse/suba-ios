@@ -26,6 +26,7 @@
 //@property (strong,nonatomic) NSString *spotID;
 @property (weak, nonatomic) IBOutlet UIView *loadingUserStreamsIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingUserStreamsIndicator;
+@property (strong,nonatomic) NSString *userProfileId;
 
 - (void)loadSpotsCreated:(NSString *)userId;
 - (void)fetchUserInfo:(NSString *)userId;
@@ -42,17 +43,19 @@
     [super viewDidLoad];
 	
     
-    NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    self.userProfileId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    
     if (![self.userId isEqualToString:[AppHelper userID]]){
         
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:@"USER_INFO_CELL" forIndexPath:indexPath];
         userInfoCell.userProfileImage.image = [UIImage imageNamed:@"anonymousUser"];
     }
-    [self loadSpotsCreated:userId];
-     [self fetchUserInfo:userId];
     
-    DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
+     [self loadSpotsCreated:self.userProfileId];
+     [self fetchUserInfo:self.userProfileId];
+    
+    //DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
 }
 
 
@@ -70,7 +73,6 @@
 
     [self.userSpotsCollectionView.pullToRefreshView setBorderColor:[UIColor redColor]];
     
-    DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
 }
 
 -(void)viewWillDisappear:(BOOL)animated
@@ -170,6 +172,7 @@
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         
         [weakSelf loadSpotsCreated:(self.userId) ? self.userId:[AppHelper userID]];
+        [weakSelf fetchUserInfo:self.userProfileId];
         [weakSelf.userSpotsCollectionView stopRefreshAnimation];
     });
 }

@@ -246,11 +246,11 @@ static BOOL isFiltered = NO;
            self.subaUsers = [NSMutableArray arrayWithArray:sortedUsers];
            NSDictionary *userToRemove = nil;
            for (NSDictionary *user in self.subaUsers){
-               //if ([user[@"userName"] class] != [NSNull class]) {
+               if ([user[@"userName"] class] != [NSNull class]) {
                    if ([user[@"userName"] isEqualToString:[AppHelper userName]]) {
                        userToRemove = user;
                    }
-              // }
+               }
                
            }
           

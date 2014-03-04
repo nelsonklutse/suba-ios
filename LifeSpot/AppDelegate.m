@@ -376,7 +376,7 @@
     [Appirater appEnteredForeground:YES];
     
     // Check for changes in facebook user info
-    if ([FBSession activeSession]) { // Do we have an active fbSession
+   /* if ([FBSession activeSession]) { // Do we have an active fbSession
         DLog(@"FBSession already active");
         if ([[AppHelper facebookLogin] isEqualToString:@"YES"]) {
         // User signed up with facebook
@@ -422,24 +422,22 @@
                  
              }];
  
-        }else{
+        }else{*/
             // Session is not open so open the session
             if ([[AppHelper facebookLogin] isEqualToString:@"YES"] || [[AppHelper facebookSession] isEqualToString:@"YES"]){
                 
-                [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email"] allowLoginUI:NO completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
+                [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:NO completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
                     if (session.isOpen) {
                         DLog(@"FBSession Open");
                         if ([[AppHelper facebookLogin] isEqualToString:@"YES"]){
-                            DLog(@"User signed up with facebook");
+                            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
                             
-                            [[FBRequest requestForMe] startWithCompletionHandler:
-                             ^(FBRequestConnection *connection,
-                               NSDictionary<FBGraphUser> *user,
-                               NSError *error){
-                                 if (error) {
+                            [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {                                 if (error) {
                                      DLog(@"Updating user fb info error - %@",error);
                                  }
                                  else if (!error){
+                                     NSDictionary<FBGraphUser> *user = result;
+                                     
                                      [AppHelper setFacebookID:user.id]; // set the facebook id
                                      DLog(@"User facebook Info fetched again - %@",user);
                                      
@@ -447,19 +445,25 @@
                                          // Make api request to update user profile if any details change
                                          DLog(@"Updating fb info - %@",user);
                                          NSString *pictureURL = [[[user valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+                                         
+                                         NSDictionary *params = @{@"id" : [NSString stringWithFormat:@"%@",user.id],
+                                         FIRST_NAME : user.first_name,
+                                         LAST_NAME : user.last_name,
+                                        USER_NAME: user.username,
+                                         EMAIL : [user valueForKey:@"email"],
+                                         @"profilePhoto" : pictureURL
+                                     };
+                                     
+                                         DLog(@" FB Params - %@",params);
+                                         
                                          [[SubaAPIClient sharedInstance]
                                           POST:@"fbUser/info/update"
-                                          parameters:@{
-                                                       @"id" : user.id,
-                                                       FIRST_NAME : user.first_name,
-                                                       LAST_NAME : user.last_name,
-                                                       USER_NAME: user.username,
-                                                       EMAIL : [user valueForKey:@"email"],
-                                                       @"profilePhoto" : pictureURL
-                                                       } success:^(NSURLSessionDataTask *task, id responseObject) {
+                                          parameters:params
+                                          success:^(NSURLSessionDataTask *task, id responseObject) {
                                                            if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+                                                               DLog(@"Response from server - %@",responseObject);
                                                                [AppHelper savePreferences:responseObject];
-                                                               [AppHelper setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
+                                                               [AppHelper setProfilePhotoURL:user[@"profilePicURL"]];
                                                                [AppHelper setFacebookLogin:@"YES"];
                                                                [AppHelper setFacebookSession:@"YES"];
                                                            } 
@@ -477,8 +481,8 @@
                     
                 }];
             }
-        }
-    }
+       // }
+   // }
     
     [self monitorNetworkChanges];
 }

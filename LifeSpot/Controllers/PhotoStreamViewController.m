@@ -804,7 +804,6 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     UIImage *image = info[UIImagePickerControllerOriginalImage];
     
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    //dateFormatter se
     
     [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
     NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
@@ -817,7 +816,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 
                 UIImage *newImage = compressedPhoto;
                NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
-               DLog(@"Uploading Photo");
+               
                [self uploadPhoto:imageData WithName:trimmedString];
         }];
     
@@ -880,12 +879,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                 [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
             }else{
                 
-                DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
+                //DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
                 
                 if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
                     [Flurry logEvent:@"Photo_Upload"];
                     
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                    [[NSNotificationCenter defaultCenter]
+                     postNotificationName:kUserReloadStreamNotification object:nil];
+                    
                     self.noPhotosView.hidden = YES;
                     self.photoCollectionView.hidden = NO;
                     if (!self.photos) {
@@ -897,19 +898,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
                 }
             }
-    });
-        
-        //[self.photos insertObject:image atIndex:0];
-        
-    }];
+    });        
+}];
     
     [operation start];
 }
 
 -(void)upDateCollectionViewWithCapturedPhoto:(NSDictionary *)photoInfo{
     
-    //[self.photos insertObject:photo atIndex:0];
-    //[self updateNumberOfPhotoLabel];
+    
     [self.photoCollectionView performBatchUpdates:^{
         [self.photoCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]];
     } completion:^(BOOL finished) {
@@ -917,8 +914,6 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     }];
     
     // Tell push provider to send
-    
-    
     
     NSArray *members = self.spotInfo[@"members"];
     
@@ -934,7 +929,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                              @"spotName" : self.spotName,
                              @"memberIds" : [memberIds description]};
     
-    DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
+    //DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
     
     [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
                                         parameters:params

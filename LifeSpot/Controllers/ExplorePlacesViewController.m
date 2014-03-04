@@ -294,12 +294,26 @@ static CLLocationManager *locationManager;
 - (void)locationManager:(CLLocationManager *)manager
        didFailWithError:(NSError *)error
 {
-    DLog(@"Error while getting core location : %@",[error localizedFailureReason]);
+    //DLog(@"Error while getting core location : %@",[error localizedFailureReason]);
     if ([error code] == kCLErrorDenied) {
         //you had denied
+        [AppHelper showAlert:@"Location Error" message:@"Suba does not have access to your location.In order to see locations to watch, go to Settings->Privacy->Location Services and enable location for Suba" buttons:@[@"OK"] delegate:nil];
     }
-    [manager stopUpdatingLocation];
+    //[manager stopUpdatingLocation];
 }
+
+
+-(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied){
+        
+        [AppHelper showAlert:@"Location Error"
+                     message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see locations to watch, go to Settings->Privacy->Location Services and enable location for Suba"]
+         
+                     buttons:@[@"OK"] delegate:nil];
+    }
+}
+
 
 
 #pragma mark - UITableView DataSource

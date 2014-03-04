@@ -308,8 +308,10 @@ static NSInteger selectedButton = 10;
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
         
-        if (!self.placesBeingWatched) {
+        if ([self.placesBeingWatched count] == 0) {
             [self fetchUserFavoriteLocations];
+        }else{
+            [self.placesBeingWatchedTableView reloadData];
         }
         // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
         [self.placesBeingWatchedButton setSelected:YES];
@@ -1055,7 +1057,7 @@ static NSInteger selectedButton = 10;
         //DLog(@"nearby spots - %@",self.nearbySpots);
         if (!self.nearbySpots || [[AppHelper userSession] isEqualToString:@"l-out"]){
             DLog(@"userSession - %@",[AppHelper userSession]);
-            
+            [AppHelper setUserSession:@"login"];
             NSString *latitude  =  [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
             
@@ -1068,12 +1070,19 @@ static NSInteger selectedButton = 10;
 
 -(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
+    if ([error code] == kCLErrorDenied) {
+        //you had denied
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
     
 }
 
 -(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
-    
+    if (status == kCLAuthorizationStatusDenied){
+        
+       [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
 }
 
 
