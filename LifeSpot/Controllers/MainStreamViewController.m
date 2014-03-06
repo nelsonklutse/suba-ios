@@ -181,7 +181,7 @@ static NSInteger selectedButton = 10;
     //self.allSpots = [NSMutableArray arrayWithCapacity:5];
     DLog(@"What stream is showing?\nPlaces View alpha %f\nNeaby spots view alpha - %f\nAllspots view alpha - %f\nSelected button -%i",self.placesBeingWatchedTableView.alpha,self.nearbySpotsCollectionView.alpha,self.allSpotsCollectionView.alpha,selectedButton);
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
         if (selectedButton == 10){
             
             self.placesBeingWatchedTableView.alpha = 0;
@@ -289,8 +289,9 @@ static NSInteger selectedButton = 10;
      object:nil];
     DLog();
     
+    selectedButton = 10;
     [locationManager stopUpdatingLocation];
-    
+    self.currentLocation = nil;
     
 }
 
@@ -682,9 +683,12 @@ static NSInteger selectedButton = 10;
                     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                     NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
                     
-                    DLog(@"Nearby spots - %@",self.nearbySpots);
+                    //DLog(@"Nearby spots - %@",self.nearbySpots);
                     
                     self.nearbySpots = [NSMutableArray arrayWithArray:sortedSpots];
+                    self.nearbySpotsCollectionView.alpha = 1;
+                    self.allSpotsCollectionView.alpha = 0;
+                    self.placesBeingWatchedTableView.alpha = 0;
                     [self.nearbySpotsCollectionView reloadData];
                     
                 }else{
@@ -1056,8 +1060,8 @@ static NSInteger selectedButton = 10;
     if (self.currentLocation == nil){
         self.currentLocation = [locations lastObject];
         //DLog(@"nearby spots - %@",self.nearbySpots);
-        if (!self.nearbySpots){
-            //DLog(@"userSession - %@",[AppHelper userSession]);
+        if (!self.nearbySpots || [[AppHelper userSession] isEqualToString:@"l-out"]){
+            DLog(@"userSession - %@",[AppHelper userSession]);
             [AppHelper setUserSession:@"login"];
             NSString *latitude  =  [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
