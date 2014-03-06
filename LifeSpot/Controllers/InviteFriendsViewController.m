@@ -332,6 +332,15 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 #pragma mark - MFMessageComposeViewControllerDelegate
 -(void)messageComposeViewController:(MFMessageComposeViewController *)controller didFinishWithResult:(MessageComposeResult)result
 {
+    NSDictionary *params = @{@"invitedUserNumbers": self.messageRecipients,@"userName" : [AppHelper userName]};
+    DLog(@"invitedUserNumbers - %@",self.messageRecipients);
+    [[SubaAPIClient sharedInstance] POST:@"/user/inviteduser" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+        DLog(@"Response - %@",responseObject);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"Response - %@",error);
+    }];
+    
+
     
     [self refreshTableView:self.phoneContactsTableView];
     [self.messageRecipients removeAllObjects];
@@ -355,7 +364,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             break;
     }
     
-    [controller dismissViewControllerAnimated:YES completion:nil];
+       [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
 

@@ -440,6 +440,15 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 #pragma mark - MFMessageComposeViewControllerDelegate
 -(void)messageComposeViewController:(MFMessageComposeViewController *)controller didFinishWithResult:(MessageComposeResult)result
 {
+    NSDictionary *params = @{@"invitedUserNumbers": self.smsRecipients,@"userName" : [AppHelper userName]};
+    
+    DLog(@"invitedUserNumbers - %@",self.smsRecipients);
+    [[SubaAPIClient sharedInstance] POST:@"/user/inviteduser" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+        DLog(@"Response - %@",responseObject);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"Response - %@",error);
+    }];
+
    
         [self refreshTableView:self.contactsTableView];
         [self.smsRecipients removeAllObjects];
@@ -462,6 +471,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             DLog(@"SMS not sent");
             break;
     }
+    
     
     [controller dismissViewControllerAnimated:YES completion:nil];
 }
