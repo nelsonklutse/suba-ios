@@ -54,6 +54,7 @@
 #define NUMBER_OF_SPOT_MEMBERS @"members"
 #define NUMBER_OF_PHOTOS @"photos"
 #define kS3_BASE_URL @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/"
+//#define kS3_BASE_URL @"https://s3.amazonaws.com/com.subaapp.photos/"
 #define DECREMENT @"0"
 #define INCREMENT @"1"
 #define PUSH_PROVIDER_BASE_URL @"http://54.201.18.151/"

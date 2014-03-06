@@ -21,6 +21,7 @@
 #import "Spot.h"
 #import "BDKNotifyHUD.h"
 #import <SDWebImage/UIImageView+WebCache.h>
+#import <IDMPhotoBrowser.h>
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 
@@ -47,6 +48,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 @property (weak, nonatomic) IBOutlet UIView *loadingInfoIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamInfoIndicator;
 @property (weak, nonatomic) IBOutlet UIButton *cameraButton;
+
+@property (retain,nonatomic) IDMPhotoBrowser *browser;
 
 //@property (nonatomic, readwrite) CGRect likeButtonBounds;
 //@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
@@ -78,6 +81,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)pickImage:(id)sender;
 - (IBAction)moveToProfile:(UIButton *)sender;
 -(NSString *)getRandomPINString:(NSInteger)length;
+- (void)preparePhotoBrowser:(NSMutableArray *)photos;
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 -(IBAction)dismissCoachMark:(UIButton *)sender;
 @end
@@ -87,6 +91,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    // Load browser
+    /*if (self.photos){
+        
+        [self preparePhotoBrowser:self.photos];
+    }*/
+    
+
     
     if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
         if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
@@ -155,6 +167,22 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 }
 
 
+-(void)preparePhotoBrowser:(NSMutableArray *)photos
+{
+    
+    NSMutableArray *photoURLs = [NSMutableArray array];
+    for (NSDictionary *photoInfo in photos) {
+        NSURL *photoURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoInfo[@"s3name"]]];
+        [photoURLs addObject:photoURL];
+    }
+    
+    NSArray *idmPhotos = [IDMPhoto photosWithURLs:photoURLs];
+    
+    self.browser = [[IDMPhotoBrowser alloc] initWithPhotos:idmPhotos];
+}
+
+
+
 -(void)loadSpotImages:(NSString *)spotId
 {
    [Spot fetchSpotImagesUsingSpotId:spotId completion:^(id results, NSError *error) {
@@ -163,12 +191,15 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
            NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
            NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
            self.photos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
-           DLog(@"Photos - %@",results);
+           //DLog(@"Photos - %@",results);
            if ([self.photos count] > 0) {
-               DLog(@"Photos in spot - %@",self.photos);
+               //DLog(@"Photos in spot - %@",self.photos);
                self.noPhotosView.hidden = YES;
                self.photoCollectionView.hidden = NO;
                [self.photoCollectionView reloadData];
+               
+               //[self preparePhotoBrowser:self.photos];
+               
            }else{
                    self.noPhotosView.hidden = NO;
                    self.photoCollectionView.hidden = YES;
@@ -332,6 +363,19 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     
     return photoCardCell;
 }
+
+
+
+#pragma mark - UICollectionView Delegate
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    //self.browser.displayToolbar = NO;
+    
+    //[self presentViewController:self.browser animated:YES completion:nil];
+}
+
+
+
 
 
 

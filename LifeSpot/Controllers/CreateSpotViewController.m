@@ -14,7 +14,10 @@
 #import "Privacy.h"
 #import "Spot.h"
 
-@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
+@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>{
+    NSString *currentCity;
+    NSString *currentCountry;
+}
 
 @property (copy,nonatomic) NSString *spotName;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
@@ -138,32 +141,53 @@ static CLLocationManager *locationManager;
     // Log this event with Flurry
     [Flurry logEvent:@"Create_Stream_Action"];
     
+    
     // 1. View Privacy  2. Add Privacy 3. Location 4.
     [self.creatingSpotIndicator startAnimating];
-    NSString *viewPrivacy = @"0";
-    NSString *addPrivacy = @"0";
-    NSString *spotKey = @"NONE";
-    self.spotName = self.spotNameField.text;
-    
-    User *user = [User currentlyActiveUser];
-    Privacy *privacy = [[Privacy alloc] initWithView:viewPrivacy AddPrivacy:addPrivacy];
-    Spot *spot = [[Spot alloc] initWithName:self.spotName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
-    
-    [user createSpot:spot completion:^(id results, NSError *error) {
-        [self.creatingSpotIndicator stopAnimating];
-        if (!error){
+    if ([locationManager location]) {
+        [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location] completionHandler:^(NSArray *placemarks, NSError *error) {
             
-            // There were no errors
-            self.createdSpotDetails = (NSDictionary *)results;
-            [self performSegueWithIdentifier:@"spotWasCreatedSegue" sender:nil];
-            
-        }else{
-            DLog(@"Error - %@",error);
-        }
-    }];
-    
+            if (!error) {
+                CLPlacemark *placemark = placemarks[0];
+                DLog(@"Placemarks - %@",placemark.locality);
+                currentCity = placemark.locality;
+                currentCountry = placemark.country;
+                
+                NSString *viewPrivacy = @"0";
+                NSString *addPrivacy = @"0";
+                NSString *spotKey = @"NONE";
+                self.spotName = self.spotNameField.text;
+                
+                User *user = [User currentlyActiveUser];
+                Privacy *privacy = [[Privacy alloc] initWithView:viewPrivacy AddPrivacy:addPrivacy];
+                Spot *spot = [[Spot alloc] initWithName:self.spotName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
+                self.chosenVenueLocation.city = currentCity;
+                self.chosenVenueLocation.country = currentCountry;
+                [user createSpot:spot completion:^(id results, NSError *error) {
+                    [self.creatingSpotIndicator stopAnimating];
+                    if (!error){
+                        
+                        // There were no errors
+                        self.createdSpotDetails = (NSDictionary *)results;
+                        [self performSegueWithIdentifier:@"spotWasCreatedSegue" sender:nil];
+                        
+                    }else{
+                        DLog(@"Error - %@",error);
+                    }
+                }];
+                
+                
 
-}
+                
+            }else{
+                DLog(@"Error - %@",error);
+            }
+            
+        }];
+    }
+    
+    
+   }
 
 - (IBAction)showNearbyLocations:(id)sender
 {

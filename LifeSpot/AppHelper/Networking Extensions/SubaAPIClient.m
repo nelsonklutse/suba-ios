@@ -33,7 +33,7 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
                        sessionConfiguration:configuration];
     });
     
-    //[__sharedInstance.requestSerializer setValue:@"com.suba.subaapp" forHTTPHeaderField:@"x-suba-api-token"];
+    [__sharedInstance.requestSerializer setValue:@"com.suba.subaapp" forHTTPHeaderField:@"x-suba-api-token"];
     
     return __sharedInstance;
 }

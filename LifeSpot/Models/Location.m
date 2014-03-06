@@ -46,13 +46,13 @@
 +(void)fetchNearbySpots:(NSDictionary *)location completionBlock:(NearbySpotsLoadedCompletionBlock)completion
 {
     [[SubaAPIClient sharedInstance] GET:@"spot/nearby" parameters:location success:^(NSURLSessionDataTask *task, id responseObject){
-        
+        DLog(@"respose - %@",responseObject);
         completion(responseObject,nil);
         
     } failure:^(NSURLSessionDataTask *task, NSError *error){ 
         
         completion(nil,error);
-        
+        DLog(@"error respose - %@",error);
     }];
 }
 

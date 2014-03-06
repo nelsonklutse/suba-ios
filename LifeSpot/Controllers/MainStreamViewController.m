@@ -669,7 +669,7 @@ static NSInteger selectedButton = 10;
         [self showPlacesBeingWatchedView:NO];
         if (error) {
             DLog(@"Error - %@",error);
-            [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+           // [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
         }else{
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 
@@ -682,7 +682,7 @@ static NSInteger selectedButton = 10;
                     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                     NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
                     
-                    //DLog(@"Nearby spots - %@",self.nearbySpots);
+                    DLog(@"Nearby spots - %@",self.nearbySpots);
                     
                     self.nearbySpots = [NSMutableArray arrayWithArray:sortedSpots];
                     [self.nearbySpotsCollectionView reloadData];
@@ -1051,12 +1051,13 @@ static NSInteger selectedButton = 10;
 #pragma mark - Location Manager Delegate
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
     //DLog(@"Current location updated - %@",[[locations lastObject] debugDescription]);
-    self.currentLocation = [locations lastObject];
     
-    if (self.currentLocation != nil ){
+    
+    if (self.currentLocation == nil){
+        self.currentLocation = [locations lastObject];
         //DLog(@"nearby spots - %@",self.nearbySpots);
-        if (!self.nearbySpots || [[AppHelper userSession] isEqualToString:@"l-out"]){
-            DLog(@"userSession - %@",[AppHelper userSession]);
+        if (!self.nearbySpots){
+            //DLog(@"userSession - %@",[AppHelper userSession]);
             [AppHelper setUserSession:@"login"];
             NSString *latitude  =  [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];

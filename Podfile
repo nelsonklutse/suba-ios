@@ -21,3 +21,4 @@ pod 'Harpy'
 
 pod "Appirater"
 
+pod 'IDMPhotoBrowser'

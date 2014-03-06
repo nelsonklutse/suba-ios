@@ -43,8 +43,9 @@
     [super viewDidLoad];
 	
     
-    self.userProfileId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
-    
+    //self.userProfileId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
     if (![self.userId isEqualToString:[AppHelper userID]]){
         
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
@@ -52,8 +53,8 @@
         userInfoCell.userProfileImage.image = [UIImage imageNamed:@"anonymousUser"];
     }
     
-     [self loadSpotsCreated:self.userProfileId];
-     [self fetchUserInfo:self.userProfileId];
+     [self loadSpotsCreated:userId];
+     [self fetchUserInfo:userId];
     
     //DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
 }
@@ -171,8 +172,9 @@
     
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         
-        [weakSelf loadSpotsCreated:(self.userId) ? self.userId:[AppHelper userID]];
-        [weakSelf fetchUserInfo:self.userProfileId];
+        //DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
+        [weakSelf loadSpotsCreated:( self.userId ) ? self.userId : [User currentlyActiveUser].userID];
+        [weakSelf fetchUserInfo:( self.userId ) ? self.userId : [User currentlyActiveUser].userID];
         [weakSelf.userSpotsCollectionView stopRefreshAnimation];
     });
 }

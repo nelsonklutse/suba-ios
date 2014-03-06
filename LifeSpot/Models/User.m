@@ -99,13 +99,16 @@
     
     NSMutableDictionary *requestparams = nil;
     NSDictionary *locationDetails = nil;
-    
+    //DLog(@");
     if (spot.venue != nil) {
         locationDetails = @{
                             @"latitude": spot.venue.latitude,
                             @"longitude" : spot.venue.longitude,
-                            @"albumVenue" : spot.venue.placeName
+                            @"albumVenue" : spot.venue.placeName,
+                            @"city" : spot.venue.city,
+                            @"country" : spot.venue.country
                             };
+        
     }else{
         locationDetails = @{
                             @"latitude": @"0",

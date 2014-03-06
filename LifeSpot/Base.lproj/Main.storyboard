@@ -879,11 +879,11 @@
                         <viewControllerLayoutGuide type="bottom" id="Uh4-DK-SWx"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="zKv-Sp-8RE">
-                        <rect key="frame" x="0.0" y="64" width="320" height="455"/>
+                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <collectionView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" restorationIdentifier="UserSpotsView" minimumZoomScale="0.0" maximumZoomScale="0.0" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="KeS-nG-a5X">
-                                <rect key="frame" x="0.0" y="0.0" width="320" height="450"/>
+                                <rect key="frame" x="0.0" y="0.0" width="320" height="499"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <color key="tintColor" red="0.85098039219999999" green="0.30196078430000001" blue="0.078431372550000003" alpha="1" colorSpace="calibratedRGB"/>
@@ -3176,7 +3176,7 @@
                                     <navigationItem title="Stream Settings" id="1HP-FX-GFT">
                                         <barButtonItem key="leftBarButtonItem" systemItem="cancel" id="VeG-Mt-54h">
                                             <connections>
-                                                <segue destination="J0A-5Q-1i5" kind="unwind" identifier="UnwindToPhotoStreamFromCancelSegue" unwindAction="unWindToPhotoStream:" id="RJV-t7-Xmy"/>
+                                                <segue destination="J0A-5Q-1i5" kind="unwind" unwindAction="unWindToPhotoStream:" id="Cr1-Df-bTH"/>
                                             </connections>
                                         </barButtonItem>
                                         <barButtonItem key="rightBarButtonItem" systemItem="save" id="de6-Tt-gHG">
@@ -3382,10 +3382,10 @@
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="DOr-TC-LHx"/>
-        <segue reference="1Xo-xE-dep"/>
         <segue reference="wti-u1-UMx"/>
+        <segue reference="1Xo-xE-dep"/>
         <segue reference="F4p-h6-pu7"/>
+        <segue reference="5m5-xu-MzX"/>
         <segue reference="fGf-Rf-DIc"/>
     </inferredMetricsTieBreakers>
 </document>

@@ -11,6 +11,8 @@
 @class DACircularProgressView;
 
 #define kS3_BASE_URL @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/"
+//#define kS3_BASE_URL @"https://s3.amazonaws.com/com.subaapp.photos/"
+
 typedef void (^PhotoDownloadedCompletion) (id results,NSError *error);
 
 @interface S3PhotoFetcher : NSObject
