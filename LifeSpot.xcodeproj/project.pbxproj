@@ -822,9 +822,25 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/**",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/**";
 				ONLY_ACTIVE_ARCH = YES;
-				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
+				OTHER_CFLAGS = "-Dmacintosh=1";
+				OTHER_LDFLAGS = "-lz";
+				"OTHER_LDFLAGS[arch=*]" = (
+					"-ObjC",
+					"-lMagickCore",
+					"-lMagickWand",
+					"-ljpeg",
+					"-lpng",
+					"-lbz2",
+					"-lz",
+				);
 				SDKROOT = iphoneos;
 				VALID_ARCHS = "arm64 armv7 armv7s";
 			};
@@ -857,9 +873,25 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"$(SRCROOT)/**",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/**";
 				ONLY_ACTIVE_ARCH = YES;
-				"OTHER_LDFLAGS[arch=*]" = "-ObjC";
+				OTHER_CFLAGS = "-Dmacintosh=1";
+				OTHER_LDFLAGS = "-lz";
+				"OTHER_LDFLAGS[arch=*]" = (
+					"-ObjC",
+					"-lMagickCore",
+					"-lMagickWand",
+					"-ljpeg",
+					"-lpng",
+					"-lbz2",
+					"-lz",
+				);
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 				VALID_ARCHS = "arm64 armv7 armv7s";
@@ -882,13 +914,52 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LifeSpot/LifeSpot-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"\"${PODS_ROOT}/Headers\"",
+					"\"${PODS_ROOT}/Headers/AFNetworking\"",
+					"\"${PODS_ROOT}/Headers/ALAssetsLibrary-CustomPhotoAlbum\"",
+					"\"${PODS_ROOT}/Headers/Appirater\"",
+					"\"${PODS_ROOT}/Headers/BDKNotifyHUD\"",
+					"\"${PODS_ROOT}/Headers/CSNotificationView\"",
+					"\"${PODS_ROOT}/Headers/CTAssetsPickerController\"",
+					"\"${PODS_ROOT}/Headers/DACircularProgress\"",
+					"\"${PODS_ROOT}/Headers/DCModalSegue\"",
+					"\"${PODS_ROOT}/Headers/Harpy\"",
+					"\"${PODS_ROOT}/Headers/IDMPhotoBrowser\"",
+					"\"${PODS_ROOT}/Headers/SDWebImage\"",
+					"\"${PODS_ROOT}/Headers/SVProgressHUD\"",
+					"\"${PODS_ROOT}/Headers/UIPhotoGallery\"",
+					"\"${PODS_ROOT}/Headers/UzysCircularProgressPullToRefresh\"",
+					"$(SRCROOT)/**",
+				);
 				INFOPLIST_FILE = "LifeSpot/LifeSpot-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"/Users/kwamenelson/Documents/Suba/suba-ios",
 					"/Users/kwamenelson/Documents/Suba/suba-ios/LifeSpot/Vendor/Flurry",
+					"$(SRCROOT)/**",
+					"/Users/kwamenelson/Documents/Suba/suba-ios/IM",
 				);
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"\"-isystem${PODS_ROOT}/Headers\"",
+					"\"-isystem${PODS_ROOT}/Headers/AFNetworking\"",
+					"\"-isystem${PODS_ROOT}/Headers/ALAssetsLibrary-CustomPhotoAlbum\"",
+					"\"-isystem${PODS_ROOT}/Headers/Appirater\"",
+					"\"-isystem${PODS_ROOT}/Headers/BDKNotifyHUD\"",
+					"\"-isystem${PODS_ROOT}/Headers/CSNotificationView\"",
+					"\"-isystem${PODS_ROOT}/Headers/CTAssetsPickerController\"",
+					"\"-isystem${PODS_ROOT}/Headers/DACircularProgress\"",
+					"\"-isystem${PODS_ROOT}/Headers/DCModalSegue\"",
+					"\"-isystem${PODS_ROOT}/Headers/Harpy\"",
+					"\"-isystem${PODS_ROOT}/Headers/IDMPhotoBrowser\"",
+					"\"-isystem${PODS_ROOT}/Headers/SDWebImage\"",
+					"\"-isystem${PODS_ROOT}/Headers/SVProgressHUD\"",
+					"\"-isystem${PODS_ROOT}/Headers/UIPhotoGallery\"",
+					"\"-isystem${PODS_ROOT}/Headers/UzysCircularProgressPullToRefresh\"",
+					"-Dmacintosh=1",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				VALID_ARCHS = "arm64 armv7 armv7s";
@@ -912,13 +983,52 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "LifeSpot/LifeSpot-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"\"${PODS_ROOT}/Headers\"",
+					"\"${PODS_ROOT}/Headers/AFNetworking\"",
+					"\"${PODS_ROOT}/Headers/ALAssetsLibrary-CustomPhotoAlbum\"",
+					"\"${PODS_ROOT}/Headers/Appirater\"",
+					"\"${PODS_ROOT}/Headers/BDKNotifyHUD\"",
+					"\"${PODS_ROOT}/Headers/CSNotificationView\"",
+					"\"${PODS_ROOT}/Headers/CTAssetsPickerController\"",
+					"\"${PODS_ROOT}/Headers/DACircularProgress\"",
+					"\"${PODS_ROOT}/Headers/DCModalSegue\"",
+					"\"${PODS_ROOT}/Headers/Harpy\"",
+					"\"${PODS_ROOT}/Headers/IDMPhotoBrowser\"",
+					"\"${PODS_ROOT}/Headers/SDWebImage\"",
+					"\"${PODS_ROOT}/Headers/SVProgressHUD\"",
+					"\"${PODS_ROOT}/Headers/UIPhotoGallery\"",
+					"\"${PODS_ROOT}/Headers/UzysCircularProgressPullToRefresh\"",
+					"$(SRCROOT)/**",
+				);
 				INFOPLIST_FILE = "LifeSpot/LifeSpot-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"/Users/kwamenelson/Documents/Suba/suba-ios",
 					"/Users/kwamenelson/Documents/Suba/suba-ios/LifeSpot/Vendor/Flurry",
+					"$(SRCROOT)/**",
+					"/Users/kwamenelson/Documents/Suba/suba-ios/IM",
 				);
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"\"-isystem${PODS_ROOT}/Headers\"",
+					"\"-isystem${PODS_ROOT}/Headers/AFNetworking\"",
+					"\"-isystem${PODS_ROOT}/Headers/ALAssetsLibrary-CustomPhotoAlbum\"",
+					"\"-isystem${PODS_ROOT}/Headers/Appirater\"",
+					"\"-isystem${PODS_ROOT}/Headers/BDKNotifyHUD\"",
+					"\"-isystem${PODS_ROOT}/Headers/CSNotificationView\"",
+					"\"-isystem${PODS_ROOT}/Headers/CTAssetsPickerController\"",
+					"\"-isystem${PODS_ROOT}/Headers/DACircularProgress\"",
+					"\"-isystem${PODS_ROOT}/Headers/DCModalSegue\"",
+					"\"-isystem${PODS_ROOT}/Headers/Harpy\"",
+					"\"-isystem${PODS_ROOT}/Headers/IDMPhotoBrowser\"",
+					"\"-isystem${PODS_ROOT}/Headers/SDWebImage\"",
+					"\"-isystem${PODS_ROOT}/Headers/SVProgressHUD\"",
+					"\"-isystem${PODS_ROOT}/Headers/UIPhotoGallery\"",
+					"\"-isystem${PODS_ROOT}/Headers/UzysCircularProgressPullToRefresh\"",
+					"-Dmacintosh=1",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				VALID_ARCHS = "arm64 armv7 armv7s";

@@ -2383,7 +2383,7 @@
                         <viewControllerLayoutGuide type="bottom" id="2yc-tG-84k"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="iJu-WV-AVW" customClass="UIControl">
-                        <rect key="frame" x="0.0" y="64" width="320" height="504"/>
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="blurBg" translatesAutoresizingMaskIntoConstraints="NO" id="fWg-31-YST">
@@ -3382,10 +3382,10 @@
         <simulatedScreenMetrics key="destination" type="retina4"/>
     </simulatedMetricsContainer>
     <inferredMetricsTieBreakers>
-        <segue reference="wti-u1-UMx"/>
         <segue reference="1Xo-xE-dep"/>
-        <segue reference="F4p-h6-pu7"/>
+        <segue reference="wti-u1-UMx"/>
         <segue reference="5m5-xu-MzX"/>
+        <segue reference="Gtx-2d-XD2"/>
         <segue reference="fGf-Rf-DIc"/>
     </inferredMetricsTieBreakers>
 </document>

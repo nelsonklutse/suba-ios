@@ -61,6 +61,6 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 + (void)allUsers:(GeneralCompletion)completion;
 + (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 
-+ (void)saveInviteeNumber:(NSDictionary *)params completion:(GeneralCompletion)completion;
+//+ (void)saveInviteeNumber:(NSDictionary *)params completion:(GeneralCompletion)completion;
 
 @end

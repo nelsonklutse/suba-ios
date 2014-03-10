@@ -166,8 +166,6 @@ static NSInteger selectedButton = 10;
 {
     [super viewDidLoad];
 	
-    //[self.coachMarkView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"overlay"]]];
-    
     [Flurry logAllPageViews:self.tabBarController];
     
     UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
@@ -210,23 +208,20 @@ static NSInteger selectedButton = 10;
     });
     
     [self.nearbySpotsButton setSelected:YES];
-    //self.images = @[@"gard_12.jpg",@"grad_01@2x.jpg",@"grad_05.jpg",@"grad_06.jpg",@"grad_07.jpg"];
     
     //Register remote notification types
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound)];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshAllStreams) name:kUserReloadStreamNotification object:nil];
    
-    /*[AppHelper setPlacesCoachMark:@"NO"];
-    [AppHelper setNearbyCoachMark:@"NO"];
-    [AppHelper setMyStreamCoachMark:@"NO"];*/
+    
     DLog(@"[AppHelper placesCoachMarkSeen] - %@",[AppHelper placesCoachMarkSeen]);
     if ([[AppHelper myStreamsCoachMarkSeen] isEqualToString:@"NO"]) {
         // Show the places coachmark
         self.coachMarkView.alpha = 1;
         self.gotItButton.alpha = 1;
         [AppHelper setMyStreamCoachMark:@"YES"];
-        //DLog(@"Showing places coachmark");
+        
         self.coachMarkImage.alpha = 1;
         [self.coachMarkImage setTag:kMyStreamCoachMark];
     }
@@ -1137,8 +1132,8 @@ static NSInteger selectedButton = 10;
     [self fetchUserSpots];
     [self fetchUserFavoriteLocations];
     
-    if (self.currentLocation != nil){
-        
+    if ([locationManager location]){
+        self.currentLocation = [locationManager location];
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
         

@@ -22,8 +22,16 @@
 #import "BDKNotifyHUD.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <IDMPhotoBrowser.h>
+#import "BOSImageResizeOperation.h"
+
+//#import "ImageMagick.h"
+//#import "MagickWand.h"
+//#import "convert.h"
+//#import "image.h"
+
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
+typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
 
 #define SpotInfoKey @"SpotInfoKey"
 #define SpotNameKey @"SpotNameKey"
@@ -31,7 +39,8 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 #define SpotPhotosKey @"SpotPhotosKey"
 
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate>{
+
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,IDMPhotoBrowserDelegate>{
     UIImage *photoToSave;
 }
 
@@ -82,6 +91,12 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 - (IBAction)moveToProfile:(UIButton *)sender;
 -(NSString *)getRandomPINString:(NSInteger)length;
 - (void)preparePhotoBrowser:(NSMutableArray *)photos;
+-(void)createStandardImage:(CGImageRef)image completon:(StandardPhotoCompletion)completion;
+- (void)resizePhoto:(UIImage*) image
+            towidth:(float) width
+           toHeight:(float) height
+          completon:(PhotoResizedCompletion)completion;
+
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 -(IBAction)dismissCoachMark:(UIButton *)sender;
 @end
@@ -93,12 +108,11 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     [super viewDidLoad];
     
     // Load browser
-    /*if (self.photos){
+    if (self.photos){
         
         [self preparePhotoBrowser:self.photos];
-    }*/
+    }
     
-
     
     if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
         if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
@@ -367,12 +381,13 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
 
 
 #pragma mark - UICollectionView Delegate
--(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+/*-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     //self.browser.displayToolbar = NO;
+    //self.browser.displayCounterLabel = YES;
     
     //[self presentViewController:self.browser animated:YES completion:nil];
-}
+}*/
 
 
 
@@ -508,6 +523,60 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                     delegate:nil];
     }
     
+    
+}
+
+
+-(void)createStandardImage:(CGImageRef)image completon:(StandardPhotoCompletion)completion
+{
+   // __block CGImageRef rawImage =
+    dispatch_queue_t createStandardPhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(createStandardPhotoQueue, ^{
+        
+        const size_t width = CGImageGetWidth(image);
+        const size_t height = CGImageGetHeight(image);
+        CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+        CGContextRef ctx = CGBitmapContextCreate(NULL, width, height, 8, 4*width, space,
+                                                 kCGBitmapByteOrder32Big | kCGImageAlphaPremultipliedFirst);
+        CGColorSpaceRelease(space);
+        CGContextDrawImage(ctx, CGRectMake(0, 0, width, height), image);
+        CGImageRef dstImage = CGBitmapContextCreateImage(ctx);
+        CGContextRelease(ctx);
+
+        
+        dispatch_async(dispatch_get_main_queue(),^{
+            completion(dstImage,nil);
+        });
+    });
+
+    //[UIImage alloc] in
+}
+
+
+- (void)resizePhoto:(UIImage*) image towidth:(float) width toHeight:(float) height completon:(PhotoResizedCompletion)completion
+{
+    /*dispatch_queue_t resizePhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(resizePhotoQueue, ^{
+        
+        BOSImageResizeOperation* op = [[BOSImageResizeOperation alloc] initWithImage:image];
+        [op resizeToFitWithinSize:CGSizeMake(width, height)];
+        [op start];
+        dispatch_async(dispatch_get_main_queue(),^{
+            completion(image,nil);
+        });
+    });*/
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+         BOSImageResizeOperation* op = [[BOSImageResizeOperation alloc] initWithImage:image];
+        [op start];
+        
+        UIImage* smallerImage = op.result;
+        dispatch_async(dispatch_get_main_queue(),^{
+            completion(smallerImage,nil);
+        });
+    });
+
+
     
 }
 
@@ -703,7 +772,7 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     if ([assets count] == 1) {
         ALAsset *asset = (ALAsset *)assets[0];
         ALAssetRepresentation *representation = asset.defaultRepresentation;
-        DLog(@"Orientation -%i",representation.orientation);
+        //DLog(@"Orientation -%i",representation.orientation);
         UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
                                                            scale:1.0f
                                                      orientation:(UIImageOrientation)ALAssetOrientationUp];
@@ -717,8 +786,26 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
         trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
         trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
         
-        //NSLog(@"Asset  Picked - %@ at time - %@",[asset debugDescription],trimmedString);
-        [self resizeImage:fullResolutionImage towidth:320.0f toHeight:320.0f
+        
+        [self resizePhoto:fullResolutionImage towidth:640.0f toHeight:640.0f completon:^(UIImage *compressedPhoto, NSError *error) {
+            NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
+            [self uploadPhoto:imageData WithName:trimmedString];
+        }];
+        
+        /*[self createStandardImage:representation.fullScreenImage
+                        completon:^(CGImageRef standardPhoto, NSError *error) {
+                            
+        UIImage *fullResolutionImage = [UIImage imageWithCGImage:standardPhoto
+                                                scale:1.0f
+                                                orientation:(UIImageOrientation)ALAssetOrientationUp];
+        
+         NSData *imageData = UIImageJPEGRepresentation(fullResolutionImage, 1.0);
+         [self uploadPhoto:imageData WithName:trimmedString];
+                            
+        }];*/
+        
+        
+        /*[self resizeImage:fullResolutionImage towidth:640.0f toHeight:640.0f
                 completon:^(UIImage *compressedPhoto, NSError *error) {
                     
                     UIImage *newImage = compressedPhoto;
@@ -726,9 +813,12 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
                     
                     [self uploadPhoto:imageData WithName:trimmedString];
                     
-                }];
+        }];*/
+        
     }else{
-        [AppHelper showAlert:@"Add Photo" message:@"You did not select a photo to add to the stream" buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Add Photo"
+                     message:@"You did not select a photo to add to the stream"
+                     buttons:@[@"OK"] delegate:nil];
     }
     
 }
@@ -855,14 +945,36 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
     trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
 
-    [self resizeImage:image towidth:320.0f toHeight:320.0f
+    
+    [self resizePhoto:image towidth:640 toHeight:640
+            completon:^(UIImage *compressedPhoto, NSError *error) {
+                if (!error) {
+                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
+                    
+                    [self uploadPhoto:imageData WithName:trimmedString];
+                }else DLog(@"Image resize error :%@",error);
+        
+    }];
+    
+    /*[self createStandardImage:image.CGImage
+                    completon:^(CGImageRef standardPhoto, NSError *error) {
+                        
+        UIImage *fullResolutionImage = [UIImage imageWithCGImage:standardPhoto
+                                                           scale:1.0
+                                                     orientation:(UIImageOrientation)ALAssetOrientationRight];
+                                        
+        NSData *imageData = UIImageJPEGRepresentation(fullResolutionImage, 1.0);
+        [self uploadPhoto:imageData WithName:trimmedString];
+    }];*/
+    
+    /*[self resizeImage:image towidth:640.0f toHeight:640.0f
            completon:^(UIImage *compressedPhoto, NSError *error) {
                 
                 UIImage *newImage = compressedPhoto;
                NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
                
                [self uploadPhoto:imageData WithName:trimmedString];
-        }];
+        }];*/
     
     [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
@@ -1020,6 +1132,14 @@ typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error)
     }
 }
 
+
+
+#pragma mark - PhotoBrowser Delegate
+-(void)photoBrowser:(IDMPhotoBrowser *)photoBrowser didDismissAtPageIndex:(NSUInteger)index
+{
+    DLog();
+    [photoBrowser dismissViewControllerAnimated:YES completion:nil];
+}
 
 
 

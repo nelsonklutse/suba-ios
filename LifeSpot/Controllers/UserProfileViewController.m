@@ -13,6 +13,7 @@
 #import "PhotosCell.h"
 #import "PhotoStreamViewController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
+#import <IDMPhotoBrowser/IDMPhotoBrowser.h>
 
 #define UserSpotsKey @"UserSpotsKey"
 #define UserProfileInfoKey @"UserProfileInfoKey"
@@ -28,6 +29,7 @@
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingUserStreamsIndicator;
 @property (strong,nonatomic) NSString *userProfileId;
 
+- (IBAction)showFullScreenImage:(UIButton *)sender;
 - (void)loadSpotsCreated:(NSString *)userId;
 - (void)fetchUserInfo:(NSString *)userId;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
@@ -104,6 +106,18 @@
     // Dispose of any resources that can be recreated.
 }
 
+
+- (IBAction)showFullScreenImage:(UIButton *)sender {
+    NSIndexPath *indexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:@"USER_INFO_CELL" forIndexPath:indexPath];
+    IDMPhoto *photo = [IDMPhoto photoWithImage:userInfoCell.userProfileImage.image];
+    IDMPhotoBrowser *photoBrowser = [[IDMPhotoBrowser alloc] initWithPhotos:@[photo] animatedFromView:sender];
+    
+    photoBrowser.displayToolbar = NO;
+    
+    [self presentViewController:photoBrowser
+                       animated:YES completion:nil];
+}
 
 -(void)loadSpotsCreated:(NSString *)userId
 {

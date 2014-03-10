@@ -100,36 +100,28 @@
     //__weak UIImageView *targetImgView = imgView;
     __weak DACircularProgressView *pView = progressView;
     dispatch_queue_t downloadPhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    
     dispatch_async(downloadPhotoQueue, ^{
         __weak UIImageView *mainImageView = imgView;
         NSURL *photoSrc = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",self.s3BucketURL,photoURL]];
         
         dispatch_async(dispatch_get_main_queue(),^{
          
-        [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground
-                        progress:^(NSUInteger receivedSize, long long expectedSize){
-                            
-                            CGFloat progress =  (float)receivedSize/expectedSize;
-                            //DLog(@"Progress - %f",progress);
-                            
-                            pView.progress = progress;
-                            
-        //DLog(@"IMAGE DOWNLOAD PROGRESS - %lu\Expected - %lld",(unsigned long)receivedSize,expectedSize);
-        } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-            if (!error) {
-                mainImageView.image = image;
-                //DLog(@"Image size downlaoded - %@",NSStringFromCGSize(image.size));
-                completion(image,nil);
-            }else{
-                completion(nil,error);
-            }
-        }];
-    
-          
+     [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                CGFloat progress =  (float)receivedSize/expectedSize;
+                //DLog(@"Progress - %f",progress);
+                
+                pView.progress = progress;
+            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                if (!error) {
+                    mainImageView.image = image;
+                    //DLog(@"Image size downlaoded - %@",NSStringFromCGSize(image.size));
+                    completion(image,nil);
+                }else{
+                    completion(nil,error);
+                }
 
-     // [imgView setImageWithURL:photoSrc p
-    
-            
+            }];
     });
         
  });
