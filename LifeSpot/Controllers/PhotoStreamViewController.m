@@ -108,10 +108,10 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     [super viewDidLoad];
     
     // Load browser
-    if (self.photos){
+    /*if (self.photos){
         
         [self preparePhotoBrowser:self.photos];
-    }
+    }*/
     
     
     if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
@@ -368,6 +368,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         
         if (!error) {
             self.albumSharePhoto = (UIImage *)results;
+            
         }
         
         [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
