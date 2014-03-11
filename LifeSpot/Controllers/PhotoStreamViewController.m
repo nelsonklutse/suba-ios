@@ -773,10 +773,15 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     if ([assets count] == 1) {
         ALAsset *asset = (ALAsset *)assets[0];
         ALAssetRepresentation *representation = asset.defaultRepresentation;
-        //DLog(@"Orientation -%i",representation.orientation);
+       
+        
+        
+        
         UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
                                                            scale:1.0f
                                                      orientation:(UIImageOrientation)ALAssetOrientationUp];
+        
+        DLog(@"Image resolution - %@",NSStringFromCGSize(fullResolutionImage.size));
         
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         //dateFormatter se
@@ -788,7 +793,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
         
         
-        [self resizePhoto:fullResolutionImage towidth:640.0f toHeight:640.0f completon:^(UIImage *compressedPhoto, NSError *error) {
+        [self resizePhoto:fullResolutionImage towidth:640.0f toHeight:852.0f completon:^(UIImage *compressedPhoto, NSError *error) {
             NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
             [self uploadPhoto:imageData WithName:trimmedString];
         }];
@@ -945,9 +950,10 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
     trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
     trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
-
     
-    [self resizePhoto:image towidth:640 toHeight:640
+    DLog(@"Image resolution - %@",NSStringFromCGSize(image.size));
+    
+    [self resizePhoto:image towidth:640.0f toHeight:852.0f
             completon:^(UIImage *compressedPhoto, NSError *error) {
                 if (!error) {
                     NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
