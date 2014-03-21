@@ -111,9 +111,10 @@ static NSInteger selectedButton = 10;
         //Show notification
         AlbumSettingsViewController *aVC = segue.sourceViewController;
         NSString *albumName = aVC.spotName;
-        DLog(@"album name - %@",albumName);
+        //DLog(@"album name - %@",albumName);
         NSString *spotId = aVC.spotID;
-        DLog(@"SpotId - %@",spotId);
+        //DLog(@"SpotId - %@",spotId);
+        
         int counter = 0;
         for (NSDictionary *spotToRemove in self.allSpots){
             
@@ -225,6 +226,10 @@ static NSInteger selectedButton = 10;
         self.coachMarkImage.alpha = 1;
         [self.coachMarkImage setTag:kMyStreamCoachMark];
     }
+    
+    [self followScrollView:self.allSpotsCollectionView];
+    [self followScrollView:self.nearbySpotsCollectionView];
+    [self followScrollView:self.placesBeingWatchedTableView];
 }
 
 -(void)viewWillAppear:(BOOL)animated
@@ -624,6 +629,7 @@ static NSInteger selectedButton = 10;
         }else{
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 NSArray *spots = (NSArray *)results[@"spots"];
+                //DLog(@"Nearby streams - %@",spots);
                 
                 if ([spots count] > 0){ // We've got some spots to display
                     self.noDataView.alpha = 0;
@@ -670,7 +676,7 @@ static NSInteger selectedButton = 10;
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 
                 NSArray *nearby = results[@"nearby"];
-                
+                //DLog(@"Nearby streams - %@",nearby);
                 if ([nearby count] > 0){
                     self.noDataView.alpha = 0;
                     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
@@ -739,7 +745,7 @@ static NSInteger selectedButton = 10;
     
     NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
     NSArray *photos = notifInfo[@"spotInfo"][@"photoURLs"];
-    
+    DLog(@"Photos - %@",photos);
     
     if (self.allSpotsCollectionView.alpha == 1) {
         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
@@ -893,6 +899,7 @@ static NSInteger selectedButton = 10;
     if (self.nearbySpotsCollectionView.alpha == 1) {
         DLog(@"Nearby spots is showing");
         cellIdentifier = @"NearbySpotCell";
+        
         personalSpotCell = [self.nearbySpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
         
         if (personalSpotCell.pGallery.hidden) {
@@ -902,9 +909,9 @@ static NSInteger selectedButton = 10;
         //DLog(@"Identifier set for nearby spotsCell");
         
         spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
-        DLog(@"SpotCode - %@",spotCode);
+        //DLog(@"SpotCode - %@",spotCode);
         if ([spotCode isEqualToString:@"NONE"] || [spotCode class] == [NSNull class]){
-            DLog(@"SpotCode is - %@ so hiding private stream",spotCode);
+            //DLog(@"SpotCode is - %@ so hiding private stream",spotCode);
             personalSpotCell.privateStreamImageView.hidden = YES;
         }else{
             personalSpotCell.privateStreamImageView.hidden = NO;

@@ -18,6 +18,7 @@ PODS:
   - AFNetworking/UIKit (2.0.3):
     - AFNetworking/NSURLConnection
   - ALAssetsLibrary-CustomPhotoAlbum (1.1.4)
+  - AMScrollingNavbar (0.5.4)
   - Appirater (2.0.2)
   - BDKNotifyHUD (1.1.0)
   - BOSImageResizeOperation (0.1.0)
@@ -41,6 +42,7 @@ PODS:
 DEPENDENCIES:
   - AFNetworking (~> 2.0)
   - ALAssetsLibrary-CustomPhotoAlbum (~> 1.1.4)
+  - AMScrollingNavbar
   - Appirater
   - BDKNotifyHUD (~> 1.1.0)
   - BOSImageResizeOperation (from `git://github.com/BucketOSoftware/BOSImageResizeOperation.git`)
@@ -60,6 +62,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AFNetworking: e499052cbf3d743e9bb727bb37adb9dc2547ba15
   ALAssetsLibrary-CustomPhotoAlbum: aed631c845bb5a950c3846780d282465309e16e0
+  AMScrollingNavbar: f94a15ec7abcd19b796498ed854d90f647582fd5
   Appirater: 32fb9089615b5e542c7ad7b5749741a8aed55290
   BDKNotifyHUD: efda37564bafd510dd56b972ea2ad8318a11751c
   BOSImageResizeOperation: 301cf26dee926abd52fc0a4664b77486b276f0f3

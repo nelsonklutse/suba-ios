@@ -333,18 +333,9 @@
     
     return headerView;
     
-}
-
-
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
-{
-    if(section == 0)
-    {
-        return CGSizeZero;
-    }
-    
-    return CGSizeMake(320, 40);
 }*/
+
+
 
 
 #pragma mark - CollectionView Delegate
@@ -353,14 +344,13 @@
     //NSLog(@"UserSpot details - %@",[self.userSpots[indexPath.section] description]);
     
     if (indexPath.section == 1) {
-        if ([self.userSpots[indexPath.item][@"photos"] integerValue] == 0 ) {
-            //DLog(@"No photos so lets segue");
+        if ([self.userSpots[indexPath.item][@"photos"] integerValue] == 0){
+            
             NSString *spotID = self.userSpots[indexPath.item][@"spotId"];
             NSString *spotName = self.userSpots[indexPath.item][@"spotName"];
             NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
             NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
             [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
-            
         }
 
     }
@@ -379,6 +369,7 @@
             photosVC.spotName = sender[@"spotName"];
             photosVC.spotID = sender[@"spotId"];
             photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
+            DLog(@"Number of photos - %i",photosVC.numberOfPhotos); 
         }
     }
 }

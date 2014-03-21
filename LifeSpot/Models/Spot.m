@@ -74,7 +74,7 @@
 
 +(void)fetchSpotImagesUsingSpotId:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
 {
-    [[SubaAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId} success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId,@"userId":[AppHelper userID]} success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);

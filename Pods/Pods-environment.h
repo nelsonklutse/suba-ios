@@ -54,6 +54,12 @@
 #define COCOAPODS_VERSION_MINOR_ALAssetsLibrary_CustomPhotoAlbum 1
 #define COCOAPODS_VERSION_PATCH_ALAssetsLibrary_CustomPhotoAlbum 4
 
+// AMScrollingNavbar
+#define COCOAPODS_POD_AVAILABLE_AMScrollingNavbar
+#define COCOAPODS_VERSION_MAJOR_AMScrollingNavbar 0
+#define COCOAPODS_VERSION_MINOR_AMScrollingNavbar 5
+#define COCOAPODS_VERSION_PATCH_AMScrollingNavbar 4
+
 // Appirater
 #define COCOAPODS_POD_AVAILABLE_Appirater
 #define COCOAPODS_VERSION_MAJOR_Appirater 2

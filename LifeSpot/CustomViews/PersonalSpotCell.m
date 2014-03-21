@@ -158,7 +158,7 @@
     
     NSString *imageURL = self.gImages[index][@"s3name"];
     
-    DLog(@"Image URL - %@",imageURL);
+    //DLog(@"Image URL - %@",imageURL);
     DACircularProgressView *progressView = [[DACircularProgressView alloc]
                                             initWithFrame:CGRectMake((page.bounds.size.width/2) - 20, (page.bounds.size.height/2) - 20, 40.0f, 40.0f)];
     
@@ -184,7 +184,7 @@
     //if (index > 0) {
         DLog(@"Rearranging the array coz index is %i",index);
         
-        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - 1);
         NSRange rangeSecondArray = NSMakeRange(0, index);
         NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
         NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
@@ -215,7 +215,7 @@
 
         self.galleryIndex = indexPath.row;
     
-    DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
+    //DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
     if ([self.gImages count] == 1) {
         self.pGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
         

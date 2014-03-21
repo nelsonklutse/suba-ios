@@ -89,9 +89,9 @@
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     
     //NSMutableArray
-    if (index > 0) {
+    if (index > 0){
         //DLog(@"Rearranging the array coz index is %i",index);
-        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - 1);
         NSRange rangeSecondArray = NSMakeRange(0, index);
         NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
         NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];

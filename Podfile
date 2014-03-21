@@ -24,3 +24,5 @@ pod "Appirater"
 pod 'IDMPhotoBrowser'
 
 pod 'BOSImageResizeOperation', :git => 'git://github.com/BucketOSoftware/BOSImageResizeOperation.git'
+
+pod 'AMScrollingNavbar'

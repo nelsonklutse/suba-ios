@@ -59,6 +59,7 @@
 		2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */; };
 		2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */; };
 		2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB6321890FE1600EAA879 /* TermsViewController.m */; };
+		2AF6CDAF18D2445E004AC57A /* APLPositionToBoundsMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AF6CDAE18D2445E004AC57A /* APLPositionToBoundsMapping.m */; };
 		2AFF59AC189944F100F051A0 /* ActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AFF59AB189944F100F051A0 /* ActivityViewController.m */; };
 		89B30E4518AE47BF0082C420 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89B30E4418AE47BF0082C420 /* FacebookSDK.framework */; };
 		89E3DC6618604E9D00D193F4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6518604E9D00D193F4 /* Foundation.framework */; };
@@ -201,6 +202,8 @@
 		2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InviteFriendsViewController.m; sourceTree = "<group>"; };
 		2AEBB6311890FE1600EAA879 /* TermsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TermsViewController.h; sourceTree = "<group>"; };
 		2AEBB6321890FE1600EAA879 /* TermsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TermsViewController.m; sourceTree = "<group>"; };
+		2AF6CDAD18D2445E004AC57A /* APLPositionToBoundsMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APLPositionToBoundsMapping.h; sourceTree = "<group>"; };
+		2AF6CDAE18D2445E004AC57A /* APLPositionToBoundsMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APLPositionToBoundsMapping.m; sourceTree = "<group>"; };
 		2AFF59AA189944F100F051A0 /* ActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ActivityViewController.h; sourceTree = "<group>"; };
 		2AFF59AB189944F100F051A0 /* ActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ActivityViewController.m; sourceTree = "<group>"; };
 		811E7F3518D646779B2C69BA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -396,6 +399,7 @@
 		2AB0FA5A187AD7FE000AB276 /* AppHelper */ = {
 			isa = PBXGroup;
 			children = (
+				2AF6CDAC18D2442C004AC57A /* Dynamics */,
 				2AB0FA71187AD9EE000AB276 /* Networking Extensions */,
 				2AB0FA5C187AD911000AB276 /* AppHelper.h */,
 				2AB0FA5D187AD911000AB276 /* AppHelper.m */,
@@ -426,6 +430,15 @@
 				2AB6220E18B3AB9900356DB5 /* libFlurry_4.3.2.a */,
 			);
 			path = Flurry;
+			sourceTree = "<group>";
+		};
+		2AF6CDAC18D2442C004AC57A /* Dynamics */ = {
+			isa = PBXGroup;
+			children = (
+				2AF6CDAD18D2445E004AC57A /* APLPositionToBoundsMapping.h */,
+				2AF6CDAE18D2445E004AC57A /* APLPositionToBoundsMapping.m */,
+			);
+			name = Dynamics;
 			sourceTree = "<group>";
 		};
 		89E3DC5918604E9D00D193F4 = {
@@ -731,6 +744,7 @@
 				2AB0FA6E187AD96C000AB276 /* User.m in Sources */,
 				2AD721E418B27153002872C5 /* FacebookAPIClient.m in Sources */,
 				2ABA812C188DDF2400A5E8B7 /* PhotosCell.m in Sources */,
+				2AF6CDAF18D2445E004AC57A /* APLPositionToBoundsMapping.m in Sources */,
 				2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */,
 				2A463D691885728E00549C7B /* PhotoStreamViewController.m in Sources */,
 				2ABA8123188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m in Sources */,
@@ -938,7 +952,6 @@
 					"/Users/kwamenelson/Documents/Suba/suba-ios",
 					"/Users/kwamenelson/Documents/Suba/suba-ios/LifeSpot/Vendor/Flurry",
 					"$(SRCROOT)/**",
-					"/Users/kwamenelson/Documents/Suba/suba-ios/IM",
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -1007,7 +1020,6 @@
 					"/Users/kwamenelson/Documents/Suba/suba-ios",
 					"/Users/kwamenelson/Documents/Suba/suba-ios/LifeSpot/Vendor/Flurry",
 					"$(SRCROOT)/**",
-					"/Users/kwamenelson/Documents/Suba/suba-ios/IM",
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (

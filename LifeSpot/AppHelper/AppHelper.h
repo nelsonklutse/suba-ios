@@ -85,6 +85,6 @@ typedef void (^NotificationCompletion) ();
 +(void)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc;
 
 + (void)showLoadingDataView:(UIView *)view indicator:(UIActivityIndicatorView *)indicator flag:(BOOL)flag;
-
++ (void)showLikeImage:(UIImageView *)imgView imageNamed:(NSString *)imageName;
 
 @end

@@ -220,17 +220,18 @@ bool isUserNameAvailable = NO;
     if (isUserNameAvailable == NO) {
         [self checkUserName:self.userNameField.text];
     }else{
-    [self.signUpActivityIndicator startAnimating];
-    
+        [self.signUpActivityIndicator startAnimating];
+        
     [AppHelper createUserAccount:params
                            WithType:NATIVE_LOGIN
                          completion:^(id results, NSError *error){
             [self.signUpActivityIndicator stopAnimating];
         if (!error){
-            NSMutableDictionary *analyticsParams = [NSMutableDictionary dictionaryWithDictionary:@{USER_NAME: [AppHelper userName]}];
+            NSMutableDictionary *analyticsParams = [NSMutableDictionary dictionaryWithDictionary:@{USER_NAME:[AppHelper userName]}];
+            DLog(@"Username for Flurry - %@",[AppHelper userName]); 
             
-            [Flurry logEvent:@"Native_SignUp" withParameters:analyticsParams];
             [self performSegueWithIdentifier:@"FromSignUpPersonalSpotsTab" sender:nil];
+            [Flurry logEvent:@"Native_SignUp" withParameters:analyticsParams];
         }else{
             DLog(@"Error : %@",error);
             [AppHelper showAlert:@"Sign Up Failed"

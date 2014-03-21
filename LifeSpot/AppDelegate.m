@@ -102,7 +102,7 @@
     NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:19.0], NSFontAttributeName,nil];
     
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
-    
+    //[[UINavigationBar appearance] setTranslucent:NO];
     [[UINavigationBar appearance] setShadowImage:[[UIImage alloc] init]];
     [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
     //End of Navbar Customization
@@ -142,7 +142,7 @@
     [descStyle setLinesNumber:TUTORIAL_DESC_LINES_NUMBER];
     [descStyle setOffset:TUTORIAL_DESC_OFFSET];
     
-    DLog(@"");
+    //DLog(@"");
     
     // Load into an array.
     NSArray *tutorialLayers = @[layer1,layer2,layer3,layer4,layer5];
@@ -167,7 +167,7 @@
     
     if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
         // First launch or from logout
-      //  DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
+        DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
         
         __unsafe_unretained typeof(self) weakSelf = self;
         
@@ -201,7 +201,7 @@
         
    }else{
         // Setting Tab Bar as root view controller
-       // DLog(@"Setting TabBar Controller as the root view controller");
+        DLog(@"Setting TabBar Controller as the root view controller");
         self.window.rootViewController = self.mainTabBarController;
     }
     
@@ -231,6 +231,9 @@
        
     }else{*/
         // Register application wide default preferences
+    
+        DLog(@"userid - %@",[AppHelper userID]);
+    
         NSDictionary *appDefaults = @{
                                       FIRST_NAME : @"",
                                       LAST_NAME : @"",
@@ -243,14 +246,14 @@
                                       NUMBER_OF_ALBUMS : @"0"
                                       };
     
-    if ([[AppHelper userID] isEqualToString:@"-1"]) {
+    if ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL) {
         DLog(@"Registering App Defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
-    }
+    } 
     
     // Setting up Flurry SDK
-    [Flurry setCrashReportingEnabled:YES];
-    [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
+    //[Flurry setCrashReportingEnabled:YES];
+    //[Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
     
     
     
@@ -260,7 +263,6 @@
     [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:YES];
     
     [self monitorNetworkChanges];
-    
     
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
@@ -374,55 +376,8 @@
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
     [Appirater appEnteredForeground:YES];
+   
     
-    // Check for changes in facebook user info
-   /* if ([FBSession activeSession]) { // Do we have an active fbSession
-        DLog(@"FBSession already active");
-        if ([[AppHelper facebookLogin] isEqualToString:@"YES"]) {
-        // User signed up with facebook
-        DLog(@"User signed up with facebook");
-            [[FBRequest requestForMe] startWithCompletionHandler:
-             ^(FBRequestConnection *connection,
-               NSDictionary<FBGraphUser> *user,
-               NSError *error){
-                 if (error) {
-                     DLog(@"Updating user fb info error - %@",error);
-                 }
-                 else if (!error){
-                     
-                     [AppHelper setFacebookID:user.id]; // set the facebook id
-                     DLog(@"User facebook Info fetched again - %@",user);
-                     NSString *pictureURL = [[[user valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
-                     if ([self fbUserInfoChanged:user]) {
-                         //NSDictionary *params =
-                         // Make api request to update user profile if any details change
-                        [[SubaAPIClient sharedInstance]
-                          POST:@"fbUser/info/update"
-                          parameters:@{
-                                    @"id" : user.id,
-                                    FIRST_NAME : user.first_name,
-                                    LAST_NAME : user.last_name,
-                                    USER_NAME: user.username,
-                                    EMAIL : [user valueForKey:@"email"],
-                                    @"profilePhoto" : pictureURL
-                                    
-                            } success:^(NSURLSessionDataTask *task, id responseObject) {
-                             if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
-                                 [AppHelper savePreferences:responseObject];
-                                 [AppHelper setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
-                                 [AppHelper setFacebookLogin:@"YES"];
-                                 [AppHelper setFacebookSession:@"YES"];
-                             } 
-                         } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                             
-                         }];
-                     }
-                 }
-                 
-                 
-             }];
- 
-        }else{*/
             // Session is not open so open the session
             if ([[AppHelper facebookLogin] isEqualToString:@"YES"] || [[AppHelper facebookSession] isEqualToString:@"YES"]){
                 

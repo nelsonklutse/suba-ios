@@ -466,12 +466,6 @@
                  [self setFacebookID:user[@"id"]];
                  [self setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
                  [self setFacebookLogin:@"YES"];
-                 //[self setUserSession:@"login"];
-                 
-                 //DLog(@"User Prefs now -\n%@",[AppHelper userPreferences]);
-                 
-                // DLog(@"User defaults - %@",NSStringFromClass([[NSUserDefaults standardUserDefaults] class]));
-                 
                  
                  completionBlock(responseObject,nil);
              }
@@ -485,12 +479,13 @@
     }else{
         
         // Do Native Sign Up
+        DLog(@"Doing native sign up");
         [[SubaAPIClient sharedInstance]
          POST:@"signUp"
          parameters:user
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
              if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
-                 
+                 DLog(@"Response from sign up - %@",responseObject);
                  [AppHelper savePreferences:responseObject];
                  [self setFacebookLogin:@"NO"];
                  //[self setUserSession:@"login"];
@@ -611,6 +606,22 @@
 
 
 
++(void)showLikeImage:(UIImageView *)imgView imageNamed:(NSString *)imageName
+{
+    
+    imgView.image = [UIImage imageNamed:imageName];
+    
+    
+    [UIView animateWithDuration:1.0 animations:^{
+        
+        imgView.alpha = 1;
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:0.5 animations:^{
+            
+            imgView.alpha = 0;
+        }];
+    }];
+}
 
 
 @end

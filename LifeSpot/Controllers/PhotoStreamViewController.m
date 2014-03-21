@@ -23,12 +23,7 @@
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <IDMPhotoBrowser.h>
 #import "BOSImageResizeOperation.h"
-
-//#import "ImageMagick.h"
-//#import "MagickWand.h"
-//#import "convert.h"
-//#import "image.h"
-
+#import "APLPositionToBoundsMapping.h"
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
@@ -40,8 +35,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,IDMPhotoBrowserDelegate>{
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,IDMPhotoBrowserDelegate,UIGestureRecognizerDelegate>
+{
     UIImage *photoToSave;
+    NSIndexPath *selectedPhoto;
+    
 }
 
 @property (strong,nonatomic) NSDictionary *reportInfo;
@@ -57,24 +55,28 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 @property (weak, nonatomic) IBOutlet UIView *loadingInfoIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamInfoIndicator;
 @property (weak, nonatomic) IBOutlet UIButton *cameraButton;
+@property (weak, nonatomic) IBOutlet UIImageView *likeImage;
 
 @property (retain,nonatomic) IDMPhotoBrowser *browser;
 
-//@property (nonatomic, readwrite) CGRect likeButtonBounds;
-//@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
-
+@property (nonatomic, readwrite) CGRect likeButtonBounds;
+@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
 
 @property (weak, nonatomic) IBOutlet UIView *noPhotosView;
+
+
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
+
 - (IBAction)sharePhoto:(UIButton *)sender;
 - (IBAction)likePicture:(id)sender;
-- (void)savePhoto:(UIImage *)imageToSave;
 - (IBAction)cameraButtonTapped:(id)sender;
 - (IBAction)settingsButtonTapped:(id)sender;
 - (IBAction)shareAlbumAction:(id)sender;
 - (IBAction)showMoreActions:(UIButton *)sender;
 
+- (void)savePhoto:(UIImage *)imageToSave;
+- (void)photoCardTapped:(UITapGestureRecognizer *)sender;
 - (void)share:(Mutant)objectOfInterest Sender:(UIButton *)sender;
 - (void)savePhotoToCustomAlbum:(UIImage *)photo;
 - (void)resizeImage:(UIImage*) image
@@ -88,6 +90,12 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId;
 - (void)loadSpotImages:(NSString *)spotId;
 - (void)pickImage:(id)sender;
+-(void)likePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath;
+-(void)unlikePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath;
+- (void)resamplePhotoInfo:(NSDictionary *)info
+                     flag:(NSString *)flag
+                    numberOfLikes:(NSString *)likes
+                  atIndex:(NSInteger)selectedIndex;
 - (IBAction)moveToProfile:(UIButton *)sender;
 -(NSString *)getRandomPINString:(NSInteger)length;
 - (void)preparePhotoBrowser:(NSMutableArray *)photos;
@@ -99,6 +107,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 //- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
 -(IBAction)dismissCoachMark:(UIButton *)sender;
+- (void)bounceLikeButton:(id)sender;
+- (void)saveLikeButtonInitialBounds:(UIButton *)button;
 @end
 
 @implementation PhotoStreamViewController
@@ -151,29 +161,28 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     self.library = [[ALAssetsLibrary alloc] init];
     
-    if (!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
+    if(!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
         // We are coming from an activity screen
-        DLog(@"Loading spotImages");
+        DLog(@"Loading spotImages for when photos is not set AND spotName is not set and number of photos is 0 AND we have a spotID");
        [self loadSpotImages:self.spotID];
     }
-    DLog(@"Number of photos - %ld",(long)self.numberOfPhotos);
-    
-    if (!self.photos && self.numberOfPhotos > 0 && self.spotID) {
+    if(!self.photos && self.numberOfPhotos > 0 && self.spotID) {
         // We are coming from a place where spotName is not set so lets load spot info
-       // DLog(@"Loading spot info");
+       DLog(@"Loading spot images. We are from user profile");
         [self loadSpotImages:self.spotID];
     }
     
-    if(self.numberOfPhotos == 0 && self.spotName && self.spotID){
+     if(self.numberOfPhotos == 0 && self.spotName && self.spotID){
         self.noPhotosView.hidden = NO;
         self.photoCollectionView.hidden = YES;
     }
 
     
-    if (self.spotID) {
-        DLog(@"SpotId - %@",self.spotID);
+     if(self.spotID) {
+        DLog(@"Loading images in stream with SpotId - %@",self.spotID);
         
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
+       //[self loadSpotImages:self.spotID];
     }
     
     
@@ -205,7 +214,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
            NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
            NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
            self.photos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
-           //DLog(@"Photos - %@",results);
+           DLog(@"Photos - %@",results);
            if ([self.photos count] > 0) {
                //DLog(@"Photos in spot - %@",self.photos);
                self.noPhotosView.hidden = YES;
@@ -224,6 +233,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
        }
    }];
 }
+
 
 -(void)loadSpotInfo:(NSString *)spotId User:(NSString *)userId
 {
@@ -332,35 +342,48 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    DLog(@"Photos - %@",self.photos[0]);
-   static NSString *cellIdentifier = @"PhotoStreamCell";
+    // Set the Double Tap Gesture Recognizer
+    UITapGestureRecognizer *doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(photoCardTapped:)];
+    
+    [doubleTapRecognizer setNumberOfTapsRequired:2];
+    [doubleTapRecognizer setDelegate:self];
+    
+    static NSString *cellIdentifier = @"PhotoStreamCell";
+    
     PhotoStreamCell *photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
-            [photoCardCell.likePhotoImage setSelected:NO];
-    });
-
     
-    [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
+        NSString *photoLiked = self.photos[indexPath.item][@"userLikedPhoto"];
+        if ([photoLiked isEqualToString:@"YES"]) {
+            [photoCardCell.likePhotoButton setSelected:YES];
+        }else{
+           [photoCardCell.likePhotoButton setSelected:NO];
+        }
+        
+    });
+    
+      [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
                          indicator:photoCardCell.loadingPictureIndicator
                               flag:YES];
     
     photoCardCell.pictureTakerView.image = [UIImage imageNamed:@"anonymousUser"];
-    //DLog(@"Photos - %@",self.photos[indexPath.row]);
+    
     NSString *photoURLstring = self.photos[indexPath.row][@"s3name"];
-    DLog(@"Photos - %@",self.photos[indexPath.item]);
+    //DLog(@"Photos - %@",self.photos[indexPath.item]);
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
         
         [photoCardCell.pictureTakerView setImageWithURL: [NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"] options:SDWebImageContinueInBackground];
-        
-       // [photoCardCell.pictureTakerView setImageWithURL:[NSURL URLWithString:pictureTakerPhotoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
-        
     }
     
     photoCardCell.pictureTakerName.text = self.photos[indexPath.row][@"pictureTaker"];
     photoCardCell.numberOfLikesLabel.text = self.photos[indexPath.row][@"likes"];
     
+    // Add the gesture recognizer to this cell
+    [photoCardCell.photoCardImage setUserInteractionEnabled:YES];
+    [photoCardCell.photoCardImage setMultipleTouchEnabled:YES];
+    [photoCardCell.photoCardImage addGestureRecognizer:doubleTapRecognizer];
     
     
     // Download photo card image
@@ -382,20 +405,16 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 
 #pragma mark - UICollectionView Delegate
-/*-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+-(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    //self.browser.displayToolbar = NO;
-    //self.browser.displayCounterLabel = YES;
-    
-    //[self presentViewController:self.browser animated:YES completion:nil];
-}*/
+    //DLog(@"selected image index - %i",indexPath.item);
+    selectedPhoto = indexPath;
+}
 
 
 
-
-
-
--(void)showMembers:(id)sender{
+-(void)showMembers:(id)sender
+{
     [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
 }
 
@@ -413,82 +432,117 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 }
 
 
+-(void)likePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath
+{
+    
+    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
+    
+    NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
+    
+    NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : photoId,@"updateFlag" :@"1"};
+    
+    [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error) {
+        if ([results[STATUS] isEqualToString:ALRIGHT]){
+            [self resamplePhotoInfo:selectedPhotoInfo flag:@"YES" numberOfLikes:results[@"likes"] atIndex:indexPath.item];
+            
+            // Ask main stream to reload
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:kUserReloadStreamNotification object:nil];
+            
+            photoCardCell.numberOfLikesLabel.text = results[@"likes"];
+            
+            //[self updatePhotosNumberOfLikes:self.photos photoId:photoId update:results[@"likes"]];
+            
+            [AppHelper showLikeImage:self.likeImage imageNamed:@"like-button"];
+            
+            
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
+                //DLog(@"Button state - %i",photoCardCell.likePhotoButton.state);
+                //[photoCardCell.likePhotoButton setSelected:YES];
+                [UIView animateWithDuration:0.8 animations:^{
+                    photoCardCell.likePhotoButton.alpha = 0;
+                    [photoCardCell.likePhotoButton setSelected:YES];
+                    photoCardCell.likePhotoButton.alpha = 1;
+                }];
+            });
+        }
+        
+    }];
+
+}
+
+
+-(void)unlikePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath
+{
+    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
+    
+    NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
+    
+    NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : photoId,@"updateFlag" :@"0"};
+    
+    [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error){
+        
+        if ([results[STATUS] isEqualToString:ALRIGHT]){
+            //DLog(@"Number of likes - %@",results[@"likes"]);
+            [self resamplePhotoInfo:selectedPhotoInfo
+                               flag:@"NO"
+                      numberOfLikes:results[@"likes"]
+                            atIndex:indexPath.item];
+            
+            //Ask main stream to reload
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:kUserReloadStreamNotification object:nil];
+            
+            photoCardCell.numberOfLikesLabel.text = results[@"likes"];
+            //[self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
+            
+            [AppHelper showLikeImage:self.likeImage imageNamed:@"unlike-button"];
+            
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+                //[photoCardCell.likePhotoButton setSelected:NO];
+                //DLog(@"Photo card cell - %@",[photoCardCell debugDescription]);
+                //DLog(@"Set selected");
+                [UIView animateWithDuration:0.8 animations:^{
+                    photoCardCell.likePhotoButton.alpha = 0;
+                    [photoCardCell.likePhotoButton setSelected:NO];
+                    photoCardCell.likePhotoButton.alpha = 1;
+                }];
+            });
+        }
+        
+    }];
+ 
+}
+
 
 - (IBAction)likePicture:(id)sender
 {
-    /*
-     UIButton *likeButton = (UIButton *)sender;
+    
+    UIButton *likeButton = (UIButton *)sender;
+    
     PhotoStreamCell *cell = (PhotoStreamCell *)likeButton.superview.superview.superview;
     NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
-    DLog(@"Button state - %i",likeButton.state);
+    
     NSString *picId = self.photos[indexPath.item][@"id"];
     
-    if (likeButton.state == UIControlStateNormal || likeButton.state == UIControlStateHighlighted){
-        //DLog(@"Like\nUserId - %@\nPicId - %@",[AppHelper userID],picId);
+    if (likeButton.state == UIControlStateNormal || likeButton.state == UIControlStateHighlighted)
+    {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
+            
+            [cell.likePhotoButton setSelected:YES];
+        });
+        [self likePhotoWithID:picId atIndexPath:selectedPhoto];
         
-        NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : picId,@"updateFlag" :@"1"};
-        
-        [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error) {
-            if ([results[STATUS] isEqualToString:ALRIGHT]){
-                cell.numberOfLikesLabel.text = results[@"likes"];
-                
-                [self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
-                
-                BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
-                                                                text:@"Photo Liked!"];
-                
-                hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
-                
-                // Animate it, then get rid of it. These settings last 1 second, takes a half-second fade.
-                [self.view addSubview:hud];
-                [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
-                    [hud removeFromSuperview];
-                }];
-
-                
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
-                    [cell.likePhotoImage setSelected:YES];
-                        [UIView animateWithDuration:1.8 animations:^{
-                        cell.likePhotoImage.alpha = 0;
-                        cell.likePhotoImage.alpha = 1;
-                    }];
-                });
-            }
-
-        }];
     }else{
-        //DLog(@"Unlike");
-       NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : picId,@"updateFlag" :@"0"};
         
-        [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error){
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
             
-            if ([results[STATUS] isEqualToString:ALRIGHT]){
-                cell.numberOfLikesLabel.text = results[@"likes"];
-                [self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
-                
-                BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
-                                                                text:@"Photo Unliked!"];
-                
-                hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
-                
-                // Animate it, then get rid of it. These settings last 1 second, takes a half-second fade.
-                [self.view addSubview:hud];
-                [hud presentWithDuration:2.0f speed:0.5f inView:self.view completion:^{
-                    [hud removeFromSuperview];
-                }];
-                
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10), dispatch_get_main_queue(),^{
-                    [cell.likePhotoImage setSelected:NO];
-                    [UIView animateWithDuration:1.8 animations:^{
-                        cell.likePhotoImage.alpha = 0;
-                        cell.likePhotoImage.alpha = 1;
-                    }];
-                });
-            }
-            
-        }];
-    }
-     */
+            [cell.likePhotoButton setSelected:NO];
+        });
+
+        [self unlikePhotoWithID:picId atIndexPath:selectedPhoto];
+       }
+    
         
 }
 
@@ -697,6 +751,67 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     [action showInView:self.view];
 }
+
+-(void)resamplePhotoInfo:(NSDictionary *)info flag:(NSString *)flag numberOfLikes:(NSString *)likes atIndex:(NSInteger)selectedIndex
+{
+    [self.photos removeObjectAtIndex:selectedIndex];
+    NSMutableDictionary *mutablePhotoInfo = [NSMutableDictionary dictionaryWithDictionary:info];
+    
+    mutablePhotoInfo[@"userLikedPhoto"] = flag;
+    mutablePhotoInfo[@"likes"] = likes;
+    
+    [self.photos insertObject:mutablePhotoInfo atIndex:selectedIndex];
+    
+    //DLog(@"Before mutation - %@\nAfter mutation - %@",[info debugDescription],[mutablePhotoInfo debugDescription]);
+}
+
+
+-(void)saveLikeButtonInitialBounds:(UIButton *)button
+{
+    self.likeButtonBounds = button.bounds;
+    DLog(@"Bouncing -%@",NSStringFromCGRect(button.bounds));
+    
+    // Force the button image to scale with its bounds.
+    button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentFill;
+    
+    button.contentVerticalAlignment = UIControlContentHorizontalAlignmentFill;
+
+}
+
+-(void)bounceLikeButton:(id)sender
+{
+    // Reset the buttons bounds to their initial state.  See the comment in
+    ((UIButton *)sender).bounds = self.likeButtonBounds;
+    DLog(@"Bouncing -%@",NSStringFromCGRect(((UIButton *)sender).bounds));
+    // UIDynamicAnimator instances are relatively cheap to create.
+    UIDynamicAnimator *animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
+    
+    // APLPositionToBoundsMapping maps the center of an id<ResizableDynamicItem>
+    // (UIDynamicItem with mutable bounds) to its bounds.  As dynamics modifies
+    // the center.x, the changes are forwarded to the bounds.size.width.
+    // Similarly, as dynamics modifies the center.y, the changes are forwarded
+    // to bounds.size.height.
+    APLPositionToBoundsMapping *buttonBoundsDynamicItem = [[APLPositionToBoundsMapping alloc] initWithTarget:sender];
+    
+    // Create an attachment between the buttonBoundsDynamicItem and the initial
+    // value of the button's bounds.
+    UIAttachmentBehavior *attachmentBehavior = [[UIAttachmentBehavior alloc] initWithItem:buttonBoundsDynamicItem attachedToAnchor:buttonBoundsDynamicItem.center];
+    [attachmentBehavior setFrequency:2.0];
+    [attachmentBehavior setDamping:0.3];
+    [animator addBehavior:attachmentBehavior];
+    
+    UIPushBehavior *pushBehavior = [[UIPushBehavior alloc] initWithItems:@[buttonBoundsDynamicItem] mode:UIPushBehaviorModeInstantaneous];
+    pushBehavior.angle = M_PI_4;
+    pushBehavior.magnitude = 2.0;
+    [animator addBehavior:pushBehavior];
+    
+    [pushBehavior setActive:TRUE];
+    
+    self.likeButtonAnimator = animator;
+
+}
+
+
 
 #pragma mark - Helpers for Social Media
 - (void)share:(Mutant)objectOfInterest Sender:(UIButton *)sender
@@ -1141,10 +1256,30 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 
 
+#pragma mark - handle gesture recognizer
+- (void)photoCardTapped:(UITapGestureRecognizer *)sender
+{
+    
+    if (sender.state == UIGestureRecognizerStateEnded)
+    {
+        NSString *photoId = self.photos[selectedPhoto.item][@"id"];
+        
+        if ([self.photos[selectedPhoto.item][@"userLikedPhoto"] isEqualToString:@"NO"]) {
+            
+            [self likePhotoWithID:photoId atIndexPath:selectedPhoto];
+            
+        }else{
+                [self unlikePhotoWithID:photoId atIndexPath:selectedPhoto];
+        }
+        
+    }
+}
+
+
+
 #pragma mark - PhotoBrowser Delegate
 -(void)photoBrowser:(IDMPhotoBrowser *)photoBrowser didDismissAtPageIndex:(NSUInteger)index
 {
-    DLog();
     [photoBrowser dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -1161,7 +1296,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     [coder encodeObject:self.photos forKey:SpotPhotosKey];
     //[coder encodeObject:@(selectedButton) forKey:SelectedButtonKey];
     
-    DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
+    //DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
 }
 
 
@@ -1174,13 +1309,13 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     self.spotID = [coder decodeObjectForKey:SpotIdKey];
     self.photos = [coder decodeObjectForKey:SpotPhotosKey];
     
-   DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
+   //DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
     
 }
 
 -(void)applicationFinishedRestoringState
 {
-     DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
+     //DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
     [self loadSpotInfo:self.spotID User:[AppHelper userID]];
     //1. Update photos
     if (self.photos) {
