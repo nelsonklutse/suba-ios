@@ -287,7 +287,16 @@
     
 }
 
-
+-(void)deleteStream:(NSString *)spotId completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"stream/delete"
+                              parameters:@{ @"userId":self.userID, @"streamId":spotId}
+                                 success:^(NSURLSessionDataTask *task, id responseObject) {
+                                     completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
 
 
 -(void)followUser:(NSString *)beingFollowed completion:(FollowUserCompletion)completion

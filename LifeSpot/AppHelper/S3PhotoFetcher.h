@@ -14,6 +14,7 @@
 //#define kS3_BASE_URL @"https://s3.amazonaws.com/com.subaapp.photos/"
 
 typedef void (^PhotoDownloadedCompletion) (id results,NSError *error);
+typedef void (^PhotoDeletedCompletion) (id results,NSError *error);
 
 @interface S3PhotoFetcher : NSObject
 @property (strong,nonatomic) NSURL *s3BucketURL;
@@ -29,4 +30,6 @@ typedef void (^PhotoDownloadedCompletion) (id results,NSError *error);
     placeholderImage:(UIImage *)img
         progressView:(DACircularProgressView *)progressView 
           completion:(PhotoDownloadedCompletion)completion;
+
++ (void)deletePhotoFromStream:(NSDictionary *)photoInfo completion:(PhotoDeletedCompletion)completion;
 @end

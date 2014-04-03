@@ -91,7 +91,7 @@
     //NSMutableArray
     if (index > 0){
         //DLog(@"Rearranging the array coz index is %i",index);
-        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - 1);
+        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
         NSRange rangeSecondArray = NSMakeRange(0, index);
         NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
         NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];

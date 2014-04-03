@@ -304,15 +304,16 @@ static CLLocationManager *locationManager;
 
 - (IBAction)dismissViewController:(UIBarButtonItem *)sender
 {
+    //DLog(@"Presenting View Controller - %@",[[self.presentingViewController childViewControllers][0] class]);
     if (sender.tag == 100) {
-        
-        if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]) {
+        //DLog(@"Presenting View Controller - %@",self.presentingViewController);
+        if ([self.presentingViewController isKindOfClass:[UINavigationController class]]){
             [self performSegueWithIdentifier:@"FoursquareToCreateSegueCancel" sender:nil];
         }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
             [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueCancel" sender:nil];
         }
     }else if (sender.tag == 200){
-        if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]) {
+        if ([self.presentingViewController isKindOfClass:[UINavigationController class]]){
             [self performSegueWithIdentifier:@"FoursquareToCreateSegueDone" sender:nil];
         }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
             [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueDone" sender:nil];

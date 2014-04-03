@@ -7,7 +7,6 @@
 //
 
 #import "PhotoStreamCell.h"
-#import "APLPositionToBoundsMapping.h"
 
 @interface PhotoStreamCell()
 // Will help with animating the like button

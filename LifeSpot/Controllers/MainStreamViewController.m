@@ -111,22 +111,54 @@ static NSInteger selectedButton = 10;
         //Show notification
         AlbumSettingsViewController *aVC = segue.sourceViewController;
         NSString *albumName = aVC.spotName;
-        //DLog(@"album name - %@",albumName);
         NSString *spotId = aVC.spotID;
-        //DLog(@"SpotId - %@",spotId);
         
         int counter = 0;
         for (NSDictionary *spotToRemove in self.allSpots){
             
             if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
-                
-                DLog(@"Spot to remove - %@",spotToRemove);
+                DLog(@"Removing stream with info - %@",spotToRemove);
                 [self.allSpots removeObject:spotToRemove];
-                //NSUInteger indexOfSpot = [self.allSpots indexOfObject:spotToRemove];
-                DLog(@"Index to be deleted - %d",counter);
-                [self updateCollectionView:self.allSpotsCollectionView
-                                withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0] ]
-                                updateType:kCollectionViewUpdateDelete];
+                
+                // If nearby streams is showing, make my streams show
+               // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
+                
+                    if (self.nearbySpotsCollectionView.alpha == 1){ // Nearby streams is showing
+                        
+                        [self.nearbySpotsButton setSelected:NO];
+                        [self.allSpotsButton setSelected:YES];
+                        [self.placesBeingWatchedButton setSelected:NO];
+                        
+                        self.nearbySpotsCollectionView.alpha = 0;
+                        self.allSpotsCollectionView.alpha = 1;
+                        self.placesBeingWatchedTableView.alpha = 0;
+                        [self fetchUserSpots];
+                        DLog(@"Nearby was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
+                    
+                    }else if (self.placesBeingWatchedTableView.alpha == 1){
+                        
+                        [self.nearbySpotsButton setSelected:NO];
+                        [self.allSpotsButton setSelected:YES];
+                        [self.placesBeingWatchedButton setSelected:NO];
+                        
+                        self.nearbySpotsCollectionView.alpha = 0;
+                        self.allSpotsCollectionView.alpha = 1;
+                        self.placesBeingWatchedTableView.alpha = 0;
+                        [self fetchUserSpots];
+                        DLog(@"Places was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
+                    }else{
+                        
+                        [self updateCollectionView:self.allSpotsCollectionView
+                                        withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]
+                                        updateType:kCollectionViewUpdateDelete];
+                    }
+                    
+                    //DLog(@"we used to here");
+                    
+                //});
+               // DLog(@"About to remove from stream with info -%@",self.allSpots[counter]);
+                
+                
                 break;
                 
             }
@@ -142,12 +174,10 @@ static NSInteger selectedButton = 10;
                                        tintColor: tintColor
                                            image:nil
                                          message:[NSString stringWithFormat:
-                                                  @"You are no longer a member of the stream %@",albumName]
-                                        duration:5.0f];
+                                                  @"%@ removed from your list of streams",albumName]
+                                        duration:2.0f];
         
     }
-    
-    
 }
 
 -(IBAction)unWindToAllSpotsWithCreatedSpot:(UIStoryboardSegue *)segue
@@ -155,7 +185,7 @@ static NSInteger selectedButton = 10;
     if ([segue.identifier isEqualToString:@"spotWasCreatedSegue"]) {
         CreateSpotViewController *csVC = segue.sourceViewController;
         NSDictionary *spotDetails = csVC.createdSpotDetails;
-        DLog(@"Spot Created Details - %@",spotDetails);
+        //DLog(@"Spot Created Details - %@",spotDetails);
         [self addSpotToAllSpotsStream:spotDetails];
     }
     
@@ -185,7 +215,7 @@ static NSInteger selectedButton = 10;
             
             self.placesBeingWatchedTableView.alpha = 0;
             self.allSpotsCollectionView.alpha = 0;
-            DLog(@"selecting nearby button");
+            //DLog(@"selecting nearby button");
             [self.nearbySpotsButton setSelected:YES];
             [self.allSpotsButton setSelected:NO];
             [self.placesBeingWatchedButton setSelected:NO];
@@ -216,7 +246,6 @@ static NSInteger selectedButton = 10;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshAllStreams) name:kUserReloadStreamNotification object:nil];
    
     
-    DLog(@"[AppHelper placesCoachMarkSeen] - %@",[AppHelper placesCoachMarkSeen]);
     if ([[AppHelper myStreamsCoachMarkSeen] isEqualToString:@"NO"]) {
         // Show the places coachmark
         self.coachMarkView.alpha = 1;
@@ -231,6 +260,7 @@ static NSInteger selectedButton = 10;
     [self followScrollView:self.nearbySpotsCollectionView];
     [self followScrollView:self.placesBeingWatchedTableView];
 }
+
 
 -(void)viewWillAppear:(BOOL)animated
 {
@@ -268,7 +298,7 @@ static NSInteger selectedButton = 10;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(galleryTappedAtIndex:) name:kPhotoGalleryTappedAtIndexNotification object:nil];
     
-    DLog(@"Location manager - %@",locationManager);
+    //DLog(@"Location manager - %@",locationManager);
     if (locationManager) {
         DLog();
         [locationManager startUpdatingLocation];
@@ -479,23 +509,23 @@ static NSInteger selectedButton = 10;
 - (IBAction)showuserProfile:(UIButton *)sender
 {
     if (self.nearbySpotsCollectionView.alpha == 1) {
-        DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
+        //DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
         PersonalSpotCell *pCell = (PersonalSpotCell *)sender.superview.superview;
         NSIndexPath *indexPath = [self.nearbySpotsCollectionView indexPathForCell:pCell];
         NSDictionary *cellInfo = self.nearbySpots[indexPath.item];
         NSString *streamCreatorId = cellInfo[@"creatorId"];
         [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:streamCreatorId];
         
-        DLog(@"Cell info - %@",cellInfo);
+        //DLog(@"Cell info - %@",cellInfo);
     }else if (self.allSpotsCollectionView.alpha == 1){
-       DLog(@"Moving to user profile from my streams");
-        DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
+       //Log(@"Moving to user profile from my streams");
+        //DLog(@"Moving to user profile from nearby with class - %@",[sender.superview.superview class]);
         PersonalSpotCell *pCell = (PersonalSpotCell *)sender.superview.superview;
          NSIndexPath *indexPath = [self.allSpotsCollectionView indexPathForCell:pCell];
         NSDictionary *cellInfo = self.allSpots[indexPath.item];
         NSString *streamCreatorId = cellInfo[@"creatorId"];
         [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:streamCreatorId];
-        DLog(@"Cell info - %@",cellInfo);
+       // DLog(@"Cell info - %@",cellInfo);
     }
 }
 
@@ -556,6 +586,7 @@ static NSInteger selectedButton = 10;
 
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates updateType:(ColectionViewUpdateType)updateType
 {
+    //DLog(@"user spots - %@",self.allSpots);
     if (updateType == kCollectionViewUpdateInsert) {
         [collectionView performBatchUpdates:^{
             [collectionView insertItemsAtIndexPaths:updates];
@@ -564,17 +595,15 @@ static NSInteger selectedButton = 10;
         }];
     }else if(updateType == kCollectionViewUpdateDelete){
         [collectionView performBatchUpdates:^{
-            //DLog(@"Deleted item at index path");
             [collectionView deleteItemsAtIndexPaths:updates];
         } completion:nil];
     }
-    
 }
+
 
 
 -(void)fetchUserFavoriteLocations
 {
-    DLog();
     // Show Activity Indicator
     [self showPlacesBeingWatchedView:YES];
     User *userInSession = [User currentlyActiveUser];
@@ -617,14 +646,14 @@ static NSInteger selectedButton = 10;
 
 
 -(void)fetchUserSpots{
-    DLog();
+    //DLog();
     // Show Activity Indicator
     [self showPlacesBeingWatchedView:YES];
     [[User currentlyActiveUser] loadPersonalSpotsWithCompletion:^(id results, NSError *error) {
         // Show Activity Indicator
         [self showPlacesBeingWatchedView:NO];
         if (error) {
-            DLog(@"There was an error - %@",error);
+            //DLog(@"There was an error - %@",error);
             [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
         }else{
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
@@ -637,8 +666,7 @@ static NSInteger selectedButton = 10;
                     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                     NSArray *sortedSpots = [spots sortedArrayUsingDescriptors:sortDescriptors];
                     
-                    //DLog(@"User spots info - %@",sortedSpots[0]);
-                    //if (!self.allSpots){ // If allspots is nil
+                   
                     self.allSpots = [NSMutableArray arrayWithArray:sortedSpots];
                     [self.allSpotsCollectionView reloadData];
                     
@@ -751,14 +779,14 @@ static NSInteger selectedButton = 10;
         [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
     }else{ // It is the nearby spots stream
         self.currentSelectedSpot = notifInfo[@"spotInfo"];
-        DLog(@"Notification Info - %@",notifInfo);
+        //DLog(@"Notification Info - %@",notifInfo);
         NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
         NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
         NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
         
         // NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
         
-        DLog(@"Is user Member - %@",isMember);
+        //DLog(@"Is user Member - %@",isMember);
         if (isMember) {
             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
         }else if([spotCode isEqualToString:@"NONE"]){
@@ -766,8 +794,10 @@ static NSInteger selectedButton = 10;
             // This album has no spot code and user is not a member, so we add user to this stream
             [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
                 if (!error){
-                    DLog(@"Album is public so joining spot");
+                    //DLog(@"Album is public so joining spot");
                     if ([results[STATUS] isEqualToString:ALRIGHT]){
+                        
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                         
                         /*[AppHelper showNotificationWithMessage:@"You are now a member of this stream" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];*/
                         
@@ -897,7 +927,7 @@ static NSInteger selectedButton = 10;
     NSString *spotCode = nil;
     
     if (self.nearbySpotsCollectionView.alpha == 1) {
-        DLog(@"Nearby spots is showing");
+        //DLog(@"Nearby spots is showing");
         cellIdentifier = @"NearbySpotCell";
         
         personalSpotCell = [self.nearbySpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
@@ -985,32 +1015,27 @@ static NSInteger selectedButton = 10;
     NSArray *spotsToDisplay = nil;
     
     if(self.allSpotsCollectionView.alpha == 1){
-        [Flurry logEvent:@"Stream_Selected_Nearby"];
+        [Flurry logEvent:@"Stream_Selected_My_Stream"];
         
         numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-        //NSArray *photos = spotsToDisplay[indexPath.item][@"photoURLs"];
-        //NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
-        //NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-        // photos = [photos sortedArrayUsingDescriptors:sortDescriptors];
         
         spotsToDisplay = self.allSpots;
         
         if (numberOfPhotos == 0) {
             NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
             NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
-            //NSString *spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
             NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
             NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
             self.currentSelectedSpot = dataPassed;
-            //NSString *isMember = spotsToDisplay[indexPath.item][@"userIsMember"];
             
             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
             
         }
     }else if (self.nearbySpotsCollectionView.alpha == 1){
-        [Flurry logEvent:@"Stream_Selected_My_Stream"];
+        [Flurry logEvent:@"Stream_Selected_Nearby"];
         spotsToDisplay = self.nearbySpots;
         numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
+        
         if (numberOfPhotos == 0){
             NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
             NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
@@ -1029,6 +1054,7 @@ static NSInteger selectedButton = 10;
                     if (!error){
                         //DLog(@"Album is public so joining spot");
                         if ([results[STATUS] isEqualToString:ALRIGHT]){
+                            
                             [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                             /*[AppHelper showNotificationWithMessage:[NSString stringWithFormat:@"You are now a member of the stream %@",spotName] type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];*/
                             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
@@ -1047,8 +1073,6 @@ static NSInteger selectedButton = 10;
             }
         }
     }
-    
-    
 }
 
 

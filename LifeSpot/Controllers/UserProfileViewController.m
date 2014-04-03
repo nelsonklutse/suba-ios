@@ -12,6 +12,7 @@
 #import "ProfileSpotsHeaderView.h"
 #import "PhotosCell.h"
 #import "PhotoStreamViewController.h"
+#import "AlbumSettingsViewController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <IDMPhotoBrowser/IDMPhotoBrowser.h>
 
@@ -22,7 +23,7 @@
 @interface UserProfileViewController ()<UICollectionViewDataSource,UICollectionViewDelegate>
 @property (weak, nonatomic) IBOutlet UICollectionView *userSpotsCollectionView;
 
-@property (strong,nonatomic) NSArray *userSpots;
+@property (strong,nonatomic) NSMutableArray *userSpots;
 @property (strong,nonatomic) NSDictionary *userProfileInfo;
 //@property (strong,nonatomic) NSString *spotID;
 @property (weak, nonatomic) IBOutlet UIView *loadingUserStreamsIndicatorView;
@@ -34,11 +35,48 @@
 - (void)fetchUserInfo:(NSString *)userId;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
 - (void)updateUserProfile;
+- (void)refreshStream;
+- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates;
+-(IBAction)unwindToUserProfile:(UIStoryboardSegue *)segue;
 @end
 
 @implementation UserProfileViewController
 
-
+-(IBAction)unwindToUserProfile:(UIStoryboardSegue *)segue
+{
+    AlbumSettingsViewController *aVC = segue.sourceViewController;
+    NSString *albumName = aVC.spotName;
+    NSString *spotId = aVC.spotID;
+    
+    int counter = 0;
+    for (NSDictionary *spotToRemove in self.userSpots){
+        
+        if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
+            
+            [self.userSpots removeObject:spotToRemove];
+            
+            [self updateCollectionView:self.userSpotsCollectionView
+                            withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:1]]];
+            
+            break;
+            
+        }
+        counter += 1;
+    }
+    
+    UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                         green:(77.0f/255.0f)
+                                          blue:(20.0f/255.0f)
+                                         alpha:1];
+    
+    [CSNotificationView showInViewController:self.navigationController
+                                   tintColor: tintColor
+                                       image:nil
+                                     message:[NSString stringWithFormat:
+                                              @"%@ removed from your list of streams",albumName]
+                                    duration:2.0f];
+    
+}
 
 - (void)viewDidLoad
 {
@@ -47,7 +85,7 @@
     
     //self.userProfileId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
     NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
-    DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
+    //DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
     if (![self.userId isEqualToString:[AppHelper userID]]){
         
         NSIndexPath *indexPath = [NSIndexPath indexPathForItem:0 inSection:0];
@@ -58,8 +96,7 @@
      [self loadSpotsCreated:userId];
      [self fetchUserInfo:userId];
     
-    //DLog(@"Presenting view controller class - %@",[self.presentingViewController class]);
-}
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshStream) name:kUserReloadStreamNotification object:nil];}
 
 
 -(void)viewWillAppear:(BOOL)animated
@@ -87,6 +124,24 @@
      name:kPhotoCellTappedAtIndexNotification
      object:nil];
 }
+
+
+-(void)refreshStream
+{
+    [self loadSpotsCreated:[AppHelper userID]];
+}
+
+
+- (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates{
+    //DLog(@"user spots - %@",self.allSpots);
+    
+        [collectionView performBatchUpdates:^{
+            [collectionView deleteItemsAtIndexPaths:updates];
+        } completion:nil];
+}
+
+
+
 
 
 -(void)galleryTappedAtIndex:(NSNotification *)aNotification
@@ -136,18 +191,15 @@
                                 NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
                                 NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                                 NSArray *sortedSpots = [createdSpots sortedArrayUsingDescriptors:sortDescriptors];
-                                self.userSpots = sortedSpots;
-                                                             
-                                //NSLog(@"Spots created by user - %@",self.userSpots);
-                                //self.nospotsView.alpha = 0;
+                                self.userSpots = [NSMutableArray arrayWithArray:sortedSpots];
                                 
                                 [self.userSpotsCollectionView reloadData];
-                            }else{
+                            }/*else{
                         [UIView animateWithDuration:0.4 animations:^{
                           //self.spotsView.alpha = 0;
                           //self.nospotsView.alpha = 1;
                         }];
-                     }
+                     }*/
                  }
             }];
   
@@ -168,12 +220,8 @@
             }else{
                 // There was a problem on the server
             }
-            
-            
-            //DLog(@"UserInfo - %@",self.userProfileInfo);
         }
     }];
-
 }
 
 
@@ -186,7 +234,6 @@
     
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         
-        //DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
         [weakSelf loadSpotsCreated:( self.userId ) ? self.userId : [User currentlyActiveUser].userID];
         [weakSelf fetchUserInfo:( self.userId ) ? self.userId : [User currentlyActiveUser].userID];
         [weakSelf.userSpotsCollectionView stopRefreshAnimation];
@@ -195,8 +242,7 @@
 
 
 #pragma mark - UICollectionViewDatasource
--(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-   // NSLog(@"Number of sections is %lu",(unsigned long)[self.userSpots count]);
+-(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
     return 2;
 }
 

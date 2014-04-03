@@ -129,6 +129,14 @@
 }
 
 
-
++(void)deletePhotoFromStream:(NSDictionary *)photoInfo completion:(PhotoDeletedCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"photo/delete"
+                              parameters:@{@"userId" : [AppHelper userID],@"photoId" : photoInfo[@"id"]} success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
 
 @end

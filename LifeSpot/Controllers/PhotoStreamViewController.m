@@ -23,7 +23,6 @@
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <IDMPhotoBrowser.h>
 #import "BOSImageResizeOperation.h"
-#import "APLPositionToBoundsMapping.h"
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
@@ -42,7 +41,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
 }
 
-@property (strong,nonatomic) NSDictionary *reportInfo;
+@property (strong,nonatomic) NSDictionary *photoInView;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
@@ -104,11 +103,9 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             towidth:(float) width
            toHeight:(float) height
           completon:(PhotoResizedCompletion)completion;
-
-//- (void)updatePhotosNumberOfLikes:(NSMutableArray *)photos photoId:(NSString *)photoId update:(NSString *)likes;
--(IBAction)dismissCoachMark:(UIButton *)sender;
-- (void)bounceLikeButton:(id)sender;
-- (void)saveLikeButtonInitialBounds:(UIButton *)button;
+- (IBAction)dismissCoachMark:(UIButton *)sender;
+- (void)deletePhotoAtIndexFromStream:(NSInteger)index;
+-(void)uploadPhotos:(NSArray *)images;
 @end
 
 @implementation PhotoStreamViewController
@@ -220,9 +217,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                self.noPhotosView.hidden = YES;
                self.photoCollectionView.hidden = NO;
                [self.photoCollectionView reloadData];
-               
                //[self preparePhotoBrowser:self.photos];
-               
            }else{
                    self.noPhotosView.hidden = NO;
                    self.photoCollectionView.hidden = YES;
@@ -323,6 +318,37 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     }];
 }
 
+-(void)deletePhotoAtIndexFromStream:(NSInteger)index
+{
+    [Flurry logEvent:@"Photo_Deleted"];
+
+    NSInteger photoIndex = index;
+    //DLog(@"PhotoInView - %@",self.photos[index]);
+    [self.photos removeObjectAtIndex:photoIndex];
+    
+    [S3PhotoFetcher deletePhotoFromStream:self.photoInView completion:^(id results, NSError *error) {
+        DLog(@"Response - %@",results);
+        if (!error) {
+            [self.photoCollectionView performBatchUpdates:^{
+                [self.photoCollectionView
+                 deleteItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:photoIndex inSection:0]]];
+            } completion:^(BOOL finished) {
+                if ([self.photos count] == 0) {
+                    self.noPhotosView.hidden = NO;
+                    self.photoCollectionView.hidden = YES;
+                }
+            }];
+            
+            
+            // Ask main stream to reload
+            [[NSNotificationCenter defaultCenter]
+             postNotificationName:kUserReloadStreamNotification object:nil];
+            
+        }
+    }];
+    
+}
+
 /*-(void)collectionView:(UICollectionView *)collectionView didEndDisplayingCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
 {
     PhotoStreamCell *photoStreamCell = (PhotoStreamCell *)cell;
@@ -412,7 +438,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 }
 
 
-
+#pragma mark - Methods
 -(void)showMembers:(id)sender
 {
     [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
@@ -434,7 +460,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 -(void)likePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath
 {
-    
+    [Flurry logEvent:@"Photo_Liked"];
     PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
     
     NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
@@ -474,6 +500,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 -(void)unlikePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath
 {
+    [Flurry logEvent:@"Photo_UnLiked"];
+
     PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
     
     NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
@@ -726,21 +754,35 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 {
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    self.reportInfo = self.photos[indexpath.row];
+    self.photoInView = self.photos[indexpath.row];
     photoToSave = cell.photoCardImage.image;
     
     
+    NSString *pictureTaker = self.photos[indexpath.item][@"pictureTaker"];
     
-    //DLog(@"Cell - selected - %@\nPhotoInfo - %@",cell.pictureTakerName,self.photos[indexpath.row]);
+    if ([[AppHelper userName] isEqualToString:pictureTaker]) {
+        //DLog(@"Allow the user to delete photo because -%@ = %@",[AppHelper userName],pictureTaker);
+        UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
+                                                                 delegate:self
+                                                        cancelButtonTitle:@"Cancel"
+                                                   destructiveButtonTitle:nil
+                                                        otherButtonTitles:@"Save Photo",@"Delete Photo",@"Report Photo", nil];
+        actionsheet.tag = 5000;
+        actionsheet.destructiveButtonIndex = 2;
+        [actionsheet showInView:self.view];
+        
+    }else{
+        UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
+                                                                 delegate:self
+                                                        cancelButtonTitle:@"Cancel"
+                                                   destructiveButtonTitle:nil
+                                                        otherButtonTitles:@"Save Photo",@"Report Photo", nil];
+        actionsheet.tag = 1000;
+        actionsheet.destructiveButtonIndex = 1;
+        [actionsheet showInView:self.view];
+    }
     
-    UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
-                                                             delegate:self
-                                                    cancelButtonTitle:@"Cancel"
-                                               destructiveButtonTitle:nil
-                                                    otherButtonTitles:@"Save Photo",@"Report Photo", nil];
-    actionsheet.tag = 1000;
-    actionsheet.destructiveButtonIndex = 1;
-    [actionsheet showInView:self.view];
+    
     
 }
 
@@ -778,7 +820,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 }
 
--(void)bounceLikeButton:(id)sender
+/*-(void)bounceLikeButton:(id)sender
 {
     // Reset the buttons bounds to their initial state.  See the comment in
     ((UIButton *)sender).bounds = self.likeButtonBounds;
@@ -809,7 +851,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     self.likeButtonAnimator = animator;
 
-}
+}*/
 
 
 
@@ -819,9 +861,9 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     NSArray *activityItems = nil;
     NSString *shareText = nil;
     if (objectOfInterest == kSpot) {
-        DLog(@"SpotId - %@",self.spotID);
+        //DLog(@"SpotId - %@",self.spotID);
         NSString *randomString = [self getRandomPINString:5];
-        DLog(@"Random String - %@",randomString);
+        //DLog(@"Random String - %@",randomString);
         shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navigationItem.title,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
         
         
@@ -851,7 +893,9 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 {
     [self.library saveImage:photo toAlbum:@"Suba Photos" completion:^(NSURL *assetURL, NSError *error) {
         [AppHelper showNotificationWithMessage:@"Image saved in camera roll" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+        
         [Flurry logEvent:@"Photo_Saved"];
+        
     }failure:^(NSError *error){
         [AppHelper showAlert:@"Save image error"
                      message:@"There was an error saving the photo"
@@ -873,7 +917,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                                                      //green:(77.0f/255.0f)
                                                       //blue:(20.0f/255.0f)
                                                      //alpha:1];
-    picker.maximumNumberOfSelection = 1;
+    picker.maximumNumberOfSelection = 3;
     picker.assetsFilter = [ALAssetsFilter allPhotos];
     picker.delegate = self;
     
@@ -888,18 +932,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     if ([assets count] == 1) {
         ALAsset *asset = (ALAsset *)assets[0];
         ALAssetRepresentation *representation = asset.defaultRepresentation;
-       
-        
-        
-        
         UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
                                                            scale:1.0f
                                                      orientation:(UIImageOrientation)ALAssetOrientationUp];
         
-        DLog(@"Image resolution - %@",NSStringFromCGSize(fullResolutionImage.size));
-        
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-        //dateFormatter se
         
         [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
         NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
@@ -936,7 +973,9 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                     
         }];*/
         
-    }else{
+    }else if([assets count] > 1){ // User selected more than one photo
+        
+    }else if([assets count] == 0){
         [AppHelper showAlert:@"Add Photo"
                      message:@"You did not select a photo to add to the stream"
                      buttons:@[@"OK"] delegate:nil];
@@ -988,8 +1027,18 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 #pragma mark - UIActionSheet Delegate Methods
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    //DLog(@"photo info - %@",self.reportInfo);
-    if (actionSheet.tag == 1000) {
+    if (actionSheet.tag == 5000){
+        
+        if(buttonIndex == 0){
+            //User wants to save photo
+            [self savePhoto:photoToSave];
+        }else if (buttonIndex == 1){
+            DLog(@"User wants to delete photo");
+            NSInteger index = [self.photos indexOfObject:self.photoInView];
+            [self deletePhotoAtIndexFromStream:index];
+        }
+        
+    }else if (actionSheet.tag == 1000){
         if(buttonIndex == 0){
             //User wants to save photo
             [self savePhoto:photoToSave];
@@ -1008,11 +1057,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         }
         
         // form report photo info
-        DLog(@"report info - %@",self.reportInfo);
+        //DLog(@"report info - %@",self.reportInfo);
         NSDictionary *params = @{
-                                 @"photoId":self.reportInfo[@"id"],
+                                 @"photoId":self.photoInView[@"id"],
                                  @"spotId" : self.spotID, 
-                                 @"pictureTakerName" : self.reportInfo[@"pictureTaker"],
+                                 @"pictureTakerName" : self.photoInView[@"pictureTaker"],
                                  @"reporterId" : [AppHelper userID],
                                  @"reportType" : reportType
                                  };
@@ -1025,12 +1074,12 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     if (buttonIndex == kTakeCamera) {
         // Call the Camera here
-        DLog(@"Calling camera");
+        //DLog(@"Calling camera");
         //[self pickPhoto:kTakeCamera];
         [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
     }else if (buttonIndex == kGallery){
         // Choose from the Gallery
-        DLog(@"Using the assets picker");
+        //DLog(@"Using the assets picker");
         //[self pickPhoto:kGallery];
         [self performSelector:@selector(pickImage:) withObject:@(kGallery) afterDelay:0.5];
     }
@@ -1043,8 +1092,12 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 -(void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
 {
-    if (actionSheet.tag == 1000) {
+    if (actionSheet.tag == 1000){
         if (buttonIndex == 1) {
+            [self showReportOptions];
+        }
+    }else if (actionSheet.tag == 5000){
+        if (buttonIndex == 2) {
             [self showReportOptions];
         }
     }
@@ -1106,6 +1159,88 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 {
     [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
+
+
+
+-(void)uploadPhotos:(NSArray *)images
+{
+    NSMutableArray *mutableOperations = [NSMutableArray array];
+    
+    NSString *userId = [User currentlyActiveUser].userID;
+    NSString *spotId = self.spotID;
+    
+    NSDictionary *params = @{@"userId": userId,@"spotId": spotId};
+    AFHTTPSessionManager *manager = [SubaAPIClient sharedInstance];
+    
+    NSURL *baseURL = (NSURL *)[SubaAPIClient subaAPIBaseURL];
+    
+    NSString *urlPath = [[NSURL URLWithString:@"spot/pictures/add" relativeToURL:baseURL] absoluteString];
+    
+    for (NSData *imageData in images){
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        
+        [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+        NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *name = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+        name = [name stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+        name = [name stringByReplacingCharactersInRange:NSMakeRange([name length]-7, 7) withString:@""];
+        
+        NSURLRequest *request = [manager.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:urlPath parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+            
+            [formData appendPartWithFileData:imageData name:@"images[]" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
+        }];
+        
+        AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
+        
+        [mutableOperations addObject:operation];
+    }
+    
+    NSArray *operations = [AFURLConnectionOperation batchOfRequestOperations:mutableOperations progressBlock:^(NSUInteger numberOfFinishedOperations, NSUInteger totalNumberOfOperations) {
+        DLog(@"%lu of %lu complete", (unsigned long)numberOfFinishedOperations, (unsigned long)totalNumberOfOperations);
+    } completionBlock:^(NSArray *operations) {
+        DLog(@"All operations in batch complete");
+        
+        /*dispatch_async(dispatch_get_main_queue(), ^{
+            //NSLog(@"response - %@",woperation.responseData);
+            NSError *error = nil;
+            // Check for when we are getting a nil data parameter back
+            NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
+            if (error) {
+                DLog(@"Error serializing %@", error);
+                [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+            }else{
+                
+                //DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
+                
+                if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
+                    [Flurry logEvent:@"Photo_Upload"];
+                    
+                    [[NSNotificationCenter defaultCenter]
+                     postNotificationName:kUserReloadStreamNotification object:nil];
+                    
+                    self.noPhotosView.hidden = YES;
+                    self.photoCollectionView.hidden = NO;
+                    if (!self.photos) {
+                        
+                        self.photos = [NSMutableArray arrayWithObject:photoInfo];
+                    }else [self.photos insertObject:photoInfo atIndex:0];
+                    
+                    [self upDateCollectionViewWithCapturedPhoto:photoInfo];
+                    
+                }
+            }
+        });*/
+
+        
+    }];
+    
+    
+    
+    [[NSOperationQueue mainQueue] addOperations:operations waitUntilFinished:NO];
+}
+
+
+
 
 
 -(void)uploadPhoto:(NSData *)imageData WithName:(NSString *)name
@@ -1241,6 +1376,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             AlbumSettingsViewController *albumVC = segue.destinationViewController;
             albumVC.spotID = (NSString *)sender;
             albumVC.spotInfo = self.spotInfo;
+            albumVC.whereToUnwind = [self.parentViewController childViewControllers][0];
+            DLog(@"WhereToUnwind - %@",[albumVC.whereToUnwind class]);
         }
     }else if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
         if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]){

@@ -35,6 +35,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *leaveAlbumButton;
 @property (weak, nonatomic) IBOutlet UIView *loadStreamSettingsIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamSettingsOndicator;
+@property (weak, nonatomic) IBOutlet UIButton *deleteButton;
 
 - (IBAction)unWindToSpotSettingsFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToSpotSettingsFromDone:(UIStoryboardSegue *)segue;
@@ -46,10 +47,12 @@
 - (IBAction)locationButtonTapped:(id)sender;
 - (IBAction)leaveAlbumAction:(UIButton *)sender;
 - (IBAction)dismissKeypadOnBackgroundClick:(id)sender;
+- (IBAction)deleteStreamAction:(id)sender;
 
 - (void)updateViewWithSpotInfo;
 - (void)disableViews;
 - (void)saveAlbumInfo:(NSMutableDictionary *)spotInfo indicator:(id)indicator;
+- (BOOL)canUserDeleteStream;
 @end
 
 @implementation AlbumSettingsViewController
@@ -69,11 +72,11 @@
     }
     
     self.leaveAlbumButton.enabled = NO;
-    
-    DLog(@"Stream info - %@",self.spotInfo);
+    //self.deleteButton.enabled = NO;
+    //DLog(@"Stream info - %@",self.spotInfo);
     
     if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
-        DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
+      //  DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
         
         // User did not create this album so disable stuff that he should not do
         [self disableViews];
@@ -117,50 +120,65 @@
 -(void)updateViewWithSpotInfo
 {
     // Show activity indicator
-    [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView indicator:self.loadingStreamSettingsOndicator flag:YES];
-    DLog(@"Showing");
+    [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView
+                         indicator:self.loadingStreamSettingsOndicator flag:YES];
+    
+    
     [Spot fetchSpotInfo:self.spotID User:[User currentlyActiveUser].userID
              completion:^(id results, NSError *error){
                  
                  [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView indicator:self.loadingStreamSettingsOndicator flag:NO];
-                 DLog(@"Hiding");
-                 //DLog(@"Spot Info - %@",results);
-                 if (!error) {
+                 
+                 if (!error){
                      if ([results[STATUS] isEqualToString:ALRIGHT]) {
                          self.spotInfo = (NSDictionary *)results;
                          self.spotName =  self.spotNameField.text = self.spotInfo[@"spotName"];
                          
                         self.spotKeyField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
                          ? @"" : self.spotInfo[@"spotCode"];
-                         
+                
                 [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
+                [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateDisabled];
+                         
                 //self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
                          
                 self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
                 self.addPrivacySwitch.on = ([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
-                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:sANYONE]) ? YES:NO;
+                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"]
+                                               isEqualToString:sANYONE]) ? YES : NO;
                          
-                         if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
-                             DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
+                if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
+                //DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
                              
-                             // User did not create this album so disable stuff that he should not do
-                             [self disableViews];
-                             self.leaveAlbumButton.hidden = NO;
-                             [self.view viewWithTag:100].hidden = NO;
-                         }else{
+                        // User did not create this album so disable stuff that he should not do
+                              [self disableViews];
+                              self.leaveAlbumButton.hidden = NO;
+                              [self.view viewWithTag:100].hidden = NO;
+                             
+                         }else{ // If user is creator
                              self.leaveAlbumButton.hidden = YES;
                              [self.view viewWithTag:100].hidden = YES;
+                             
+                             if ([self canUserDeleteStream]) {
+                                 self.deleteButton.hidden = NO;
+                                }else{
+                                 self.deleteButton.hidden = YES;
+                            
+                             }
                          }
-
-                     }
+                        }
                      
-                   self.leaveAlbumButton.enabled = YES;
+                            self.leaveAlbumButton.enabled = YES;
                  }else{
-                     [AppHelper showAlert:@"Stream Settings Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                     
+                     [AppHelper showAlert:@"Stream Settings Error"
+                                  message:error.localizedDescription
+                                  buttons:@[@"OK"]
+                                 delegate:nil];
                  }
                  
              }];
-}
+ }
 
 
 
@@ -254,6 +272,22 @@
     }];
 }
 
+-(BOOL)canUserDeleteStream
+{
+    NSArray *members = self.spotInfo[@"members"];
+    NSInteger photos = [self.spotInfo[@"numberOfPhotos"] integerValue];
+    
+    if ([members count] == 1 || photos == 0){ // There are no members in this stream
+        return YES;
+        // Show delete stream button
+    }
+    /*else if(photos == 0){ // There are no photos in this stream
+        // Show delete stream button
+        return YES;
+    }*/
+    
+    return NO;
+}
 
 -(void)disableViews
 {
@@ -304,8 +338,9 @@
 {
     // This is a destructive action. Prompt the user later before finally deleting the album
     
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Album" message:@"Are you sure you want to leave this album" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"I'm sure", nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Stream" message:@"Are you sure you want to leave this album" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"I'm sure", nil];
     
+    alert.tag = 5000;
     [alert show];
     
 }
@@ -315,6 +350,16 @@
     [self.spotNameField resignFirstResponder];
     [self.spotKeyField resignFirstResponder];
     //[self.spotDescription resignFirstResponder];
+}
+
+- (IBAction)deleteStreamAction:(id)sender {
+    // This is a destructive action. Prompt the user later before finally deleting the album
+    
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Delete Stream" message:@"Are you sure you want to delete this album" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"I'm sure", nil];
+    
+    alert.tag = 2000;
+    [alert show];
+
 }
 
 
@@ -347,25 +392,45 @@
 #pragma mark - AlertView Delegate
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    //DLog(@"button index - %ld",(long)buttonIndex);
-    if (buttonIndex == 1) {
-        // User surely wants to leave the album
-       // DLog(@"User surely wants to leave the album");
-        [[User currentlyActiveUser] leaveSpot:self.spotID completion:^(id results, NSError *error) {
-            //DLog(@"And back");
-            if (!error) {
-                if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                    [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                    [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+    if (alertView.tag == 5000){
+        if (buttonIndex == 1){
+            // User surely wants to leave the stream
+            
+            [[User currentlyActiveUser] leaveSpot:self.spotID completion:^(id results, NSError *error) {
+                
+                if (!error) {
+                    [Flurry logEvent:@"Leave_Stream"];
+                    if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                        
+                        [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                    }
                 }
-            }
-        }];
+            }];
+            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+        }
+        
+    }else if (alertView.tag == 2000){ // We are deleting a stream
+        if(buttonIndex == 1){
+            
+            [[User currentlyActiveUser] deleteStream:self.spotID completion:^(id results, NSError *error) {
+                
+                if (!error){
+                    
+                    [Flurry logEvent:@"Stream_Deleted"];
+                    
+                    if ([results[STATUS] isEqualToString:ALRIGHT]){
+                        if ([self.whereToUnwind class] == [MainStreamViewController class]) {
+                            [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                        }else{
+                           [self performSegueWithIdentifier:@"DELETE_STREAM_TO_USERPROFILE" sender:nil]; 
+                        }
+                        
+                    }
+                }
+            }];
+        }
+        
     }
-    
 }
-
-
-
-
 
 @end

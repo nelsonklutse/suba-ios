@@ -153,9 +153,7 @@
         NSString *isMember = notifInfo[@"spotInfo"][@"userIsMember"];
         NSString *spotCode = notifInfo[@"spotInfo"][@"spotCode"];
         NSString *spotId = notifInfo[@"spotInfo"][@"spotId"];
-        // NSString *spotName = notifInfo[@"spotInfo"][@"spot"];
-        
-        DLog(@"Is user Member - %@",isMember);
+    
         if (isMember) {
             [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:photos];
         }else if ([spotCode isEqualToString:@"NONE"]) {
@@ -163,10 +161,12 @@
             // This album has no spot code and user is not a member, so we add user to this stream
             [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
                 if (!error){
-                    DLog(@"Album is public so joining spot");
+                    //DLog(@"Album is public so joining spot");
                     if ([results[STATUS] isEqualToString:ALRIGHT]){
                         
-                        [AppHelper showNotificationWithMessage:@"You are now a member of this spot" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                        
+                        //[AppHelper showNotificationWithMessage:@"You are now a member of this spot" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
                         
                         [self performSegueWithIdentifier:@"FromWatchingStreamsToPhotoStream" sender:photos];
                     }else{
@@ -194,7 +194,7 @@
 #pragma mark - UICollection View Datasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    DLog(@"Watching - %@",self.spotsWatching);
+    //DLog(@"Watching - %@",self.spotsWatching);
     return [self.spotsWatching count]; 
 }
 

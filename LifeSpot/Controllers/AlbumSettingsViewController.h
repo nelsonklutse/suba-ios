@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface AlbumSettingsViewController : UIViewController
+@property UIViewController *whereToUnwind;
 
 @property (copy,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSDictionary *spotInfo;
