@@ -105,7 +105,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
           completon:(PhotoResizedCompletion)completion;
 - (IBAction)dismissCoachMark:(UIButton *)sender;
 - (void)deletePhotoAtIndexFromStream:(NSInteger)index;
--(void)uploadPhotos:(NSArray *)images;
+- (void)uploadPhotos:(NSArray *)images;
+- (void)upDateCollectionViewWithCapturedPhotos:(NSArray *)photoInfo;
 @end
 
 @implementation PhotoStreamViewController
@@ -917,7 +918,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                                                      //green:(77.0f/255.0f)
                                                       //blue:(20.0f/255.0f)
                                                      //alpha:1];
-    picker.maximumNumberOfSelection = 3;
+    picker.maximumNumberOfSelection = 5;
     picker.assetsFilter = [ALAssetsFilter allPhotos];
     picker.delegate = self;
     
@@ -974,7 +975,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         }];*/
         
     }else if([assets count] > 1){ // User selected more than one photo
-        
+        [self uploadPhotos:assets];
     }else if([assets count] == 0){
         [AppHelper showAlert:@"Add Photo"
                      message:@"You did not select a photo to add to the stream"
@@ -1162,9 +1163,10 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 
 
--(void)uploadPhotos:(NSArray *)images
+-(void)uploadPhotos:(NSArray *)assets
 {
-    NSMutableArray *mutableOperations = [NSMutableArray array];
+    NSMutableArray *imagesData = [NSMutableArray arrayWithCapacity:2];
+   // NSMutableArray *mutableOperations = [NSMutableArray array];
     
     NSString *userId = [User currentlyActiveUser].userID;
     NSString *spotId = self.spotID;
@@ -1175,8 +1177,14 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     NSURL *baseURL = (NSURL *)[SubaAPIClient subaAPIBaseURL];
     
     NSString *urlPath = [[NSURL URLWithString:@"spot/pictures/add" relativeToURL:baseURL] absoluteString];
+    __block NSMutableURLRequest *request = nil;
     
-    for (NSData *imageData in images){
+    for (ALAsset *asset in assets){
+        ALAssetRepresentation *representation = asset.defaultRepresentation;
+        UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage
+                                                           scale:1.0f
+                                                     orientation:(UIImageOrientation)ALAssetOrientationUp];
+        
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         
         [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
@@ -1185,32 +1193,51 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         name = [name stringByReplacingOccurrencesOfString:@"-" withString:@":"];
         name = [name stringByReplacingCharactersInRange:NSMakeRange([name length]-7, 7) withString:@""];
         
-        NSURLRequest *request = [manager.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:urlPath parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-            
-            [formData appendPartWithFileData:imageData name:@"images[]" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
-        }];
+        [imagesData addObject:@{@"imageData": fullResolutionImage, @"imageName" : name}];
         
-        AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
-        
-        [mutableOperations addObject:operation];
+        DLog(@"Filling images data with name - %@",name);
     }
     
-    NSArray *operations = [AFURLConnectionOperation batchOfRequestOperations:mutableOperations progressBlock:^(NSUInteger numberOfFinishedOperations, NSUInteger totalNumberOfOperations) {
-        DLog(@"%lu of %lu complete", (unsigned long)numberOfFinishedOperations, (unsigned long)totalNumberOfOperations);
-    } completionBlock:^(NSArray *operations) {
-        DLog(@"All operations in batch complete");
+    request = [manager.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:urlPath parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
         
-        /*dispatch_async(dispatch_get_main_queue(), ^{
-            //NSLog(@"response - %@",woperation.responseData);
+        for (NSDictionary *imageInfo in imagesData){
+            //DLog(@"Images being resized");
+            
+            //[self resizePhoto:imageInfo[@"imageData"] towidth:640.0f toHeight:852.0f
+              //      completon:^(UIImage *compressedPhoto, NSError *error){
+                        //DLog(@"Does it even get here - %@",imageInfo[@"imageName"]);
+                    NSData *imageData = UIImageJPEGRepresentation(imageInfo[@"imageData"], 1.0);
+                    [formData appendPartWithFileData:imageData name:imageInfo[@"imageName"] fileName:[NSString stringWithFormat:@"%@.jpg",imageInfo[@"imageName"]] mimeType:@"image/jpeg"];
+                //}];
+             }
+        //DLog(@"DONE");
+     }];
+    
+    AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
+    __weak AFURLConnectionOperation *woperation = operation;
+    
+    self.imageUploadProgressView.hidden = NO;
+    
+    [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite){
+        self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
+        
+        if (self.imageUploadProgressView.progress == 1.0){
+            self.imageUploadProgressView.hidden = YES; // or remove from superview
+        }
+    }];
+   
+    
+    [operation setCompletionBlock:^{
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
             NSError *error = nil;
+            
             // Check for when we are getting a nil data parameter back
             NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
             if (error) {
                 DLog(@"Error serializing %@", error);
                 [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
             }else{
-                
-                //DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
                 
                 if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
                     [Flurry logEvent:@"Photo_Upload"];
@@ -1222,21 +1249,24 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                     self.photoCollectionView.hidden = NO;
                     if (!self.photos) {
                         
-                        self.photos = [NSMutableArray arrayWithObject:photoInfo];
-                    }else [self.photos insertObject:photoInfo atIndex:0];
+                        self.photos = [NSMutableArray arrayWithArray:photoInfo[@"photos"]];
+                    }else{
+                       //[self.photos insertObject:photoInfo atIndex:0];
+                        [self.photos insertObjects:photoInfo[@"photos"] atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [photoInfo[@"photos"] count])]];
+                        DLog(@"Photos Uploaded - %@",photoInfo); 
+                    }
                     
-                    [self upDateCollectionViewWithCapturedPhoto:photoInfo];
+                    [self upDateCollectionViewWithCapturedPhotos:photoInfo[@"photos"]];
                     
                 }
             }
-        });*/
-
-        
+        });
     }];
     
+    [operation start];
     
     
-    [[NSOperationQueue mainQueue] addOperations:operations waitUntilFinished:NO];
+    
 }
 
 
@@ -1354,6 +1384,49 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     }];
     
 }
+
+
+-(void)upDateCollectionViewWithCapturedPhotos:(NSArray *)photoInfo{
+    NSMutableArray *indexPaths = [NSMutableArray arrayWithCapacity:2];
+    for (int x = 0; x < [photoInfo count]; x++) {
+        [indexPaths addObject:[NSIndexPath indexPathForItem:x inSection:0]];
+    }
+    
+    [self.photoCollectionView performBatchUpdates:^{
+        [self.photoCollectionView insertItemsAtIndexPaths:indexPaths];
+    } completion:^(BOOL finished) {
+        [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
+    }];
+    
+    // Tell push provider to send
+    
+    NSArray *members = self.spotInfo[@"members"];
+    
+    NSMutableArray *memberIds = [NSMutableArray arrayWithCapacity:1];
+    for (NSDictionary *member in members){
+        if (![member[@"userName"] isEqualToString:[AppHelper userName]]) {
+            [memberIds addObject:member[@"id"]];
+        }
+        
+    }
+    
+    NSDictionary *params = @{@"spotId": self.spotID,
+                             @"spotName" : self.spotName,
+                             @"memberIds" : [memberIds description]};
+    
+    //DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
+    
+    [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
+                                        parameters:params
+                         constructingBodyWithBlock:nil
+                                           success:^(NSURLSessionDataTask *task, id responseObject) {
+                                               DLog(@"From push provider - %@",responseObject);
+                                           } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                               DLog(@"Error - %@",error);
+                                           }];
+    
+}
+
 
 
 #pragma mark - Segues

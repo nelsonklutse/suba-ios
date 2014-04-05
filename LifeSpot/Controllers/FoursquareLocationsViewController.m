@@ -12,11 +12,11 @@
 #import "AlbumSettingsViewController.h"
 #import "Location.h"
 
-@interface FoursquareLocationsViewController ()<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate,CLLocationManagerDelegate>
+@interface FoursquareLocationsViewController ()<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
 
 @property (retain,nonatomic) NSIndexPath *lastSelected;
 @property (strong,nonatomic) Location *venueChosen;
-
+@property (strong,nonatomic) NSArray *subaLocations;
 @property (retain,nonatomic) NSMutableArray *filteredLocations;
 @property (retain,nonatomic) CLLocation *userLocation;
 @property (retain,nonatomic) NSString *currentLocationSelected;
@@ -30,6 +30,7 @@
 
 //- (IBAction)locationChosen:(id)sender;
 - (void)displayFourSquareLocations:(Location *)locationPassed;
+- (void)displaySubaLocations:(Location *)locationPassed;
 - (void)showLoadingLocationsView:(BOOL)flag;
 - (NSArray *)retrieveVenueDetails:(NSDictionary *)venue;
 - (IBAction)dismissViewController:(UIBarButtonItem *)sender;
@@ -54,6 +55,8 @@ static CLLocationManager *locationManager;
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
             [locationManager startUpdatingLocation];
+            
+            
         }else{
             [AppHelper showAlert:@"Location Denied"
                          message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
@@ -75,8 +78,23 @@ static CLLocationManager *locationManager;
     
     [super viewWillAppear:YES];
     [locationManager startUpdatingLocation];
-    //DLog(@"Started monitoring Locations");
     
+    self.userLocation = [locationManager location];
+    if (self.userLocation != nil){
+        
+        NSString *latitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.latitude];
+        NSString *longitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.longitude];
+        self.currentLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
+        
+        if (self.locations == nil){
+            [self displayFourSquareLocations:self.currentLocation];
+        }
+        if (self.subaLocations == nil) {
+            DLog(@"Suba Locations is nil with Location - %@",[self.currentLocation description]);
+            
+            [self displaySubaLocations:self.currentLocation];
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning
@@ -86,21 +104,94 @@ static CLLocationManager *locationManager;
 }
 
 #pragma mark - Table view data source
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+{
+    // Return the number of sections.
+    return 3;
+}
+
+
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+    return 40.0f;
+}
+
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    /*CGFloat height = 60.0f;
+    
+    if (indexPath.section == 1) {
+        height = 60.0f;
+    }*/
+    
+    return 60.0f;
+}
+
+
+-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+{
+    NSString *headerTitle = nil;
+    if (section == 0) {
+        headerTitle = @"Add Location";
+    }else if (section == 1){
+     headerTitle = @"Pick a Location - SUBA";
+    }else if (section == 2){
+        headerTitle = @"Pick a Location - FOURSQUARE";
+    }
+    
+    return headerTitle;
+}
+
+
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-
-    // Return the number of rows in the section.
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
+    NSInteger numberOfRows = 0;
+    if (section == 0) {
         
-        return [self.filteredLocations count];
-    }else{
-    
-    return [self.locations count];
+        return 1;
+    }else if(section == 1){
+        return [self.subaLocations count];
+    }else if (section == 2){
+        if (tableView == self.searchDisplayController.searchResultsTableView) {
+            
+            numberOfRows = [self.filteredLocations count];
+        }else{
+            
+            numberOfRows = [self.locations count];
+        }
     }
+    
+    return numberOfRows;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == 0) {
+        static NSString *CellIdentifier = @"AddNewLocation";
+        UITableViewCell *newLocationCell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+        newLocationCell.textLabel.text = @"Add a new  Location";
+        
+        return newLocationCell;
+    }else if(indexPath.section == 1){
+        static NSString *CellIdentifier = @"SubaVenueCell";
+        UITableViewCell *subaLocationCell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+        if ([self.subaLocations count] == 0) {
+           subaLocationCell.textLabel.text = @"No Suba locations near you";
+        }else{
+            if (self.lastSelected.row == indexPath.row){
+                //DLog(@"Last selected row - %li",(long)indexPath.row);
+                //subaLocationCell.accessoryType = UITableViewCellAccessoryCheckmark;
+                
+            }else subaLocationCell.accessoryType = UITableViewCellAccessoryNone;
+            
+            NSDictionary *subaLocation = self.subaLocations[indexPath.row];
+            subaLocationCell.textLabel.text = subaLocation[@"locationName"];
+        }
+        
+        
+        return subaLocationCell;
+    }else if (indexPath.section == 2){
     static NSString *CellIdentifier = @"VenueCell";
     FoursquareVenueCell *cell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
         // Configure the cell...
@@ -108,8 +199,8 @@ static CLLocationManager *locationManager;
         cell.textLabel.text = [self.filteredLocations[indexPath.row] objectForKey:@"name"];
     }else{
         if (self.lastSelected.row == indexPath.row){ 
-            DLog(@"Last selected row - %i",indexPath.row);
-            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            //DLog(@"Last selected row - %li",(long)indexPath.row);
+            //cell.accessoryType = UITableViewCellAccessoryCheckmark;
             
         }else cell.accessoryType = UITableViewCellAccessoryNone;
         
@@ -126,12 +217,52 @@ static CLLocationManager *locationManager;
     }
     
     return cell;
+   }
+    
+    return nil;
 }
 
 
 #pragma mark - TableView Delegate
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     //NSLog(@"Selected");
+    
+    
+    if (indexPath.section == 0) {
+        // Check whether we have access to the user's location
+        if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+            
+            [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+            
+        }else{
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Add Location" message:@"Add your location to create this stream" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Done", nil];
+        alert.alertViewStyle = UIAlertViewStylePlainTextInput;
+        
+        [alert show];
+    }
+    
+    }else if(indexPath.section == 1){
+        if (self.lastSelected != indexPath) {
+            UITableViewCell *oldCell = [self.venuesTableView cellForRowAtIndexPath:self.lastSelected];
+            
+            oldCell.accessoryType = UITableViewCellAccessoryNone;
+            
+            UITableViewCell *cell = [self.venuesTableView cellForRowAtIndexPath:indexPath];
+            self.currentLocationSelected = cell.textLabel.text;
+            NSString *latitude = self.subaLocations[indexPath.row][@"latitude"];
+            NSString *longitude = self.subaLocations[indexPath.row][@"latitude"];
+            //NSString *city = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"city"];
+            //NSString *country = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"country"];
+            
+            self.venueChosen = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.currentLocationSelected];
+            
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+            
+            self.lastSelected = indexPath;
+        }
+
+    }else if(indexPath.section == 2){
     
     if (tableView == self.venuesTableView) {
         if (self.lastSelected != indexPath) {
@@ -152,7 +283,7 @@ static CLLocationManager *locationManager;
             cell.accessoryType = UITableViewCellAccessoryCheckmark;
             
             self.lastSelected = indexPath;
-            DLog(@"Last selected - %@",indexPath);
+            //DLog(@"Last selected - %@",indexPath);
             
         }
     }else if(tableView == self.searchDisplayController.searchResultsTableView){
@@ -167,8 +298,9 @@ static CLLocationManager *locationManager;
             self.lastSelected = indexPath;
         }
     }
-    
+  }
     self.doneButton.enabled = YES;
+ 
 }
 
 /*
@@ -253,6 +385,23 @@ static CLLocationManager *locationManager;
     
 }
 
+
+-(void)displaySubaLocations:(Location *)locationPassed
+{
+    DLog(@"Suba Locations");
+    
+    [[SubaAPIClient sharedInstance] GET:@"location/nearby"
+                             parameters:@{@"latitude": locationPassed.latitude,@"longitude" : locationPassed.longitude}
+                                success:^(NSURLSessionDataTask *task,id responseObject){
+                                    if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+                                        DLog(@"Suba Locations - %@",responseObject[@"subaLocations"]);
+                                        self.subaLocations = responseObject[@"subaLocations"];
+                                        [self.venuesTableView reloadData];
+                                    }
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"Error - %@",error);
+    }];
+}
 
 
 - (IBAction)locationChosen:(id)sender {
@@ -366,14 +515,37 @@ static CLLocationManager *locationManager;
         
         NSString *latitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.latitude];
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.longitude];
+        self.currentLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
+        
         if (self.locations == nil){
-            DLog(@"Locations not set");
-            self.currentLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
             [self displayFourSquareLocations:self.currentLocation];
+        }
+        if (self.subaLocations == nil) {
+           //[self displaySubaLocations:self.currentLocation];
         }
         
     }
 }
+
+
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    if ([error code] == kCLErrorDenied) {
+        //you had denied
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
+    
+}
+
+-(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied){
+        
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
+}
+
+
 
 
 -(void)showLoadingLocationsView:(BOOL)flag
@@ -382,6 +554,21 @@ static CLLocationManager *locationManager;
     if (flag == YES) {
         [self.searchingVenuesIndicator startAnimating];
     }else [self.searchingVenuesIndicator stopAnimating];
+}
+
+
+#pragma mark - Alert View Delegate Methods
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex == 1) {
+       self.currentLocationSelected = [alertView textFieldAtIndex:0].text;
+        //self.userLocation = [locationManager location];
+        NSString *latitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.latitude];
+        NSString *longitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.longitude];
+       self.venueChosen = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.currentLocationSelected];
+        
+        [self dismissViewController:self.doneButton];
+    }
 }
 
 @end

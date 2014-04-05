@@ -9,6 +9,11 @@
 #import <UIKit/UIKit.h>
 #import <AMScrollingNavbarViewController.h>
 
-@interface MainStreamViewController : AMScrollingNavbarViewController
+@interface MainStreamViewController : AMScrollingNavbarViewController{
+    BOOL nearbyNeedsUpdate;
+    BOOL myStreamsNeedsUpdate;
+    BOOL placesNeedsUpdate;
+}
+
 
 @end

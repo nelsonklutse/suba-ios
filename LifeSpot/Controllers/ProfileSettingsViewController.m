@@ -231,6 +231,8 @@
 {
     
     CTAssetsPickerController *picker = [[CTAssetsPickerController alloc] init];
+    picker.navigationBar.translucent = NO;
+    picker.navigationItem.rightBarButtonItem.tintColor = [UIColor whiteColor];
     picker.maximumNumberOfSelection = 1;
     picker.assetsFilter = [ALAssetsFilter allPhotos];
     picker.delegate = self;

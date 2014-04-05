@@ -132,7 +132,6 @@ static CLLocationManager *locationManager;
         
     }];
     
-
 }
 
 
@@ -144,12 +143,15 @@ static CLLocationManager *locationManager;
     
     // 1. View Privacy  2. Add Privacy 3. Location 4.
     [self.creatingSpotIndicator startAnimating];
+    if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }else{
     if ([locationManager location]) {
         [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location] completionHandler:^(NSArray *placemarks, NSError *error) {
             
             if (!error) {
                 CLPlacemark *placemark = placemarks[0];
-                DLog(@"Placemarks - %@",placemark.locality);
+                //DLog(@"Placemarks - %@",placemark.locality);
                 currentCity = placemark.locality;
                 currentCountry = placemark.country;
                 
@@ -171,13 +173,11 @@ static CLLocationManager *locationManager;
                         self.createdSpotDetails = (NSDictionary *)results;
                         [self performSegueWithIdentifier:@"spotWasCreatedSegue" sender:nil];
                         
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                     }else{
                         DLog(@"Error - %@",error);
                     }
                 }];
-                
-                
-
                 
             }else{
                 DLog(@"Error - %@",error);
@@ -185,14 +185,15 @@ static CLLocationManager *locationManager;
             
         }];
     }
-    
-    
-   }
+  }
+}
+
 
 - (IBAction)showNearbyLocations:(id)sender
 {
     
 }
+
 
 -(void)askLocationPermission
 {
@@ -248,7 +249,24 @@ static CLLocationManager *locationManager;
     }
 }
 
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+{
+    if ([error code] == kCLErrorDenied) {
+        //you had denied
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
+    
+}
 
+-(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+{
+    if (status == kCLAuthorizationStatusDenied){
+        
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+    }
+}
+
+#pragma mark - AlertView Delegate Methods
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     if (buttonIndex == 1){
@@ -293,7 +311,7 @@ static CLLocationManager *locationManager;
         PhotoStreamViewController *pVC = segue.destinationViewController;
         
         pVC.spotID = sender;
-        DLog(@"SpotID - %@",pVC.spotID);
+        //DLog(@"SpotID - %@",pVC.spotID);
     }
 }
 

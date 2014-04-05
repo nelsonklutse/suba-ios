@@ -96,7 +96,9 @@
      [self loadSpotsCreated:userId];
      [self fetchUserInfo:userId];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshStream) name:kUserReloadStreamNotification object:nil];}
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshStream) name:kUserReloadStreamNotification object:nil];
+
+}
 
 
 -(void)viewWillAppear:(BOOL)animated
@@ -128,9 +130,10 @@
 
 -(void)refreshStream
 {
-    [self loadSpotsCreated:[AppHelper userID]];
+    if (self != nil) {
+      [self loadSpotsCreated:[AppHelper userID]];
+   }
 }
-
 
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates{
     //DLog(@"user spots - %@",self.allSpots);
@@ -186,7 +189,7 @@
                             }else{
                             // If the user has created spots
                             if ([results[@"spots"] count] > 0){
-                                DLog(@"User spots"); 
+                                //DLog(@"User spots");
                                 NSArray *createdSpots = results[@"spots"];
                                 NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
                                 NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];

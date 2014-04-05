@@ -406,7 +406,7 @@
                     }
                 }
             }];
-            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+            
         }
         
     }else if (alertView.tag == 2000){ // We are deleting a stream
@@ -422,6 +422,7 @@
                         if ([self.whereToUnwind class] == [MainStreamViewController class]) {
                             [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
                         }else{
+                           [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                            [self performSegueWithIdentifier:@"DELETE_STREAM_TO_USERPROFILE" sender:nil]; 
                         }
                         

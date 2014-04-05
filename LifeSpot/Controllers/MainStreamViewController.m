@@ -117,13 +117,15 @@ static NSInteger selectedButton = 10;
         for (NSDictionary *spotToRemove in self.allSpots){
             
             if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
-                DLog(@"Removing stream with info - %@",spotToRemove);
+                //DLog(@"Removing stream with info - %@",spotToRemove);
                 [self.allSpots removeObject:spotToRemove];
                 
                 // If nearby streams is showing, make my streams show
                // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
                 
                     if (self.nearbySpotsCollectionView.alpha == 1){ // Nearby streams is showing
+                        
+                        nearbyNeedsUpdate = YES;
                         
                         [self.nearbySpotsButton setSelected:NO];
                         [self.allSpotsButton setSelected:YES];
@@ -133,7 +135,7 @@ static NSInteger selectedButton = 10;
                         self.allSpotsCollectionView.alpha = 1;
                         self.placesBeingWatchedTableView.alpha = 0;
                         [self fetchUserSpots];
-                        DLog(@"Nearby was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
+                        //DLog(@"Nearby was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
                     
                     }else if (self.placesBeingWatchedTableView.alpha == 1){
                         
@@ -145,9 +147,9 @@ static NSInteger selectedButton = 10;
                         self.allSpotsCollectionView.alpha = 1;
                         self.placesBeingWatchedTableView.alpha = 0;
                         [self fetchUserSpots];
-                        DLog(@"Places was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
+                        //DLog(@"Places was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
                     }else{
-                        
+                        myStreamsNeedsUpdate = YES;
                         [self updateCollectionView:self.allSpotsCollectionView
                                         withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]
                                         updateType:kCollectionViewUpdateDelete];
@@ -339,7 +341,7 @@ static NSInteger selectedButton = 10;
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
         
-        if ([self.placesBeingWatched count] == 0) {
+        if ([self.placesBeingWatched count] == 0 || placesNeedsUpdate == YES){
             [self fetchUserFavoriteLocations];
         }else{
             [self.placesBeingWatchedTableView reloadData];
@@ -357,11 +359,12 @@ static NSInteger selectedButton = 10;
     [Flurry logEvent:@"Nearby_Tapped"];
     selectedButton = kNearbyButton;
     self.noDataView.alpha = 0;
+    
     [UIView animateWithDuration:0.5 animations:^{
         self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.nearbySpotsCollectionView.alpha = 1;
         
-        if (!self.nearbySpots) {
+        if (!self.nearbySpots || nearbyNeedsUpdate == YES){
             self.currentLocation = [locationManager location];
             
             if (self.currentLocation != nil){
@@ -395,11 +398,11 @@ static NSInteger selectedButton = 10;
         self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.allSpotsCollectionView.alpha = 1;
         
-        if (!self.allSpots) {
-            DLog(@"All spots is nil");
+        if (!self.allSpots || myStreamsNeedsUpdate == YES) {
+            //DLog(@"All spots is nil");
             [self fetchUserSpots];
         }else{
-            DLog(@"All spots - %@",[self.allSpots debugDescription]);
+            //DLog(@"All spots - %@",[self.allSpots debugDescription]);
             [self.allSpotsCollectionView reloadData];
         }
         
@@ -617,7 +620,7 @@ static NSInteger selectedButton = 10;
         }else{
             
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                DLog(@"Results - %@",results);
+                //DLog(@"Results - %@",results);
                 NSArray *locationsInfo = [results objectForKey:@"watching"];
                 
                 if ([locationsInfo count] > 0) { // User is watching locations
@@ -658,7 +661,7 @@ static NSInteger selectedButton = 10;
         }else{
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 NSArray *spots = (NSArray *)results[@"spots"];
-                //DLog(@"Nearby streams - %@",spots);
+                //DLog(@"My streams - %@",spots);
                 
                 if ([spots count] > 0){ // We've got some spots to display
                     self.noDataView.alpha = 0;
@@ -853,8 +856,45 @@ static NSInteger selectedButton = 10;
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 60;
+    return 65.0f;
 }
+
+-(UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return UITableViewCellEditingStyleDelete;
+}
+
+-(NSString *)tableView:(UITableView *)tableView titleForDeleteConfirmationButtonForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return @"UnWatch";
+}
+
+- (void)tableView:(UITableView*)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath*)indexPath {
+    // delete your data for this row from here
+    //numRows--;
+    
+    
+     [Flurry logEvent:@"unWatch_Place"];
+    
+    
+    User *user = [User currentlyActiveUser];
+    
+    [user removeLocationFromWatching:self.placesBeingWatched[indexPath.row][@"prettyName"] Completion:^(id results, NSError *error) {
+        if (!error && [results[STATUS] isEqualToString:ALRIGHT]) {
+           [self.placesBeingWatched removeObjectAtIndex:indexPath.row];
+            [self.placesBeingWatchedTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
+                                                    withRowAnimation:UITableViewRowAnimationLeft];
+            
+            if ([self.placesBeingWatched count] == 0){
+                self.placesBeingWatchedTableView.alpha = 0;
+                self.noDataView.alpha = 1;
+                self.noDataLabel.text = @"When you watch locations, they appear here. Tap Explore to start watching";
+            }
+        }
+    }];
+
+}
+
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {

@@ -129,7 +129,7 @@ static CLLocationManager *locationManager;
     
     // Let's got the server
     ExplorePlacesCell *cell = (ExplorePlacesCell *)sender.superview.superview.superview;
-    DLog(@"Sender state  - %u\n",sender.state);
+    
      User *user = [User currentlyActiveUser];
     
     NSIndexPath *indexPath = [self.venuesTableView indexPathForCell:cell];
@@ -140,7 +140,7 @@ static CLLocationManager *locationManager;
 
     
     if (sender.state == UIControlStateNormal || sender.state == UIControlStateHighlighted) {
-        DLog(@"ControlState is normal or highlighted so we follow place");
+        //DLog(@"ControlState is normal or highlighted so we follow place");
         
         Location *location = [[Location alloc] initWithLat:lat Lng:lng PrettyName:placeName];
         [user addLocationToWatching:location Completion:^(id results, NSError *error) {
@@ -164,7 +164,7 @@ static CLLocationManager *locationManager;
         }];
         
     }else{
-        DLog(@"Button is in selected state");
+        //DLog(@"Button is in selected state");
         
         // unfollow place
         [user removeLocationFromWatching:placeName Completion:^(id results, NSError *error) {
@@ -191,8 +191,8 @@ static CLLocationManager *locationManager;
             }
         }];
     }
-    
 }
+
 
 -(void)checkForLocation
 {
@@ -202,18 +202,19 @@ static CLLocationManager *locationManager;
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
             [locationManager startUpdatingLocation];
+       
        /* }else{
             [AppHelper showAlert:@"Location Denied"
-                         message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
+                         message:@"You have disabled location services for Suba.
+        Please go to Settings->Privacy->Location and enable location for Suba"
                          buttons:@[@"OK"] delegate:nil];
         }*/
-
-        
         
     }else{
-        [AppHelper showAlert:@"Location Services Disabled"
-                     message:@"Location services is disabled for this app. Please enable location services to see nearby spots" buttons:@[@"OK"] delegate:nil];
         
+        [AppHelper showAlert:@"Location Services Disabled"
+                     message:@"Location services is disabled for this app. Please enable location services to see nearby spots"
+                     buttons:@[@"OK"] delegate:nil];
     }
 }
 
