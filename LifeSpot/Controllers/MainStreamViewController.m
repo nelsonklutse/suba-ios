@@ -125,7 +125,7 @@ static NSInteger selectedButton = 10;
                 
                     if (self.nearbySpotsCollectionView.alpha == 1){ // Nearby streams is showing
                         
-                        nearbyNeedsUpdate = YES;
+                        self.nearbyNeedsUpdate = YES;
                         
                         [self.nearbySpotsButton setSelected:NO];
                         [self.allSpotsButton setSelected:YES];
@@ -149,7 +149,7 @@ static NSInteger selectedButton = 10;
                         [self fetchUserSpots];
                         //DLog(@"Places was showing so switching to my streams - %f",self.allSpotsCollectionView.alpha);
                     }else{
-                        myStreamsNeedsUpdate = YES;
+                        self.myStreamsNeedsUpdate = YES;
                         [self updateCollectionView:self.allSpotsCollectionView
                                         withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]
                                         updateType:kCollectionViewUpdateDelete];
@@ -341,7 +341,7 @@ static NSInteger selectedButton = 10;
         self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
         self.placesBeingWatchedTableView.alpha = 1;
         
-        if ([self.placesBeingWatched count] == 0 || placesNeedsUpdate == YES){
+        if ([self.placesBeingWatched count] == 0 || self.placesNeedsUpdate == YES){
             [self fetchUserFavoriteLocations];
         }else{
             [self.placesBeingWatchedTableView reloadData];
@@ -364,7 +364,7 @@ static NSInteger selectedButton = 10;
         self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.nearbySpotsCollectionView.alpha = 1;
         
-        if (!self.nearbySpots || nearbyNeedsUpdate == YES){
+        if (!self.nearbySpots || self.nearbyNeedsUpdate == YES){
             self.currentLocation = [locationManager location];
             
             if (self.currentLocation != nil){
@@ -398,7 +398,7 @@ static NSInteger selectedButton = 10;
         self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
         self.allSpotsCollectionView.alpha = 1;
         
-        if (!self.allSpots || myStreamsNeedsUpdate == YES) {
+        if (!self.allSpots || self.myStreamsNeedsUpdate == YES) {
             //DLog(@"All spots is nil");
             [self fetchUserSpots];
         }else{
@@ -838,8 +838,7 @@ static NSInteger selectedButton = 10;
                          buttons:@[@"OK"] delegate:nil];
         }*/
     }else{
-        [AppHelper showAlert:@"Location Services Disabled"
-                     message:@"Location services is disabled for this app. Please enable location services to see nearby spots" buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
         
     }
 }
@@ -870,10 +869,7 @@ static NSInteger selectedButton = 10;
 }
 
 - (void)tableView:(UITableView*)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath*)indexPath {
-    // delete your data for this row from here
-    //numRows--;
-    
-    
+        
      [Flurry logEvent:@"unWatch_Place"];
     
     
@@ -883,7 +879,7 @@ static NSInteger selectedButton = 10;
         if (!error && [results[STATUS] isEqualToString:ALRIGHT]) {
            [self.placesBeingWatched removeObjectAtIndex:indexPath.row];
             [self.placesBeingWatchedTableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath]
-                                                    withRowAnimation:UITableViewRowAnimationLeft];
+                                                    withRowAnimation:UITableViewRowAnimationFade];
             
             if ([self.placesBeingWatched count] == 0){
                 self.placesBeingWatchedTableView.alpha = 0;

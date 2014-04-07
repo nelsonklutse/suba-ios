@@ -7,6 +7,7 @@
 //
 
 #import "ExplorePlacesViewController.h"
+#import "MainStreamViewController.h"
 #import "ExplorePlacesCell.h"
 #import "SearchBarCell.h"
 #import "Location.h"
@@ -160,6 +161,10 @@ static CLLocationManager *locationManager;
                     
                     [sender setSelected:YES];
                 }];
+                
+                MainStreamViewController *mainVC = [self.storyboard instantiateViewControllerWithIdentifier:@"MAINSTREAM_VC"];
+                
+                mainVC.placesNeedsUpdate = YES; 
             }
         }];
         
@@ -212,9 +217,7 @@ static CLLocationManager *locationManager;
         
     }else{
         
-        [AppHelper showAlert:@"Location Services Disabled"
-                     message:@"Location services is disabled for this app. Please enable location services to see nearby spots"
-                     buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to explore places, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }
 }
 

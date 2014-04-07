@@ -348,7 +348,7 @@
 #pragma mark - UIIMagePickerController Delegate methods
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    DLog(@"media info - %@",info);
+    //DLog(@"media info - %@",info);
     UIImage *image = info[UIImagePickerControllerOriginalImage];
     self.profilePictureView.image = image;
     
@@ -386,9 +386,9 @@
 {
     [self.profilePictureView setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@",[AppHelper profilePhotoURL]]] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     
-    DLog(@"Profile photo URL - %@",[AppHelper profilePhotoURL]);
+    //DLog(@"Profile photo URL - %@",[AppHelper profilePhotoURL]);
     
-    if ([[AppHelper firstName] isEqualToString:@""]){
+    if ([[AppHelper firstName] isEqualToString:@""] || [AppHelper firstName] == NULL){
         self.usrFullNameField.placeholder = @"Full Name";
     }else{
         self.fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
@@ -397,7 +397,7 @@
     
     self.usrNameField.text = [AppHelper userName];
     //self.usrEmailField.text = [AppHelper userEmail];
-    DLog(@"Name - %@",[AppHelper firstName]);
+    DLog(@"Name class - %@",[[AppHelper firstName] class]);
 }
 
 

@@ -167,7 +167,7 @@
     
     if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
         // First launch or from logout
-        DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
+        //DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
         
         __unsafe_unretained typeof(self) weakSelf = self;
         
@@ -201,7 +201,7 @@
         
    }else{
         // Setting Tab Bar as root view controller
-        DLog(@"Setting TabBar Controller as the root view controller");
+        //DLog(@"Setting TabBar Controller as the root view controller");
         self.window.rootViewController = self.mainTabBarController;
     }
     
@@ -232,7 +232,7 @@
     }else{*/
         // Register application wide default preferences
     
-        DLog(@"userid - %@",[AppHelper userID]);
+        //DLog(@"userid - %@",[AppHelper userID]);
     
         NSDictionary *appDefaults = @{
                                       FIRST_NAME : @"",
@@ -247,7 +247,7 @@
                                       };
     
     if ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL) {
-        DLog(@"Registering App Defaults");
+        //DLog(@"Registering App Defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
     } 
     
