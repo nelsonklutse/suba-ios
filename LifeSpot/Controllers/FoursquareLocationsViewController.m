@@ -189,7 +189,6 @@ static CLLocationManager *locationManager;
             subaLocationCell.textLabel.text = subaLocation[@"locationName"];
         }
         
-        
         return subaLocationCell;
     }else if (indexPath.section == 2){
     static NSString *CellIdentifier = @"VenueCell";
@@ -228,7 +227,7 @@ static CLLocationManager *locationManager;
     //NSLog(@"Selected");
     
     
-    if (indexPath.section == 0) {
+    if (indexPath.section == 0){
         // Check whether we have access to the user's location
         if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
             
@@ -236,7 +235,7 @@ static CLLocationManager *locationManager;
             
         }else{
         
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Add Location" message:@"Add your location to create this stream" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Done", nil];
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Add Location" message:@"Name your location" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Done", nil];
         alert.alertViewStyle = UIAlertViewStylePlainTextInput;
         
         [alert show];

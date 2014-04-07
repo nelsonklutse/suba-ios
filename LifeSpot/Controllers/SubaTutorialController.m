@@ -61,15 +61,28 @@
                 if (!error) {
                     NSDictionary<FBGraphUser> *user = result;
                     
+                    NSString *userEmail = [user valueForKey:@"email"];
+                    if (userEmail == NULL) {
+                        [AppHelper showAlert:@"Facebook Error"
+                                     message:@"There was an issue retrieving your facebook email address."
+                                     buttons:@[@"OK"] delegate:nil];
+                        
+                        [AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
+                        self.connectingToFacebookView.alpha = 0;
+                    }else{
                     NSString *pictureURL = [[[result valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
                     
                     [AppHelper setProfilePhotoURL:pictureURL];
+                    
+                    DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                    
+                    
                     
                     NSDictionary *fbSignUpDetails = @{
                                                       @"id" :user.id,
                                                       FIRST_NAME: user.first_name,
                                                       LAST_NAME : user.last_name,
-                                                      EMAIL : [user valueForKey:@"email"],
+                                                      EMAIL :  userEmail,
                                                       USER_NAME : user.username,
                                                       @"pass" : @"",
                                                       PROFILE_PHOTO_URL : pictureURL
@@ -96,11 +109,11 @@
                             
                         }
                     }];
-                    
-                    
-                }
+                 }
+              }
             }];
         }
+    
     }];
     
 }

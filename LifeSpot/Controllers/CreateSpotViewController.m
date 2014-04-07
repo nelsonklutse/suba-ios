@@ -158,6 +158,7 @@ static CLLocationManager *locationManager;
                 NSString *viewPrivacy = @"0";
                 NSString *addPrivacy = @"0";
                 NSString *spotKey = @"NONE";
+                
                 self.spotName = self.spotNameField.text;
                 
                 User *user = [User currentlyActiveUser];
@@ -165,6 +166,7 @@ static CLLocationManager *locationManager;
                 Spot *spot = [[Spot alloc] initWithName:self.spotName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
                 self.chosenVenueLocation.city = currentCity;
                 self.chosenVenueLocation.country = currentCountry;
+                
                 [user createSpot:spot completion:^(id results, NSError *error) {
                     [self.creatingSpotIndicator stopAnimating];
                     if (!error){
