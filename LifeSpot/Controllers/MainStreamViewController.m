@@ -49,7 +49,7 @@ typedef enum{
 #define SelectedButtonKey @"SelectedButtonKey"
 
 
-@interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
+@interface MainStreamViewController()<UITableViewDataSource,UITableViewDelegate,UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate,UITabBarControllerDelegate>
 
 @property (weak, nonatomic) IBOutlet UIView *coachMarkView;
 @property (strong,nonatomic) NSMutableArray *placesBeingWatched;
@@ -93,10 +93,12 @@ typedef enum{
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)indexPaths updateType:(ColectionViewUpdateType)updateType;
 - (void)checkForLocation;
 - (void)galleryTappedAtIndex:(NSNotification *)aNotification;
+- (void)showSearchBar;
 //- (void)networkChanged:(NSNotification *)aNotification;
 - (IBAction)switchCoachMark:(UIButton *)sender;
 - (IBAction)showuserProfile:(UIButton *)sender;
 - (IBAction)actionBtn:(id)sender;
+
 @end
 
 @implementation MainStreamViewController
@@ -199,6 +201,11 @@ static NSInteger selectedButton = 10;
 {
     [super viewDidLoad];
 	
+    /*UserProfileViewController *userPVC = [self.storyboard instantiateViewControllerWithIdentifier:@"USERPROFILE_SCENE"];
+    UIBarButtonItem *searchBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSearch target:self action:@selector(showSearchBar)];
+    
+    self.navigationItem.rightBarButtonItems = [NSArray arrayWithObjects:self.navigationItem.rightBarButtonItem,searchBarButtonItem,nil];*/
+    
     [Flurry logAllPageViews:self.tabBarController];
     
     UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
@@ -210,7 +217,7 @@ static NSInteger selectedButton = 10;
     self.navigationItem.titleView = navImageView;
     
     //self.allSpots = [NSMutableArray arrayWithCapacity:5];
-    DLog(@"What stream is showing?\nPlaces View alpha %f\nNeaby spots view alpha - %f\nAllspots view alpha - %f\nSelected button -%i",self.placesBeingWatchedTableView.alpha,self.nearbySpotsCollectionView.alpha,self.allSpotsCollectionView.alpha,selectedButton);
+    //DLog(@"What stream is showing?\nPlaces View alpha %f\nNeaby spots view alpha - %f\nAllspots view alpha - %f\nSelected button -%i",self.placesBeingWatchedTableView.alpha,self.nearbySpotsCollectionView.alpha,self.allSpotsCollectionView.alpha,selectedButton);
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
         if (selectedButton == 10){
@@ -302,12 +309,27 @@ static NSInteger selectedButton = 10;
     
     //DLog(@"Location manager - %@",locationManager);
     if (locationManager) {
-        DLog();
+     //   DLog();
         [locationManager startUpdatingLocation];
     }else{
         [self checkForLocation];
     }
+}
+
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
     
+    NSInteger appsessions = [AppHelper appSessions];
+    //DLog(@"Number of app sessions - %li", (long)appsessions);
+    if (appsessions % 5 == 0 && [[AppHelper hasUserInvited] isEqualToString:@"NO"]) {
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Tell your friends about Suba" message:@"Enjoying Suba? Why don't you invite your friends" delegate:self cancelButtonTitle:@"Later" otherButtonTitles:@"Invite", nil];
+        
+        alert.tag = 100;
+        [alert show];
+    }
 }
 
 
@@ -319,7 +341,7 @@ static NSInteger selectedButton = 10;
      removeObserver:self
      name:kPhotoGalleryTappedAtIndexNotification
      object:nil];
-    DLog();
+    //DLog();
     
     selectedButton = 10;
     [locationManager stopUpdatingLocation];
@@ -429,7 +451,7 @@ static NSInteger selectedButton = 10;
             self.coachMarkImage.alpha = 0;
             self.gotItButton.alpha = 0;
             self.coachMarkView.alpha = 0;
-            //exploreImgView.alpha = 0;
+            self.gotItButton.titleLabel.text = @"OK";
             //[exploreImgView removeFromSuperview];
             [self.coachMarkImage setTag:1000];
         }];
@@ -819,6 +841,7 @@ static NSInteger selectedButton = 10;
             UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
             
             alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+            alertView.tag = 10;
             [alertView show];
         }
     }
@@ -844,6 +867,10 @@ static NSInteger selectedButton = 10;
 }
 
 
+-(void)showSearchBar
+{
+    DLog(@"Showing search bar");
+}
 
 
 
@@ -972,10 +999,8 @@ static NSInteger selectedButton = 10;
             personalSpotCell.pGallery.hidden = NO;
         }
         spotsToDisplay = self.nearbySpots;
-        //DLog(@"Identifier set for nearby spotsCell");
         
         spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
-        //DLog(@"SpotCode - %@",spotCode);
         if ([spotCode isEqualToString:@"NONE"] || [spotCode class] == [NSNull class]){
             //DLog(@"SpotCode is - %@ so hiding private stream",spotCode);
             personalSpotCell.privateStreamImageView.hidden = YES;
@@ -987,19 +1012,15 @@ static NSInteger selectedButton = 10;
     }else if (self.allSpotsCollectionView.alpha == 1){
         cellIdentifier = @"PersonalSpotCell";
         spotsToDisplay = self.allSpots;
-        personalSpotCell = [self.allSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-        //DLog(@"All Spots - %@",spotsToDisplay);
+        personalSpotCell = [self.allSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];;
         if (personalSpotCell.pGallery.hidden){
             personalSpotCell.pGallery.hidden = NO;
         }
     }
     
-    
-    //DLog(@"Spots to display - %@",spotsToDisplay);
     [[personalSpotCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     NSString *photos = spotsToDisplay[indexPath.row][@"photos"];
-    //DLog(@"%@ photos - %@",spotsToDisplay[indexPath.row][@"creatorName"],photos);
     personalSpotCell.userNameLabel.text = (spotsToDisplay[indexPath.row][@"creatorName"] != NULL)?spotsToDisplay[indexPath.row][@"creatorName"] : @"";
     
     NSString *imageSrc = spotsToDisplay[indexPath.row][@"creatorPhoto"];
@@ -1012,11 +1033,10 @@ static NSInteger selectedButton = 10;
     
     
     
-    if ([photos integerValue] > 0 ) {  // If there are photos to display
+    if ([photos integerValue] > 0) {  // If there are photos to display
             
             [personalSpotCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
-            //[personalSpotCell mScroller];
-            
+        
             if ([personalSpotCell.pGallery superview]) {
                 [personalSpotCell.pGallery removeFromSuperview];
             }
@@ -1030,10 +1050,10 @@ static NSInteger selectedButton = 10;
         noPhotosImageView.image = [UIImage imageNamed:@"noPhoto"];
         noPhotosImageView.contentMode = UIViewContentModeScaleAspectFit;
         
-        if ([noPhotosImageView superview]) {
-            //DLog(@"View has no subviews coz there are no photos");
+        if ([noPhotosImageView superview]){
             [noPhotosImageView removeFromSuperview];
         }
+        
         [personalSpotCell.photoGalleryView addSubview:noPhotosImageView];
     }
     
@@ -1245,11 +1265,27 @@ static NSInteger selectedButton = 10;
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
     //DLog(@"button index - %ld",(long)buttonIndex);
-    if (buttonIndex == 1) {
-        NSString *passcode = [alertView textFieldAtIndex:0].text;
-        [self joinSpot:passcode data:self.currentSelectedSpot];
+    if (alertView.tag == 10) {
+        if (buttonIndex == 1) {
+            NSString *passcode = [alertView textFieldAtIndex:0].text;
+            [self joinSpot:passcode data:self.currentSelectedSpot];
+        }
+    }else if(alertView.tag == 100){
+        [AppHelper userHasInvited:@"YES"];
         
+        if (buttonIndex == 1) {
+            //UserProfileViewController *userPVC = [self.storyboard instantiateViewControllerWithIdentifier:@"USERPROFILE_SCENE"];
+            DLog(@"Class - %@",[[[self.tabBarController viewControllers][3] childViewControllers][0] class]);
+            UserProfileViewController *userVC = (UserProfileViewController *)[[self.tabBarController viewControllers][3] childViewControllers][0];
+            userVC.shouldAutoInvite = YES;
+            [self.tabBarController.delegate tabBarController:self.tabBarController
+                                  shouldSelectViewController:[self.tabBarController viewControllers][3]];
+            
+            self.tabBarController.selectedViewController = [self.tabBarController viewControllers][3];
+            
+        }
     }
+    
     
 }
 
@@ -1349,10 +1385,19 @@ static NSInteger selectedButton = 10;
 {
     self.allSpots = self.nearbySpots = self.placesBeingWatched = nil;
     
-    DLog();
+    //DLog();
     [[NSNotificationCenter defaultCenter] removeObserver:kUserReloadStreamNotification];
     
 }
+
+
+
+#pragma mark - UITabBarController delegate methods
+-(BOOL)tabBarController:(UITabBarController *)tabBarController shouldSelectViewController:(UIViewController *)viewController
+{
+    return YES;
+}
+
 
 
 

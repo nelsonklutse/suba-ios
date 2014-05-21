@@ -7,16 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A1C630018FCA2800041AD83 /* FXBlurView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A1C62FF18FCA2800041AD83 /* FXBlurView.m */; };
+		2A1C630218FCA30A0041AD83 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1C630118FCA30A0041AD83 /* Accelerate.framework */; };
 		2A2BD6C7189E462E00B9F4B5 /* SubaTutorialController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */; };
 		2A463D691885728E00549C7B /* PhotoStreamViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D681885728E00549C7B /* PhotoStreamViewController.m */; };
 		2A463D6C1885777600549C7B /* PhotoStreamCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A463D6B1885777600549C7B /* PhotoStreamCell.m */; };
 		2A504B1D189AB359008E3C40 /* PlacesWatchingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */; };
 		2A504B20189AB8D1008E3C40 /* PlacesWatchingStreamCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A504B1F189AB8D1008E3C40 /* PlacesWatchingStreamCell.m */; };
+		2A5A4033190FB9EC00AFD3DD /* Invites.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2A5A4032190FB9EC00AFD3DD /* Invites.storyboard */; };
+		2A5A4036190FBD7F00AFD3DD /* CleverInvitesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5A4035190FBD7F00AFD3DD /* CleverInvitesViewController.m */; };
 		2A5E3A751889B32C003F4933 /* ExplorePlacesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */; };
 		2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5E3A771889BD1E003F4933 /* ExplorePlacesCell.m */; };
 		2A74F90E18A56C6800889227 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2A74F90D18A56C6800889227 /* Images.xcassets */; };
 		2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */; };
 		2A7A27C8188D5C0E000A2A45 /* SearchBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */; };
+		2A8114F719275573003C37DC /* Comment.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A8114F619275573003C37DC /* Comment.m */; };
 		2AB0FA50187AD276000AB276 /* ICETutorialController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4D187AD276000AB276 /* ICETutorialController.m */; };
 		2AB0FA51187AD276000AB276 /* ICETutorialPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA4F187AD276000AB276 /* ICETutorialPage.m */; };
 		2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AB0FA56187AD3BE000AB276 /* SignUpViewController.m */; };
@@ -53,12 +58,15 @@
 		2ACAE5F4188705E40076A665 /* AlbumMembersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5F3188705E40076A665 /* AlbumMembersViewController.m */; };
 		2ACAE5F7188705F90076A665 /* InvitesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5F6188705F90076A665 /* InvitesViewController.m */; };
 		2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5F918870CF80076A665 /* UserProfileViewController.m */; };
+		2ACBAD8019254A810012B777 /* CommentsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACBAD7F19254A810012B777 /* CommentsViewController.m */; };
+		2ACFCE8B19102A4E00DEC987 /* facebook_v1.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 2ACFCE8A19102A4E00DEC987 /* facebook_v1.jpg */; };
 		2AD721E418B27153002872C5 /* FacebookAPIClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AD721E318B27153002872C5 /* FacebookAPIClient.m */; };
 		2ADE846118802BEF001C2515 /* PersonalSpotCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ADE846018802BEF001C2515 /* PersonalSpotCell.m */; };
 		2AEBB62A188FC69400EAA879 /* PasswordChangeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB629188FC69400EAA879 /* PasswordChangeViewController.m */; };
 		2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */; };
 		2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */; };
 		2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AEBB6321890FE1600EAA879 /* TermsViewController.m */; };
+		2AFC4B9D1926C9A200753058 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AFC4B9C1926C9A200753058 /* AVFoundation.framework */; };
 		2AFF59AC189944F100F051A0 /* ActivityViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AFF59AB189944F100F051A0 /* ActivityViewController.m */; };
 		89B30E4518AE47BF0082C420 /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89B30E4418AE47BF0082C420 /* FacebookSDK.framework */; };
 		89E3DC6618604E9D00D193F4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89E3DC6518604E9D00D193F4 /* Foundation.framework */; };
@@ -104,6 +112,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2A1C62FE18FCA2800041AD83 /* FXBlurView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FXBlurView.h; sourceTree = "<group>"; };
+		2A1C62FF18FCA2800041AD83 /* FXBlurView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FXBlurView.m; sourceTree = "<group>"; };
+		2A1C630118FCA30A0041AD83 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		2A1C630318FCA3140041AD83 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		2A2BD6C5189E462E00B9F4B5 /* SubaTutorialController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubaTutorialController.h; sourceTree = "<group>"; };
 		2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SubaTutorialController.m; sourceTree = "<group>"; };
 		2A463D671885728E00549C7B /* PhotoStreamViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotoStreamViewController.h; sourceTree = "<group>"; };
@@ -114,6 +126,9 @@
 		2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlacesWatchingViewController.m; sourceTree = "<group>"; };
 		2A504B1E189AB8D1008E3C40 /* PlacesWatchingStreamCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlacesWatchingStreamCell.h; sourceTree = "<group>"; };
 		2A504B1F189AB8D1008E3C40 /* PlacesWatchingStreamCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlacesWatchingStreamCell.m; sourceTree = "<group>"; };
+		2A5A4032190FB9EC00AFD3DD /* Invites.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Invites.storyboard; sourceTree = "<group>"; };
+		2A5A4034190FBD7F00AFD3DD /* CleverInvitesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CleverInvitesViewController.h; sourceTree = "<group>"; };
+		2A5A4035190FBD7F00AFD3DD /* CleverInvitesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CleverInvitesViewController.m; sourceTree = "<group>"; };
 		2A5E3A731889B32C003F4933 /* ExplorePlacesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesViewController.h; sourceTree = "<group>"; };
 		2A5E3A741889B32C003F4933 /* ExplorePlacesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExplorePlacesViewController.m; sourceTree = "<group>"; };
 		2A5E3A761889BD1E003F4933 /* ExplorePlacesCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExplorePlacesCell.h; sourceTree = "<group>"; };
@@ -123,6 +138,8 @@
 		2A7A27C4188D3DED000A2A45 /* UserSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserSettingsViewController.m; sourceTree = "<group>"; };
 		2A7A27C6188D5C0E000A2A45 /* SearchBarCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SearchBarCell.h; sourceTree = "<group>"; };
 		2A7A27C7188D5C0E000A2A45 /* SearchBarCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SearchBarCell.m; sourceTree = "<group>"; };
+		2A8114F519275573003C37DC /* Comment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Comment.h; sourceTree = "<group>"; };
+		2A8114F619275573003C37DC /* Comment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Comment.m; sourceTree = "<group>"; };
 		2AB0FA4C187AD276000AB276 /* ICETutorialController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialController.h; sourceTree = "<group>"; };
 		2AB0FA4D187AD276000AB276 /* ICETutorialController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ICETutorialController.m; sourceTree = "<group>"; };
 		2AB0FA4E187AD276000AB276 /* ICETutorialPage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICETutorialPage.h; sourceTree = "<group>"; };
@@ -189,6 +206,9 @@
 		2ACAE5F6188705F90076A665 /* InvitesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InvitesViewController.m; sourceTree = "<group>"; };
 		2ACAE5F818870CF80076A665 /* UserProfileViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserProfileViewController.h; sourceTree = "<group>"; };
 		2ACAE5F918870CF80076A665 /* UserProfileViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserProfileViewController.m; sourceTree = "<group>"; };
+		2ACBAD7E19254A810012B777 /* CommentsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CommentsViewController.h; sourceTree = "<group>"; };
+		2ACBAD7F19254A810012B777 /* CommentsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CommentsViewController.m; sourceTree = "<group>"; };
+		2ACFCE8A19102A4E00DEC987 /* facebook_v1.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = facebook_v1.jpg; sourceTree = "<group>"; };
 		2AD721E218B27153002872C5 /* FacebookAPIClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FacebookAPIClient.h; sourceTree = "<group>"; };
 		2AD721E318B27153002872C5 /* FacebookAPIClient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FacebookAPIClient.m; sourceTree = "<group>"; };
 		2ADE845F18802BEF001C2515 /* PersonalSpotCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PersonalSpotCell.h; sourceTree = "<group>"; };
@@ -201,6 +221,7 @@
 		2AEBB62F1890DC2300EAA879 /* InviteFriendsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InviteFriendsViewController.m; sourceTree = "<group>"; };
 		2AEBB6311890FE1600EAA879 /* TermsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TermsViewController.h; sourceTree = "<group>"; };
 		2AEBB6321890FE1600EAA879 /* TermsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TermsViewController.m; sourceTree = "<group>"; };
+		2AFC4B9C1926C9A200753058 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		2AFF59AA189944F100F051A0 /* ActivityViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ActivityViewController.h; sourceTree = "<group>"; };
 		2AFF59AB189944F100F051A0 /* ActivityViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ActivityViewController.m; sourceTree = "<group>"; };
 		811E7F3518D646779B2C69BA /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -248,6 +269,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2AFC4B9D1926C9A200753058 /* AVFoundation.framework in Frameworks */,
+				2A1C630218FCA30A0041AD83 /* Accelerate.framework in Frameworks */,
 				2AB0FA83187C35F8000AB276 /* AddressBook.framework in Frameworks */,
 				89B30E4518AE47BF0082C420 /* FacebookSDK.framework in Frameworks */,
 				2AB6220F18B3AB9900356DB5 /* libFlurry_4.3.2.a in Frameworks */,
@@ -275,6 +298,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2A1C62FD18FCA2800041AD83 /* FXBlurView */ = {
+			isa = PBXGroup;
+			children = (
+				2A1C62FE18FCA2800041AD83 /* FXBlurView.h */,
+				2A1C62FF18FCA2800041AD83 /* FXBlurView.m */,
+			);
+			name = FXBlurView;
+			path = ../../FXBlurView;
+			sourceTree = "<group>";
+		};
 		2AB0FA4A187AD276000AB276 /* Vendor */ = {
 			isa = PBXGroup;
 			children = (
@@ -299,6 +332,8 @@
 		2AB0FA52187AD286000AB276 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				2ACBAD7E19254A810012B777 /* CommentsViewController.h */,
+				2ACBAD7F19254A810012B777 /* CommentsViewController.m */,
 				2AEBB62B188FCA7300EAA879 /* ProfileSettingsViewController.m */,
 				2AEBB62C188FCA7300EAA879 /* ProfileSettingsViewController.h */,
 				2AEBB628188FC69400EAA879 /* PasswordChangeViewController.h */,
@@ -337,6 +372,8 @@
 				2A504B1C189AB359008E3C40 /* PlacesWatchingViewController.m */,
 				2A2BD6C5189E462E00B9F4B5 /* SubaTutorialController.h */,
 				2A2BD6C6189E462E00B9F4B5 /* SubaTutorialController.m */,
+				2A5A4034190FBD7F00AFD3DD /* CleverInvitesViewController.h */,
+				2A5A4035190FBD7F00AFD3DD /* CleverInvitesViewController.m */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -354,6 +391,8 @@
 				2AB0FA68187AD96C000AB276 /* Photo.m */,
 				2AB0FA69187AD96C000AB276 /* Privacy.h */,
 				2AB0FA6A187AD96C000AB276 /* Privacy.m */,
+				2A8114F519275573003C37DC /* Comment.h */,
+				2A8114F619275573003C37DC /* Comment.m */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -396,6 +435,7 @@
 		2AB0FA5A187AD7FE000AB276 /* AppHelper */ = {
 			isa = PBXGroup;
 			children = (
+				2A1C62FD18FCA2800041AD83 /* FXBlurView */,
 				2AB0FA71187AD9EE000AB276 /* Networking Extensions */,
 				2AB0FA5C187AD911000AB276 /* AppHelper.h */,
 				2AB0FA5D187AD911000AB276 /* AppHelper.m */,
@@ -434,10 +474,10 @@
 				89E3DC6B18604E9D00D193F4 /* LifeSpot */,
 				2A74F90D18A56C6800889227 /* Images.xcassets */,
 				2AB0FA4A187AD276000AB276 /* Vendor */,
-				89E3DC8A18604E9D00D193F4 /* LifeSpotTests */,
 				89E3DC6418604E9D00D193F4 /* Frameworks */,
 				89E3DC6318604E9D00D193F4 /* Products */,
 				F2269B5B7BEA4C949224A70F /* Pods.xcconfig */,
+				89E3DC8A18604E9D00D193F4 /* LifeSpotTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -453,6 +493,9 @@
 		89E3DC6418604E9D00D193F4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2AFC4B9C1926C9A200753058 /* AVFoundation.framework */,
+				2A1C630318FCA3140041AD83 /* QuartzCore.framework */,
+				2A1C630118FCA30A0041AD83 /* Accelerate.framework */,
 				89B30E4418AE47BF0082C420 /* FacebookSDK.framework */,
 				2AB0FA81187C35F8000AB276 /* AddressBook.framework */,
 				2AB0FA82187C35F8000AB276 /* AddressBookUI.framework */,
@@ -493,6 +536,7 @@
 				89E3DC6E18604E9D00D193F4 /* InfoPlist.strings */,
 				89E3DC7118604E9D00D193F4 /* main.m */,
 				89E3DC7318604E9D00D193F4 /* LifeSpot-Prefix.pch */,
+				2A5A4032190FB9EC00AFD3DD /* Invites.storyboard */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -518,6 +562,7 @@
 		89E3DC9A18604EC500D193F4 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				2ACFCE8A19102A4E00DEC987 /* facebook_v1.jpg */,
 				89E4544118609FFB0041FA93 /* 1.png */,
 				89E4544218609FFB0041FA93 /* 1@2x.png */,
 				89E4544318609FFB0041FA93 /* 2.png */,
@@ -623,9 +668,11 @@
 			files = (
 				2AB331DF18AFD61D00D10E02 /* Main.storyboard in Resources */,
 				89E4545118609FFB0041FA93 /* 4.png in Resources */,
+				2ACFCE8B19102A4E00DEC987 /* facebook_v1.jpg in Resources */,
 				89E3DCBD18604EC500D193F4 /* button-background.png in Resources */,
 				89E3DCBB18604EC500D193F4 /* background-gradient.png in Resources */,
 				89E4545418609FFB0041FA93 /* 5@2x.png in Resources */,
+				2A5A4033190FB9EC00AFD3DD /* Invites.storyboard in Resources */,
 				89E4544D18609FFB0041FA93 /* 2.png in Resources */,
 				89E3DC7018604E9D00D193F4 /* InfoPlist.strings in Resources */,
 				2A74F90E18A56C6800889227 /* Images.xcassets in Resources */,
@@ -694,11 +741,13 @@
 			files = (
 				2AEBB6331890FE1600EAA879 /* TermsViewController.m in Sources */,
 				2AB0FA96187F1BD9000AB276 /* PlacesWatchingCell.m in Sources */,
+				2A1C630018FCA2800041AD83 /* FXBlurView.m in Sources */,
 				2A5E3A781889BD1E003F4933 /* ExplorePlacesCell.m in Sources */,
 				2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */,
 				2A7A27C5188D3DED000A2A45 /* UserSettingsViewController.m in Sources */,
 				2ACAE5EB1886F4A00076A665 /* SMSContactsCell.m in Sources */,
 				2AB0FA6F187AD96C000AB276 /* Photo.m in Sources */,
+				2A5A4036190FBD7F00AFD3DD /* CleverInvitesViewController.m in Sources */,
 				2AB0FA76187AD9EE000AB276 /* SubaAPIClient.m in Sources */,
 				2AB0FA60187AD911000AB276 /* AppHelper.m in Sources */,
 				89E3DC7C18604E9D00D193F4 /* ViewController.m in Sources */,
@@ -722,6 +771,7 @@
 				2ACAE5F4188705E40076A665 /* AlbumMembersViewController.m in Sources */,
 				2ADE846118802BEF001C2515 /* PersonalSpotCell.m in Sources */,
 				2AB0FA57187AD3BE000AB276 /* SignUpViewController.m in Sources */,
+				2ACBAD8019254A810012B777 /* CommentsViewController.m in Sources */,
 				2A504B20189AB8D1008E3C40 /* PlacesWatchingStreamCell.m in Sources */,
 				2AEBB62D188FCA7300EAA879 /* ProfileSettingsViewController.m in Sources */,
 				2AB0FA7A187B302B000AB276 /* LoginViewController.m in Sources */,
@@ -736,6 +786,7 @@
 				2ABA8123188DBC5D00A5E8B7 /* ProfileSpotsHeaderView.m in Sources */,
 				2AB0FA61187AD911000AB276 /* S3PhotoFetcher.m in Sources */,
 				2ABA8126188DD99500A5E8B7 /* ProfileSpotCell.m in Sources */,
+				2A8114F719275573003C37DC /* Comment.m in Sources */,
 				2AB0FA8D187C39AD000AB276 /* CreateSpotViewController.m in Sources */,
 				2AB0FA51187AD276000AB276 /* ICETutorialPage.m in Sources */,
 				89E3DC7218604E9D00D193F4 /* main.m in Sources */,
@@ -829,7 +880,7 @@
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/**";
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-Dmacintosh=1";
 				OTHER_LDFLAGS = "-lz";
 				"OTHER_LDFLAGS[arch=*]" = (
@@ -880,7 +931,7 @@
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/**";
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-Dmacintosh=1";
 				OTHER_LDFLAGS = "-lz";
 				"OTHER_LDFLAGS[arch=*]" = (

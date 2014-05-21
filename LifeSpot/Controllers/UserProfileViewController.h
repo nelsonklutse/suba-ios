@@ -11,4 +11,5 @@
 @interface UserProfileViewController : UIViewController
 
 @property (strong,nonatomic) NSString *userId;
+@property BOOL shouldAutoInvite;
 @end

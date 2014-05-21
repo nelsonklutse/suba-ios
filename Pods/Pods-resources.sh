@@ -55,8 +55,10 @@ install_resource "CTAssetsPickerController/CTAssetsPickerController/Images.xcass
 install_resource "CTAssetsPickerController/CTAssetsPickerController/Images.xcassets/CTAssetsPickerVideo.imageset/CTAssetsPickerVideo@2x.png"
 install_resource "Harpy/Harpy/Harpy.bundle"
 install_resource "IDMPhotoBrowser/Classes/IDMPhotoBrowser.bundle"
+install_resource "MWPhotoBrowser/MWPhotoBrowser/MWPhotoBrowser.bundle"
 install_resource "SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle"
 install_resource "UzysCircularProgressPullToRefresh/UzysCircularProgressPullToRefresh/UzysCircularProgressPullToRefresh/Library/centerIcon@2x.png"
+install_resource "iVersion/iVersion/iVersion.bundle"
 install_resource "${BUILT_PRODUCTS_DIR}/Appirater.bundle"
 
 rsync -avr --copy-links --no-relative --exclude '*/.svn/*' --files-from="$RESOURCES_TO_COPY" / "${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"

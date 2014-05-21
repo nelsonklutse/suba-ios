@@ -9,10 +9,6 @@
 #import "InviteFriendsViewController.h"
 #import "SMSContactsCell.h"
 #import "FacebookUsersCell.h"
-#import <AddressBook/AddressBook.h>
-#import <AddressBookUI/AddressBookUI.h>
-#import <MessageUI/MessageUI.h>
-
 
 #define PhoneContactsKey @"PhoneContactsKey"
 #define FacebookUsersKey @"FacebookUsersKey"
@@ -25,7 +21,6 @@ typedef enum{
 
 @interface InviteFriendsViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UISearchBarDelegate,UISearchDisplayDelegate>
 
-@property (weak, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
 @property (strong,nonatomic) NSArray *fbUsers;
 @property (strong,nonatomic) NSMutableArray *facebookFriendsFilteredArray;
 @property (strong,nonatomic) NSArray *phoneContacts;
@@ -33,6 +28,7 @@ typedef enum{
 @property (strong,nonatomic) NSMutableArray *messageRecipients;
 @property (strong,nonatomic) NSMutableArray *facebookRecipients;
 
+@property (weak, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *inviteContactsSegmentedControl;
 @property (weak, nonatomic) IBOutlet UITableView *phoneContactsTableView;
 @property (weak, nonatomic) IBOutlet UITableView *facebookFriendsTableView;
@@ -401,7 +397,8 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 /**
  * A function for parsing URL parameters.
  */
-- (NSDictionary*)parseURLParams:(NSString *)query {
+- (NSDictionary*)parseURLParams:(NSString *)query
+{
     NSArray *pairs = [query componentsSeparatedByString:@"&"];
     NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
     for (NSString *pair in pairs) {
@@ -417,12 +414,13 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 - (void)publishStory{
     
     FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
-    params.link = [NSURL URLWithString:@"http://www.subaapp.com"];
+    params.link = [NSURL URLWithString:@"http://bit.ly/suba_fb"];
     params.friends = self.facebookRecipients;
-    params.name = @"Suba";
-    params.picture = [NSURL URLWithString:@"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/Suba_1024x1024.jpg"];
-    params.caption = @"Photo-storify your events today!";
-    params.description = @"Get Suba today to create nice photo stories for your events.";
+    params.name = @"Suba ";
+    params.picture = [NSURL URLWithString:@"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/facebook_v1.jpg"];
+    params.caption = @"itunes.apple.com";
+    params.description = [NSString stringWithFormat:@"%@\n%@",@"Ever been to a party or event and wished you get all those nice photos others took without waiting a decade for them?",@" Don't miss out again. Download Suba free today."];
+    
     BOOL canShare = [FBDialogs canPresentShareDialogWithParams:params];
     
     if (canShare) {
@@ -447,11 +445,11 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         
         // Put together the dialog parameters
         NSMutableDictionary *params = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                                       @"Suba", @"name",
-                                       @"Photo-storify your events today", @"caption",
-                                       @"Download Suba today to create nice photo stories for your events.", @"description",
-                                       @"http://www.subaapp.com", @"link",
-                                       @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/Suba_1024x1024.jpg", @"source",
+                                       @"Suba ", @"name",
+                                       @"itunes.apple.com", @"caption",
+                                       [NSString stringWithFormat:@"%@\n%@",@"Ever been to a party or event and wished you get all those nice photos others took without waiting a decade for them?",@" Don't miss out again. Download Suba"], @"description",
+                                       @"http://bit.ly/suba_fb", @"link",
+                                       @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/facebook_v1.jpg", @"source",
                                        [friendInfo valueForKey:@"id"], @"to", nil];
         
         // Invoke the Web Dialog
@@ -593,7 +591,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         }
         
         if ([self.messageRecipients containsObject:phoneNumber]) {
-            DLog(@"Contains object at row - %i",indexPath.row);
+            //DLog(@"Contains object at row - %i",indexPath.row);
             contactCell.accessoryType = UITableViewCellAccessoryCheckmark;
         }else if(![self.messageRecipients containsObject:phoneNumber]){
             contactCell.accessoryType = UITableViewCellAccessoryNone;
@@ -694,8 +692,8 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 
 -(void)tableView:(UITableView *)tableView didDeselectRowAtIndexPath:(NSIndexPath *)indexPath{
     
-    
     if (self.inviteContactsSegmentedControl.selectedSegmentIndex == kContacts){
+        
         SMSContactsCell *cell = (SMSContactsCell *)[tableView cellForRowAtIndexPath:indexPath];
         cell.accessoryType = UITableViewCellAccessoryNone;
         [self.messageRecipients removeObject:cell.phoneNumberLabel.text];

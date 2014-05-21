@@ -99,7 +99,7 @@
     [UINavigationBar appearance].barTintColor = navbarTintColor;
     [[UINavigationBar appearance] setTintColor:[UIColor whiteColor]];
     
-    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:19.0], NSFontAttributeName,nil];
+    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0], NSFontAttributeName,nil];
     
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
     //[[UINavigationBar appearance] setTranslucent:NO];
@@ -127,6 +127,7 @@
     ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@""
                                                             description:@"And you can enjoy and\n share the whole experience"
                                                             pictureName:@"5.png"];
+    
     
     
     // Set the common style for SubTitles and Description (can be overrided on each page).
@@ -222,7 +223,7 @@
     [Appirater setSignificantEventsUntilPrompt:-1];
     [Appirater setTimeBeforeReminding:2];
     [Appirater setDebug:NO];
-    [Appirater appLaunched:YES];
+    [Appirater appLaunched:YES]; 
     
     
     /*if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
@@ -243,11 +244,12 @@
                                       API_TOKEN : @"-1",
                                       PROFILE_PHOTO_URL : @"-1",
                                       FACEBOOK_ID : @"-1",
-                                      NUMBER_OF_ALBUMS : @"0"
+                                      NUMBER_OF_ALBUMS : @"0",
+                                      NUMBER_OF_APP_SESSIONS : [NSNumber numberWithInteger:0]
                                       };
     
+    
     if ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL) {
-        //DLog(@"Registering App Defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
     } 
     
@@ -266,7 +268,7 @@
     
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
-        DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);
+        /*DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);*/
         
         NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
         
@@ -331,11 +333,11 @@
     
     
     // Check whether we have an update
-    [[Harpy sharedInstance] setAppID:kSUBA_APP_ID];
-    [[Harpy sharedInstance] setAppName:kSUBA_APP_NAME];
+    //[[Harpy sharedInstance] setAppID:kSUBA_APP_ID];
+    //[[Harpy sharedInstance] setAppName:kSUBA_APP_NAME];
     
     // Perform check for new version of app
-    [[Harpy sharedInstance] checkVersion];
+    //[[Harpy sharedInstance] checkVersion];
     
     return YES;
 }
@@ -346,8 +348,6 @@
     // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     
     //[[NSNotificationCenter defaultCenter] removeObserver:self name:kUserDidSignUpNotification object:nil];
-    
-   
     
 }
 
@@ -376,7 +376,8 @@
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
     [Appirater appEnteredForeground:YES];
-   
+    
+     [AppHelper increaseAppSessions];
     
             // Session is not open so open the session
             if ([[AppHelper facebookLogin] isEqualToString:@"YES"] || [[AppHelper facebookSession] isEqualToString:@"YES"]){
@@ -445,24 +446,16 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    
-    
-    
-    
-        /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
-        */
-    
+    [FBSettings setDefaultAppID:@"563203563717054"];
     [FBAppEvents activateApp];
     
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     
     [FBAppCall handleDidBecomeActive];
     [application setApplicationIconBadgeNumber:0];
-
-    
     
     if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
-        DLog();
+        
         if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
             
         }else{
@@ -475,7 +468,6 @@
                 
                 //Handle all notifications
                 NSString *notifications = [responseObject[@"badgeCount"] stringValue];
-               // NSLog(@"Notifications  - %@",[responseObject debugDescription]);
                 
                 if ([notifications isEqualToString:@"0"]) {
                     [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];

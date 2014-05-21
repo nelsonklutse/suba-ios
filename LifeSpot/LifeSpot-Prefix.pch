@@ -13,6 +13,10 @@
 #ifdef __OBJC__
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
+    #import <AddressBook/AddressBook.h>
+    #import <AddressBookUI/AddressBookUI.h>
+    #import <MessageUI/MessageUI.h>
+    #import <Social/Social.h>
     #import <AFNetworking.h>
     #import <UIKit+AFNetworking.h>
     #import <FacebookSDK/FacebookSDK.h>

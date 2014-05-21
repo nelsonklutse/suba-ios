@@ -139,8 +139,7 @@
         int indexOfTappedPhoto = [notifInfo[@"photoIndex"] intValue];
         self.currentSelectedSpot = notifInfo[@"spotInfo"];
     
-    if (indexOfTappedPhoto > 0) {
-        //DLog(@"Rearranging the array coz index is %i",index);
+    if (indexOfTappedPhoto > 0){
         NSRange rangeForFirstArray = NSMakeRange(indexOfTappedPhoto, [photos count] - indexOfTappedPhoto);
         NSRange rangeSecondArray = NSMakeRange(0, indexOfTappedPhoto);
         NSArray *firstArray = [photos subarrayWithRange:rangeForFirstArray];

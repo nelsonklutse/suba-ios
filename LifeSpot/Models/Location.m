@@ -59,7 +59,7 @@
 
 + (void)searchFourquareWithSearchTerm:(NSString *)searchText completionBlock:(MatchingLocationsCompletionBlock)completion
 {
-    DLog(@"Search text - %@",searchText);
+        
         NSString *radius = @"800";
     NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
     
@@ -67,6 +67,7 @@
     [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
                                          @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
                                          @"near" : searchText,
+                                         @"intent" : @"global",
                                          @"radius" : radius,
                                          @"limit" : @"50",
                                          @"v" : @"20140107"
@@ -95,6 +96,7 @@
     [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
                                          @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
                                          searchType : near,
+                                         @"intent" : @"browse",
                                          @"radius" : radius,
                                          @"limit" : @"50",
                                          @"v" : @"20140107"

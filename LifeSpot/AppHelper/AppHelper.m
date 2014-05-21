@@ -422,6 +422,40 @@
 }
 
 
++(NSInteger)appSessions
+{
+   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+   NSNumber *numSessions = [userDefaults valueForKey:NUMBER_OF_APP_SESSIONS];
+    
+   return [numSessions integerValue];
+}
+
+
++(void)increaseAppSessions
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *appSessions = (NSNumber *)[userDefaults valueForKey:NUMBER_OF_APP_SESSIONS];
+    NSInteger sessions = [appSessions integerValue];
+    sessions = sessions + 1;
+    [userDefaults setObject:[NSNumber numberWithInteger:sessions] forKey:NUMBER_OF_APP_SESSIONS];
+    [self userHasInvited:@"NO"];
+    [userDefaults synchronize];
+}
+
+
++(NSString *)hasUserInvited
+{
+   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:USER_HAS_INVITED];
+}
+
++(void)userHasInvited:(NSString *)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setValue:flag forKey:USER_HAS_INVITED];
+    [userDefaults synchronize];
+}
+
 
 /*+ (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -622,6 +656,9 @@
         }];
     }];
 }
+
+
+
 
 
 @end

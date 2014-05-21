@@ -17,6 +17,7 @@
 @interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>{
     NSString *currentCity;
     NSString *currentCountry;
+    NSArray *subaLocations;
 }
 
 @property (copy,nonatomic) NSString *spotName;
@@ -41,6 +42,7 @@
 - (IBAction)showNearbyLocations:(id)sender;
 - (void)askLocationPermission;
 - (void)foursquareVenueMatchingCurrentLocation:(Location *)here;
+- (void)displaySubaLocationsMatchingCurrentVenue:(Location *)here;
 - (void)joinStream:(NSString *)code;
 - (IBAction)unWindToCreateSpotFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue;
@@ -63,6 +65,9 @@ static CLLocationManager *locationManager;
 -(void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    
+    [self.spotNameField becomeFirstResponder];
+    
     if (locationManager) {
         [locationManager startUpdatingLocation];
     }
@@ -234,6 +239,22 @@ static CLLocationManager *locationManager;
 }
 
 
+- (void)displaySubaLocationsMatchingCurrentVenue:(Location *)here
+{
+    [[SubaAPIClient sharedInstance] GET:@"location/nearby"
+                             parameters:@{@"latitude": here.latitude,@"longitude" : here.longitude}
+                                success:^(NSURLSessionDataTask *task,id responseObject){
+                                    if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+                                        //DLog(@"Suba Locations - %@",responseObject[@"subaLocations"]);
+                                        subaLocations = responseObject[@"subaLocations"];
+                                    }
+                                } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                                    DLog(@"Error - %@",error);
+                                }];
+}
+
+
+
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
     
     CLLocation *here = [locations lastObject];
@@ -306,6 +327,7 @@ static CLLocationManager *locationManager;
         FoursquareLocationsViewController *nearbyVenuesVC = segue.destinationViewController;
         nearbyVenuesVC.currentLocation = self.userLocation;
         nearbyVenuesVC.locations = self.otherVenues;
+        nearbyVenuesVC.subaLocations = subaLocations;
         
     }
     
@@ -329,6 +351,7 @@ static CLLocationManager *locationManager;
     
     [self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
     self.chosenVenueLocation = (foursquareVC.venueChosen == nil) ? self.chosenVenueLocation : foursquareVC.venueChosen;
+    DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
 }
 
 
@@ -336,6 +359,6 @@ static CLLocationManager *locationManager;
 
 - (IBAction)dismissKeyPad:(id)sender
 {
-    [self resignFirstResponder];
+    [self.spotNameField resignFirstResponder];
 }
 @end

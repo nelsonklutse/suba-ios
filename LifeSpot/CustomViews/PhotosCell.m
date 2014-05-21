@@ -12,7 +12,9 @@
 
 @interface PhotosCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 
-@property (strong,nonatomic) NSDictionary *gImages;
+@property (strong,nonatomic) NSArray *gImages;
+@property (strong,nonatomic) NSMutableDictionary *spotInfo;
+@property int galleryIndex;
 
 @end
 
@@ -30,14 +32,18 @@
 
 #pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
-   // DLog(@"Number of images in gallery is %i",[self.gImages[@"images"] count]);
-    return [self.gImages[@"images"] count];
+    if ([self.gImages count] >= 3) {
+        return 3;
+    }
+    
+    return [self.gImages count];
 }
 
 
 - (NSURL*)photoGallery:(UIPhotoGalleryView *)photoGallery remoteImageURLAtIndex:(NSInteger)index {
-    NSString *imageURL = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,self.gImages[@"images"][index]];
-    //DLog(@"Setting Image at src=%@",imageURL);
+    NSString *imageURL = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,self.gImages[index][@"s3name"]];
+    //DLog(@"Image URL being sent is %@ for index %li",imageURL,(long)index);
+    
     return [NSURL URLWithString:imageURL];
 }
 
@@ -46,22 +52,22 @@
 {
     
     UIImageView *page = [[UIImageView alloc] init];
-    NSUInteger photos = [self.gImages[@"images"] count];
+    NSUInteger photos = [self.gImages count];
     
     if (photos == 1) {
         page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
     }else{
         page.frame = CGRectMake(0, 0, photoGallery.frame.size.width, photoGallery.frame.size.height);
     }
+    
     page.contentMode = UIViewContentModeScaleAspectFill;
-    //DLog(@"PhotoGallery frame - %@\nPhotoGallery subview gap - %f\nImage frame - %@",NSStringFromCGRect(photoGallery.frame),photoGallery.subviewGap,NSStringFromCGRect(page.frame));
     
-    //page.backgroundColor = [UIColor yellowColor];
-    NSString *imageURL = self.gImages[@"images"][index];
+    NSString *imageURL = self.gImages[index][@"s3name"];
     
-   //DLog(@"Image URL - %@",imageURL);
+    //DLog(@"Image URL - %@",imageURL);
     DACircularProgressView *progressView = [[DACircularProgressView alloc]
                                             initWithFrame:CGRectMake((page.bounds.size.width/2) - 20, (page.bounds.size.height/2) - 20, 40.0f, 40.0f)];
+    
     progressView.thicknessRatio = .1f;
     progressView.roundedCorners = YES;
     progressView.trackTintColor = [UIColor whiteColor];
@@ -69,8 +75,6 @@
     [page addSubview:progressView];
     
     [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:page placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView completion:^(id results, NSError *error) {
-        //DLog(@"IMAGE DOWNLOADED");
-        //page.image = (UIImage *)results;
         [progressView removeFromSuperview];
     }];
     
@@ -82,21 +86,24 @@
 
 #pragma UIPhotoGalleryDelegate methods
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
-    //self.galleryIndex = index;
-    //NSMutableArray
-  
-        //DLog(@"Index Tapped - %i",index);
-        /*NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
-        NSRange rangeSecondArray = NSMakeRange(0, index);
-        NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
-        NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
-        
-        self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];*/
+    
+    self.galleryIndex = index;
+    
+    NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+    NSRange rangeSecondArray = NSMakeRange(0, index);
+    NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
+    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
+    
+    self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
+    DLog(@"All images count - %i\nFirst Range - %@\nSecond Range - %@",[self.gImages count],NSStringFromRange(rangeForFirstArray),NSStringFromRange(rangeSecondArray));
+    
+    [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
+    
     
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoCellTappedAtIndexNotification
-     object:nil userInfo:@{@"photoIndex": @(index),@"photoURLs" : self.gImages}];
+     object:nil userInfo:@{@"photoIndex": @(index),@"photoInfo" : self.spotInfo}];
     
 }
 
@@ -106,24 +113,31 @@
 #pragma mark - Class Helpers
 - (void)prepareForGallery:(NSDictionary *)photosData index:(NSIndexPath *)indexPath
 {
-    //NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
-    //NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-    //NSArray *sortedPhotos = [allSpots sortedArrayUsingDescriptors:sortDescriptors];
-    self.gImages = photosData;
+    self.spotInfo = [NSMutableDictionary dictionaryWithDictionary:photosData];
     
-    //DLog(@"gImages - %@",[allSpots debugDescription]);
+    NSArray *allphotos = photosData[@"images"];
     
-    //self.galleryIndex = indexPath.row;
-    DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
-    if ([self.gImages[@"images"] count] == 1) {
-         self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
+    //DLog(@"Photos - %@",allphotos);
+    
+    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+    NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
+    
+    self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
+    
+    self.galleryIndex = indexPath.row;
+    self.galleryIndex = indexPath.row;
+    
+    //DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
+    if ([self.gImages count] == 1) {
+        self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
         
         self.photoGallery.initialIndex = 0;
-        //DLog(@"Set photo gallery initial index to %i",self.photoGallery.initialIndex);
-    }else{
-       self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(20, 0, 280,self.photoGalleryView.frame.size.height)];
         
-}
+    }else{
+        self.photoGallery = [[UIPhotoGalleryView alloc] initWithFrame:CGRectMake(20, 0, 280,self.photoGalleryView.frame.size.height)];
+    }
+
     
     
     self.photoGallery.dataSource = self;

@@ -16,7 +16,7 @@
 
 @property (retain,nonatomic) NSIndexPath *lastSelected;
 @property (strong,nonatomic) Location *venueChosen;
-@property (strong,nonatomic) NSArray *subaLocations;
+
 @property (retain,nonatomic) NSMutableArray *filteredLocations;
 @property (retain,nonatomic) CLLocation *userLocation;
 @property (retain,nonatomic) NSString *currentLocationSelected;
@@ -91,8 +91,9 @@ static CLLocationManager *locationManager;
         }
         if (self.subaLocations == nil) {
             DLog(@"Suba Locations is nil with Location - %@",[self.currentLocation description]);
-            
             [self displaySubaLocations:self.currentLocation];
+        }else{
+            DLog(@"Suba Locations is not nil");
         }
     }
 }
@@ -250,7 +251,7 @@ static CLLocationManager *locationManager;
             UITableViewCell *cell = [self.venuesTableView cellForRowAtIndexPath:indexPath];
             self.currentLocationSelected = cell.textLabel.text;
             NSString *latitude = self.subaLocations[indexPath.row][@"latitude"];
-            NSString *longitude = self.subaLocations[indexPath.row][@"latitude"];
+            NSString *longitude = self.subaLocations[indexPath.row][@"longitude"];
             //NSString *city = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"city"];
             //NSString *country = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"country"];
             
@@ -381,13 +382,12 @@ static CLLocationManager *locationManager;
         DLog(@"Error: %@", error);
         [self showLoadingLocationsView:NO];
     }];
-    
 }
 
 
 -(void)displaySubaLocations:(Location *)locationPassed
 {
-    DLog(@"Suba Locations");
+    //DLog(@"Suba Locations");
     
     [[SubaAPIClient sharedInstance] GET:@"location/nearby"
                              parameters:@{@"latitude": locationPassed.latitude,@"longitude" : locationPassed.longitude}

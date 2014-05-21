@@ -18,6 +18,7 @@
 @property (retain,nonatomic) NSArray *locations;
 @property (retain,nonatomic,readonly) NSString *currentLocationSelected;
 @property (strong,nonatomic,readonly) Location *venueChosen;
+@property (strong,nonatomic) NSArray *subaLocations;
 @end
 
 

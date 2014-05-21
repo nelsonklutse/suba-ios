@@ -267,7 +267,7 @@ static CLLocationManager *locationManager;
                 [self.view viewWithTag:10000].alpha = 1;
                 [AppHelper setWatchLocation:@"YES"];
             }
-
+            [self.searchBar resignFirstResponder];
         }else{
            DLog(@"Error: %@", error);
             [AppHelper showAlert:@"Locations Error" message:@"We could not fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
@@ -411,7 +411,46 @@ static CLLocationManager *locationManager;
     searchBar.showsCancelButton = NO;
     [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:YES];
     
-    [Location searchFourquareWithSearchTerm:searchBar.text completionBlock:^(id results, NSError *error) {
+    //DLog(@"Search text - %@",searchText);
+    CLGeocoder *geocoder = [[CLGeocoder alloc] init];
+    [geocoder geocodeAddressString:searchBar.text completionHandler:^(NSArray *placemarks, NSError *error){
+        if (!error) {
+            
+            CLPlacemark *aPlacemark = placemarks[0];
+            NSString *latitude = [NSString stringWithFormat:@"%.8f",aPlacemark.location.coordinate.latitude];
+            NSString *longitude = [NSString stringWithFormat:@"%.8f",aPlacemark.location.coordinate.longitude];
+            DLog(@"Using the placemark - %@",aPlacemark);
+            
+            [self showNearbyFoursuareVenues:@{@"latitude": latitude,@"longitude":longitude}];
+        }else{
+            DLog(@"We could not retrieve placemark so we are using the searchterm");
+            [Location searchFourquareWithSearchTerm:searchBar.text completionBlock:^(id results, NSError *error) {
+                [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:NO];
+                
+                if (error) {
+                    DLog(@"Error - %@",error);
+                    [AppHelper showAlert:@"Matching Locations Error"
+                                 message:@"We could not retrieve matching locations for your search term.If you searched for a specific place ,try adding city name and/or country after your search term for better results"
+                                 buttons:@[@"OK"]
+                                delegate:nil];
+                }else{
+                    NSArray *searchResults = [[results objectForKey:@"response"] objectForKey:@"venues"];
+                    if ([searchResults count] > 0){
+                        
+                        self.locations = [NSMutableArray arrayWithArray:searchResults];
+                        DLog(@"Locations - %@",searchResults);
+                        [self.venuesTableView reloadData];
+                    }
+                }
+                [searchBar resignFirstResponder];
+            }];
+        }
+       
+    }];
+
+    
+    
+    /*[Location searchFourquareWithSearchTerm:searchBar.text completionBlock:^(id results, NSError *error) {
         [AppHelper showLoadingDataView:self.searchingLocationsView indicator:self.searchingIndicator flag:NO];
         
         if (error) {
@@ -431,7 +470,7 @@ static CLLocationManager *locationManager;
             
         }
        [searchBar resignFirstResponder];
-    }];
+    }];*/
     
     
 }

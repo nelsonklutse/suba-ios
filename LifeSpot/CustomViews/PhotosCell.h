@@ -17,4 +17,6 @@
 @property (weak, nonatomic) IBOutlet UILabel *spotName;
 
 - (void)prepareForGallery:(NSDictionary *)allSpots index:(NSIndexPath*)indexPath;
+
+//- (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath*)indexPath;
 @end

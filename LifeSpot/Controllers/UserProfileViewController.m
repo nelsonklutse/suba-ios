@@ -12,6 +12,7 @@
 #import "ProfileSpotsHeaderView.h"
 #import "PhotosCell.h"
 #import "PhotoStreamViewController.h"
+#import "UserSettingsViewController.h"
 #import "AlbumSettingsViewController.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import <IDMPhotoBrowser/IDMPhotoBrowser.h>
@@ -38,6 +39,7 @@
 - (void)refreshStream;
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates;
 -(IBAction)unwindToUserProfile:(UIStoryboardSegue *)segue;
+- (IBAction)showSettingsView:(id)sender;
 @end
 
 @implementation UserProfileViewController
@@ -78,11 +80,18 @@
     
 }
 
+- (IBAction)showSettingsView:(id)sender
+{
+    [self performSegueWithIdentifier:@"UserProfileToMainSettingsSegue" sender:nil];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 	
+   // [self followScrollView:self.userSpotsCollectionView];
     
+    //self.shouldAutoInvite = NO;
     //self.userProfileId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
     NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
     //DLog(@"UserProfileId - %@\nUserInSession Id - %@",self.userProfileId,[AppHelper userID]);
@@ -117,6 +126,20 @@
     
 }
 
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    DLog(@"Should invite - %i",self.shouldAutoInvite);
+    
+    if (self.shouldAutoInvite == YES){
+        [self performSegueWithIdentifier:@"UserProfileToMainSettingsSegue" sender:@(1)];
+    }
+    self.shouldAutoInvite = NO;
+}
+
+
 -(void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
@@ -149,11 +172,13 @@
 
 -(void)galleryTappedAtIndex:(NSNotification *)aNotification
 {
+    //DLog(@"Galerry tapped");
     
     NSDictionary *notifInfo = [aNotification valueForKey:@"userInfo"];
-    NSArray *photos = notifInfo[@"photoURLs"];
-    DLog(@"Notification Info - %@",notifInfo);
-    [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:photos];
+    NSMutableDictionary *photoInfo = notifInfo[@"photoInfo"];
+    //DLog(@"Photos - %@",photos);
+    
+    [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:photoInfo];
 }
 
 
@@ -275,8 +300,9 @@
         //DLog(@"Its section - %i",indexPath.section);
         // It is the profile view
         cellIdentifier = @"USER_INFO_CELL";
+        
         ProfileSpotCell *userInfoCell = [self.userSpotsCollectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-       
+        
          NSURL *profilePhotoURL = nil;
         
         userInfoCell.userProfileImage.image = [UIImage imageNamed:@"anonymousUser"];
@@ -345,6 +371,7 @@
                 //DLog(@"View has no subviews coz there are no photos");
                 [noPhotosImageView removeFromSuperview];
             }
+            
             [photosCell.photoGalleryView addSubview:noPhotosImageView];
         }
 
@@ -412,14 +439,29 @@
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:@"FromUserSpotsToPhotosStreamSegue"]){
-        if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]) {
+        if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]){
+            
             PhotoStreamViewController *photosVC = segue.destinationViewController;
-            //photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"images"]];
+            if (sender[@"photoURLs"]) {
+                
+                photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"photoURLs"]];
+            }
+            
             photosVC.spotName = sender[@"spotName"];
             photosVC.spotID = sender[@"spotId"];
             photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
-            DLog(@"Number of photos - %i",photosVC.numberOfPhotos); 
+            //DLog(@"Number of photos - %i",photosVC.numberOfPhotos);
         }
+    }else if ([segue.identifier isEqualToString:@"UserProfileToMainSettingsSegue"]){
+        
+        if ([sender  isEqual: @(1)]) {
+            //DLog(@"Sender class - %@",[sender class]);
+            UserSettingsViewController *userSettingsVC = segue.destinationViewController;
+            userSettingsVC.autoInvite = YES;
+            //DLog();
+        }
+        
+        
     }
 }
 
@@ -433,7 +475,7 @@
     [coder encodeObject:self.userProfileInfo forKey:UserProfileInfoKey];
     [coder encodeObject:self.userId forKey:UserIdKey];
     
-    DLog();
+    //DLog();
 }
 
 
@@ -445,7 +487,7 @@
     self.userProfileInfo = [coder decodeObjectForKey:UserProfileInfoKey];
     self.userId = [coder decodeObjectForKey:UserIdKey];
     
-    DLog();
+    //DLog();
 }
 
 -(void)applicationFinishedRestoringState
@@ -459,7 +501,7 @@
         }
     }
     
-    DLog(@"UserId decoded - %@",self.userId);
+    //DLog(@"UserId decoded - %@",self.userId);
 }
 
 

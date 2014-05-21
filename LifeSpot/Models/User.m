@@ -61,6 +61,17 @@
     return user;
 }
 
++ (User *)userWithId:(NSString *)userId userName:(NSString *)username profilePhotoURL:(NSURL *)url
+{
+    User *user = [[User alloc] init];
+    user.userID = userId;
+    user.userName = username;
+    user.profilePhotoURL = url;
+    
+    return user;
+  
+}
+
 -(void)savePreferences:(NSDictionary *)preferences{
     
 }
@@ -134,7 +145,7 @@
         
         if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
             [AppHelper updateNumberOfAlbums:1];
-            completion(responseObject,nil);
+            completion(responseObject,nil); 
         }
         
         
@@ -377,7 +388,14 @@
 }
 
 
-
++ (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"photo/comment" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
 
 
 @end

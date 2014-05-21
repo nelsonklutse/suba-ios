@@ -26,15 +26,27 @@ PODS:
   - CTAssetsPickerController (1.3.3)
   - DACircularProgress (2.1.0)
   - DCModalSegue (0.0.2)
+  - DKLiveBlur (0.0.1)
+  - EBPhotoPages (0.9.1)
   - Harpy (2.5.2)
   - IDMPhotoBrowser (1.3.2):
     - AFNetworking (~> 2.0.2)
     - DACircularProgress (~> 2.1.0)
     - SVProgressHUD (~> 1.0)
+  - iVersion (1.10.6)
+  - MBProgressHUD (0.8)
+  - MBPullDownController (1.1.1)
+  - MWPhotoBrowser (1.4.0):
+    - DACircularProgress
+    - MBProgressHUD (~> 0.8)
+    - PSTCollectionView (~> 1.2)
+    - SDWebImage (~> 3.5.4)
+  - PSTCollectionView (1.2.0)
   - SDWebImage (3.5.4):
     - SDWebImage/Core
   - SDWebImage/Core (3.5.4)
   - SVProgressHUD (1.0)
+  - TWSReleaseNotesView (1.2.0)
   - UIPhotoGallery (0.1.2):
     - SDWebImage (~> 3.0)
   - UzysCircularProgressPullToRefresh (1.0.4)
@@ -50,8 +62,14 @@ DEPENDENCIES:
   - CTAssetsPickerController (~> 1.3.3)
   - DACircularProgress (~> 2.1.0)
   - DCModalSegue (~> 0.0.2)
+  - DKLiveBlur (~> 0.0.1)
+  - EBPhotoPages (~> 0.9.1)
   - Harpy
   - IDMPhotoBrowser
+  - iVersion (~> 1.10.6)
+  - MBPullDownController (~> 1.0)
+  - MWPhotoBrowser
+  - TWSReleaseNotesView (~> 1.2.0)
   - UIPhotoGallery (~> 0.1.2)
   - UzysCircularProgressPullToRefresh (~> 1.0.4)
 
@@ -69,12 +87,20 @@ SPEC CHECKSUMS:
   CSNotificationView: f14352657afe7255be9fb2446eb99d5914b97b5d
   CTAssetsPickerController: d65272a08dc2b1d48da6e839055c7288bd7d8b7d
   DACircularProgress: 8c8f20c8dffdd647fbf570ddecbc2b1b59da5888
-  DCModalSegue: dbec9bde298bdb92c4d15b2e4a10b6f43bc0977e
+  DCModalSegue: 1393836d5e72b6ec04299b20bdc122bba6b730e3
+  DKLiveBlur: 0107f6bf5c4447066317a83101fee0e35ac00716
+  EBPhotoPages: db87967e6be6f235b120985e0c4264fac501a90b
   Harpy: b992e16082d1ae123f4a135eacfd07a6c6e1feb7
   IDMPhotoBrowser: aee42ff18cdb1bf2f7326631094ad18f236d2ab9
+  iVersion: 260d17038c6e2c256b17d77c4ca2f74cddd5128a
+  MBProgressHUD: 2bbc6f470111daf7f3eaa4eb12b8cbf01c4c0622
+  MBPullDownController: e08984bd628e9cd6b9c7ad59183913d1fbf2cff8
+  MWPhotoBrowser: b85e89fcf0575062f32c472d389265dce1f068e1
+  PSTCollectionView: fb2ad2790c6efa306b2caf10315b2c1464d1f5c6
   SDWebImage: 1a62010700adbba823b621fc217906739dbf6aa5
   SVProgressHUD: 5e10939a296debf5fe5a5895eda9539b8b2114f1
+  TWSReleaseNotesView: ea7e62a767f0d690c2e8de2ca5e6311bd66d29d7
   UIPhotoGallery: f054e2dae658cf324b7b202d5c5f4b39457dce1c
   UzysCircularProgressPullToRefresh: 6e8a0deaa881bd62615d50cb462c766c0d650f2f
 
-COCOAPODS: 0.29.0
+COCOAPODS: 0.32.1

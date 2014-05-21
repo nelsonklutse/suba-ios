@@ -10,4 +10,6 @@
 
 @interface UserSettingsViewController : UIViewController
 
+@property BOOL autoInvite;
+
 @end

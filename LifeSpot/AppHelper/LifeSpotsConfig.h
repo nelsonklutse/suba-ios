@@ -29,7 +29,8 @@
 #define NUMBER_OF_ALBUMS @"numberOfAlbums"
 #define PROFILE_PHOTO_URL @"profilePictureURL"
 #define SPOT_ID @"spotId"
-
+#define NUMBER_OF_APP_SESSIONS @"sessions_started"
+#define USER_HAS_INVITED @"user_has_invited"
 
 
 // Other
@@ -76,9 +77,8 @@
 #define kSUBA_EXPLORE_COACHMARK_SEEN @"exploreLocationCoachMarkSeen"
 #define kSUBA_WATCH_LOCATION_COACHMARK_SEEN @"watchLocationCoachMarkSeen"
 #define kSUBA_SHARE_STREAM_COACHMARK_SEEN @"shareStreamCoachMarkSeen"
-
-
-
+#define kSUBA_PHOTOCARD_GAP 10
+#define kSUBA_SHARE_IMAGE_URL @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/facebook_v1.jpg"
 
 // Notifications
 #define kFBInfoWasFetchedNotification @"FbUserInfoNotification"

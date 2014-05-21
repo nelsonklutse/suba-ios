@@ -61,6 +61,13 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)userSession;
 + (void)setUserSession:(NSString *)flag;
 
++ (NSInteger)appSessions;
++ (void)increaseAppSessions;
+//+ (void)resetAppSession;
+
++ (NSString *)hasUserInvited;
++ (void)userHasInvited:(NSString *)flag;
+
 + (void)setPlacesCoachMark:(NSString *)flag;
 + (void)setNearbyCoachMark:(NSString *)flag;
 + (void)setMyStreamCoachMark:(NSString *)flag;

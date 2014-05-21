@@ -37,6 +37,8 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 @property (readonly,nonatomic) NSURL *profilePhotoURL;
 
 + (User *)currentlyActiveUser;
++ (User *)userWithId:(NSString *)userId userName:(NSString *)username profilePhotoURL:(NSURL *)url;
+
 - (id)initWithAttributes:(NSDictionary *)attributes;
 - (id)initWithUserName:(NSString *)userName Email:(NSString *)email AndPassword:(NSString *)password;
 
@@ -57,11 +59,11 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 - (void)changePassOld:(NSString *)oldPass newPass:(NSString *)newPass completion:(GeneralCompletion)completion;
 - (void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion;
 - (void)likePhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
--(void)deleteStream:(NSString *)spotId completion:(GeneralCompletion)completion;
+- (void)deleteStream:(NSString *)spotId completion:(GeneralCompletion)completion;
 
 + (void)allUsers:(GeneralCompletion)completion;
 + (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
-
++ (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 //+ (void)saveInviteeNumber:(NSDictionary *)params completion:(GeneralCompletion)completion;
 
 @end

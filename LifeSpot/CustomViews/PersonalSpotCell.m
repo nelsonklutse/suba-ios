@@ -11,9 +11,10 @@
 #import "S3PhotoFetcher.h"
 
 @interface PersonalSpotCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
+
 @property (strong,nonatomic) NSArray *gImages;
 @property (strong,nonatomic) NSMutableDictionary *spotInfo;
-@property int galleryIndex;
+@property NSInteger galleryIndex;
 //@property (retain,nonatomic) MainStreamViewController *mainStreamVC;
 @end
 
@@ -158,10 +159,8 @@
     
     NSString *imageURL = self.gImages[index][@"s3name"];
     
-    //DLog(@"Image URL - %@",imageURL);
     DACircularProgressView *progressView = [[DACircularProgressView alloc]
                                             initWithFrame:CGRectMake((page.bounds.size.width/2) - 20, (page.bounds.size.height/2) - 20, 40.0f, 40.0f)];
-    
     progressView.thicknessRatio = .1f;
     progressView.roundedCorners = YES;
     progressView.trackTintColor = [UIColor whiteColor];
@@ -171,7 +170,6 @@
     [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:page placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView completion:^(id results, NSError *error) {
         [progressView removeFromSuperview];
     }];
-    
     return page;
 }
 
@@ -180,24 +178,19 @@
 #pragma UIPhotoGalleryDelegate methods
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     self.galleryIndex = index;
-    //NSMutableArray
-    //if (index > 0) {
-        DLog(@"Rearranging the array coz index is %i",index);
-        
-        NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
-        NSRange rangeSecondArray = NSMakeRange(0, index);
-        NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
-        NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
-        
-        self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
-        DLog(@"self.gImages - %@",[self.gImages debugDescription]);
-        [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
     
-    
+    NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+    NSRange rangeSecondArray = NSMakeRange(0, index);
+    NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
+    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
+        
+    self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
+    [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoGalleryTappedAtIndexNotification
      object:nil userInfo:@{@"photoIndex": @(index),@"spotInfo" : self.spotInfo}];
+    
 }
 
 
@@ -212,8 +205,8 @@
     NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
     
     self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
-
-        self.galleryIndex = indexPath.row;
+    
+    self.galleryIndex = indexPath.row;
     
     //DLog(@"self.photoGalleryView.frame - %@",NSStringFromCGRect(self.photoGalleryView.frame));
     if ([self.gImages count] == 1) {

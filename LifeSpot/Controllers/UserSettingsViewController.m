@@ -9,11 +9,11 @@
 #import "UserSettingsViewController.h"
 #import "ProfileSettingsViewController.h"
 #import "AppDelegate.h"
-//#import "InviteFriendsViewController.h"
+#import "CleverInvitesViewController.h"
 #import "TermsViewController.h"
 #import <MessageUI/MessageUI.h>
 
-@interface UserSettingsViewController ()<MFMailComposeViewControllerDelegate>
+@interface UserSettingsViewController ()<MFMailComposeViewControllerDelegate,UIActionSheetDelegate>
 
 @property(strong,nonatomic) NSArray *accountSettings;
 @property(strong,nonatomic) NSArray *help;
@@ -24,6 +24,11 @@
 - (void)logout;
 
 - (IBAction)unwindToUserSettings:(UIStoryboardSegue *)segue;
+- (void)showActionSheet;
+
+- (void)shareViaServiceType:(NSString *)serviceType;
+- (void)showUnavailableAlertForServiceType: (NSString *)serviceType;
+- (void)rateApp;
 @end
 
 @implementation UserSettingsViewController
@@ -49,19 +54,34 @@
 {
     [super viewDidLoad];
     
+    //self.autoInvite = NO;
+    
     // Uncomment the following line to preserve selection between presentations.
     // self.clearsSelectionOnViewWillAppear = NO;
     
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
     
-    self.accountSettings = @[@"Edit Profile",@"Invite Friends To Suba"];
+    self.accountSettings = @[@"Edit Profile",@"Tell a friend",@"Rate Suba"];
     self.help = @[@"Help",@"Send Feedback",@"Licenses"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
     
     
    // DLog(@"Bounds of root view - %@\nFrame of appsettingsTable - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.appSettingsTableView.frame));
 }
+
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    DLog();
+    [super viewDidAppear:animated];
+    
+    if (self.autoInvite == YES) {
+        [self showActionSheet];
+    }
+    self.autoInvite = NO;
+}
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -145,14 +165,20 @@
             //We are at the very first cell in the first section.Go to the Edit Settings page
             UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
             [self performSegueWithIdentifier:@"EDIT_PROFILE_SEGUE" sender:cell.textLabel.text];
-        /*}else if (indexPath.row == 1){
+        }else if (indexPath.row == 1){
             // First section 2nd cell
-            UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
-            [self performSegueWithIdentifier:@"PUSH_NOTIFICATIONS_SEGUE" sender:cell.textLabel.text];*/
-        }else{
+            //UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
+            //[self performSegueWithIdentifier:@"PUSH_NOTIFICATIONS_SEGUE" sender:cell.textLabel.text];*/
+            
+            [self showActionSheet];
+            
+        }else if (indexPath.row == 2){
             // First section 3rd cell
             //UITableViewCell *cell = [self.appSettingsTableView cellForRowAtIndexPath:indexPath];
-            [self performSegueWithIdentifier:@"INVITE_FRIENDS_TO_SUBA_SEGUE" sender:nil];
+            //[self performSegueWithIdentifier:@"INVITE_FRIENDS_TO_SUBA_SEGUE" sender:nil];
+            
+            [self rateApp];
+            
         }
     }else if (indexPath.section == 1){
         if (indexPath.row == 0) {
@@ -273,6 +299,107 @@
             break;
     }
 }
+
+
+#pragma mark - Helpers
+-(void)showActionSheet
+{
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Tell a friend about Suba via..."
+                                                             delegate:self cancelButtonTitle:@"Dismiss"destructiveButtonTitle:nil
+                                                    otherButtonTitles:@"Mail",@"Message",@"Twitter",@"Facebook", nil];
+    
+    [actionSheet showInView:self.view];
+}
+
+#pragma mark - Action Sheet Delegate
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    CleverInvitesViewController *cVC = nil;
+    UIStoryboard *invitesSb = [UIStoryboard storyboardWithName:@"Invites" bundle:[NSBundle mainBundle]];
+    cVC = [invitesSb instantiateViewControllerWithIdentifier:@"CleverInvitation"];
+    if (buttonIndex == 0){
+        // We want to email
+        cVC.inviteType = kEmail;
+        [self presentViewController:cVC animated:YES completion:nil];
+    }else if(buttonIndex == 1){
+        // Send Message
+        cVC.inviteType = kContacts;
+        [self presentViewController:cVC animated:YES completion:nil];
+    }else if (buttonIndex == 2){
+        cVC.inviteType = kTwitter;
+        [self shareViaServiceType:SLServiceTypeTwitter];
+    }else if(buttonIndex == 3){
+        cVC.inviteType = kFacebook;
+        [self shareViaServiceType:SLServiceTypeFacebook];
+    }else{
+        [actionSheet dismissWithClickedButtonIndex:4 animated:YES];
+    }
+}
+
+
+-(void)rateApp
+{
+    // Make call to Appirater
+    [Appirater rateApp];
+
+}
+
+
+- (void)shareViaServiceType:(NSString *)serviceType
+{
+    //NSString *serviceType = SLServiceTypeTwitter;
+    if (![SLComposeViewController isAvailableForServiceType:serviceType]) {
+        [self showUnavailableAlertForServiceType:serviceType];
+        
+    }else{
+        SLComposeViewController *composeViewController = [SLComposeViewController
+                                                          composeViewControllerForServiceType:serviceType];
+        
+        [composeViewController addImage:[UIImage imageNamed:@"facebook_v1.jpg"]];
+        
+        
+        
+        
+        if (serviceType == SLServiceTypeTwitter){
+            NSString *initalTextString = [NSString stringWithFormat:@"%@",@"I'm using this awesome photo app @SubaPhotoApp"];
+            
+            [composeViewController setInitialText:initalTextString];
+            
+            [composeViewController addURL:[NSURL URLWithString:@"http://bit.ly/suba_t"]];
+        }else if (serviceType == SLServiceTypeFacebook){
+            
+            NSString *initalTextString = [NSString stringWithFormat:@"%@\n%@",@"Ever been to a party or event and wished you got all those nice photos others took without waiting a decade for them?",@" Don't miss out again. Download Suba @ "];
+            
+            [composeViewController setInitialText:initalTextString];
+            [composeViewController addURL:[NSURL URLWithString:@"http://bit.ly/suba_fb"]];
+        }
+        
+        
+        [self presentViewController:composeViewController animated:YES completion:nil];
+    }
+}
+
+
+
+
+- (void)showUnavailableAlertForServiceType: (NSString *)serviceType
+{
+    NSString *serviceName = @"";
+    if (serviceType == SLServiceTypeFacebook) {
+        serviceName = @"Facebook";
+    }
+    else if (serviceType == SLServiceTypeTwitter) {
+        serviceName = @"Twitter";
+    }
+    
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Account"
+                                                        message:[NSString stringWithFormat:@"Please go to the device settings and add a %@ account in order to share through that service", serviceName]
+                                                       delegate:nil
+                                              cancelButtonTitle:@"Dismiss" otherButtonTitles:nil];
+    
+    [alertView show];
+}
+
 
 
 @end

@@ -102,6 +102,18 @@
 #define COCOAPODS_VERSION_MINOR_DCModalSegue 0
 #define COCOAPODS_VERSION_PATCH_DCModalSegue 2
 
+// DKLiveBlur
+#define COCOAPODS_POD_AVAILABLE_DKLiveBlur
+#define COCOAPODS_VERSION_MAJOR_DKLiveBlur 0
+#define COCOAPODS_VERSION_MINOR_DKLiveBlur 0
+#define COCOAPODS_VERSION_PATCH_DKLiveBlur 1
+
+// EBPhotoPages
+#define COCOAPODS_POD_AVAILABLE_EBPhotoPages
+#define COCOAPODS_VERSION_MAJOR_EBPhotoPages 0
+#define COCOAPODS_VERSION_MINOR_EBPhotoPages 9
+#define COCOAPODS_VERSION_PATCH_EBPhotoPages 1
+
 // Harpy
 #define COCOAPODS_POD_AVAILABLE_Harpy
 #define COCOAPODS_VERSION_MAJOR_Harpy 2
@@ -113,6 +125,30 @@
 #define COCOAPODS_VERSION_MAJOR_IDMPhotoBrowser 1
 #define COCOAPODS_VERSION_MINOR_IDMPhotoBrowser 3
 #define COCOAPODS_VERSION_PATCH_IDMPhotoBrowser 2
+
+// MBProgressHUD
+#define COCOAPODS_POD_AVAILABLE_MBProgressHUD
+#define COCOAPODS_VERSION_MAJOR_MBProgressHUD 0
+#define COCOAPODS_VERSION_MINOR_MBProgressHUD 8
+#define COCOAPODS_VERSION_PATCH_MBProgressHUD 0
+
+// MBPullDownController
+#define COCOAPODS_POD_AVAILABLE_MBPullDownController
+#define COCOAPODS_VERSION_MAJOR_MBPullDownController 1
+#define COCOAPODS_VERSION_MINOR_MBPullDownController 1
+#define COCOAPODS_VERSION_PATCH_MBPullDownController 1
+
+// MWPhotoBrowser
+#define COCOAPODS_POD_AVAILABLE_MWPhotoBrowser
+#define COCOAPODS_VERSION_MAJOR_MWPhotoBrowser 1
+#define COCOAPODS_VERSION_MINOR_MWPhotoBrowser 4
+#define COCOAPODS_VERSION_PATCH_MWPhotoBrowser 0
+
+// PSTCollectionView
+#define COCOAPODS_POD_AVAILABLE_PSTCollectionView
+#define COCOAPODS_VERSION_MAJOR_PSTCollectionView 1
+#define COCOAPODS_VERSION_MINOR_PSTCollectionView 2
+#define COCOAPODS_VERSION_PATCH_PSTCollectionView 0
 
 // SDWebImage
 #define COCOAPODS_POD_AVAILABLE_SDWebImage
@@ -132,6 +168,12 @@
 #define COCOAPODS_VERSION_MINOR_SVProgressHUD 0
 #define COCOAPODS_VERSION_PATCH_SVProgressHUD 0
 
+// TWSReleaseNotesView
+#define COCOAPODS_POD_AVAILABLE_TWSReleaseNotesView
+#define COCOAPODS_VERSION_MAJOR_TWSReleaseNotesView 1
+#define COCOAPODS_VERSION_MINOR_TWSReleaseNotesView 2
+#define COCOAPODS_VERSION_PATCH_TWSReleaseNotesView 0
+
 // UIPhotoGallery
 #define COCOAPODS_POD_AVAILABLE_UIPhotoGallery
 #define COCOAPODS_VERSION_MAJOR_UIPhotoGallery 0
@@ -143,4 +185,10 @@
 #define COCOAPODS_VERSION_MAJOR_UzysCircularProgressPullToRefresh 1
 #define COCOAPODS_VERSION_MINOR_UzysCircularProgressPullToRefresh 0
 #define COCOAPODS_VERSION_PATCH_UzysCircularProgressPullToRefresh 4
+
+// iVersion
+#define COCOAPODS_POD_AVAILABLE_iVersion
+#define COCOAPODS_VERSION_MAJOR_iVersion 1
+#define COCOAPODS_VERSION_MINOR_iVersion 10
+#define COCOAPODS_VERSION_PATCH_iVersion 6
 

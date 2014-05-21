@@ -19,10 +19,14 @@
 #import "Photo.h"
 #import "User.h"
 #import "Spot.h"
+#import "Comment.h"
 #import "BDKNotifyHUD.h"
 #import <SDWebImage/UIImageView+WebCache.h>
-#import <IDMPhotoBrowser.h>
+#import <MWPhotoBrowser.h>
+#import <EBPhotoPagesController.h>
+//#import <IDMPhotoBrowser.h>
 #import "BOSImageResizeOperation.h"
+#import <QuartzCore/QuartzCore.h>
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
@@ -34,10 +38,12 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,IDMPhotoBrowserDelegate,UIGestureRecognizerDelegate>
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,MWPhotoBrowserDelegate,UIGestureRecognizerDelegate,EBPhotoPagesDataSource,EBPhotoPagesDelegate>
 {
-    UIImage *photoToSave;
-    NSIndexPath *selectedPhoto;
+    UIImage *selectedPhoto;
+    NSIndexPath *selectedPhotoIndexPath;
+    EBPhotoPagesController *ebPhotoPagesController;
+    NSMutableArray *comments;   //of comments
     
 }
 
@@ -45,6 +51,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
+
+//@property (weak, nonatomic) IBOutlet FXBlurView *viewToAnimate;
 
 @property (weak, nonatomic) IBOutlet UIImageView *coachMarkImageView;
 @property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
@@ -56,14 +64,16 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 @property (weak, nonatomic) IBOutlet UIButton *cameraButton;
 @property (weak, nonatomic) IBOutlet UIImageView *likeImage;
 
-@property (retain,nonatomic) IDMPhotoBrowser *browser;
+@property (retain,nonatomic) MWPhotoBrowser *browser;
 
-@property (nonatomic, readwrite) CGRect likeButtonBounds;
-@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
+//@property (nonatomic, readwrite) CGRect likeButtonBounds;
+//@property (nonatomic, strong) UIDynamicAnimator *likeButtonAnimator;
 
 @property (weak, nonatomic) IBOutlet UIView *noPhotosView;
 
+@property (strong,nonatomic) UILabel *navItemTitle;
 
+- (IBAction)commentOnPhoto:(UIButton *)sender;
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
 
@@ -107,19 +117,32 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (void)deletePhotoAtIndexFromStream:(NSInteger)index;
 - (void)uploadPhotos:(NSArray *)images;
 - (void)upDateCollectionViewWithCapturedPhotos:(NSArray *)photoInfo;
+
+- (void)showFullScreenPhotoBrowser:(UITapGestureRecognizer *)sender;
+- (void)scrollToCorrect:(UIScrollView*)scrollView;
+- (NSMutableArray *)prepareComments:(NSArray *)commentsInfo;
 @end
 
 @implementation PhotoStreamViewController
-
+int toggler;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     
+    comments = [NSMutableArray arrayWithCapacity:2];
+    /*
+     self.viewToAnimate.blurEnabled = YES;
+    self.viewToAnimate.dynamic = NO;
+    self.viewToAnimate.tintColor = [UIColor colorWithRed:38.0f/255.0f
+                                                   green:37.0f/255.0f
+                                                    blue:41.0f/255.0f
+                                                   alpha:1.0f];
+    self.viewToAnimate.blurRadius = 35.0f;*/
     // Load browser
-    /*if (self.photos){
+    //if (self.photos){
         
-        [self preparePhotoBrowser:self.photos];
-    }*/
+      //  [self preparePhotoBrowser:self.photos];
+    //}
     
     
     if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
@@ -134,13 +157,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                 
                 self.gotItButton.frame = btnFrame;
             }
-            if(result.height == 1136){
-                //  DLog(@"Using 5");
-                //CODE IF iPHONE 5
-                //self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
+            if(result.height == 1136){  //CODE IF iPHONE 5
                 self.coachMarkImageView.image = [UIImage imageNamed:@"share-stream_new"];
-                
-               // self.gotItButton.frame = btnFrame;
             }
         }
 
@@ -155,18 +173,37 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 	// Do any additional setup after loading the view.
     self.noPhotosView.hidden = YES;
     
-    self.navigationItem.title = (self.spotName) ? self.spotName : @"Stream";
+    // Make the text on the navigation item a title view so we can touch it
+    self.navItemTitle = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 100, 50)];
+    self.navItemTitle.textColor = [UIColor whiteColor];
+    self.navItemTitle.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:16.0];
+    self.navItemTitle.textAlignment = NSTextAlignmentCenter;
+    
+    self.navItemTitle.text = (self.spotName) ? self.spotName : @"Stream";
+    
+    self.navigationItem.titleView = self.navItemTitle;
+    [self.navigationItem.titleView setUserInteractionEnabled:YES];
+    [self.navigationItem.titleView setMultipleTouchEnabled:YES];
+
+    /*UITapGestureRecognizer *oneTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(animateView:)];
+    
+    [tapGestureRecognizer setNumberOfTapsRequired:1];
+    [tapGestureRecognizer setDelegate:self];
+    
+    [self.navigationItem.titleView addGestureRecognizer:tapGestureRecognizer];*/
     
     self.library = [[ALAssetsLibrary alloc] init];
     
     if(!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
-        // We are coming from an activity screen
-        DLog(@"Loading spotImages for when photos is not set AND spotName is not set and number of photos is 0 AND we have a spotID");
-       [self loadSpotImages:self.spotID];
+        
+      // We are coming from an activity screen
+    [self loadSpotImages:self.spotID];
+    
     }
+    
     if(!self.photos && self.numberOfPhotos > 0 && self.spotID) {
         // We are coming from a place where spotName is not set so lets load spot info
-       DLog(@"Loading spot images. We are from user profile");
+       //DLog(@"Loading spot images. We are from user profile");
         [self loadSpotImages:self.spotID];
     }
     
@@ -176,30 +213,46 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     }
 
     
-     if(self.spotID) {
-        DLog(@"Loading images in stream with SpotId - %@",self.spotID);
-        
+     if(self.spotID){
        [self loadSpotInfo:self.spotID User:[AppHelper userID]];
        //[self loadSpotImages:self.spotID];
     }
+}
+
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
     
-    
-    
+    /*if(self.viewToAnimate.frame.size.height == self.view.frame.size.height){
+        [self hideView];
+    }*/
 }
 
 
 -(void)preparePhotoBrowser:(NSMutableArray *)photos
 {
-    
-    NSMutableArray *photoURLs = [NSMutableArray array];
-    for (NSDictionary *photoInfo in photos) {
+    /*NSMutableArray *photoURLs = [NSMutableArray array];
+    for (NSDictionary *photoInfo in photos){
         NSURL *photoURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoInfo[@"s3name"]]];
-        [photoURLs addObject:photoURL];
-    }
+        
+        [photoURLs addObject:[MWPhoto photoWithURL:photoURL]];
+    }*/
     
-    NSArray *idmPhotos = [IDMPhoto photosWithURLs:photoURLs];
+    self.browser = [[MWPhotoBrowser alloc] initWithDelegate:self];
     
-    self.browser = [[IDMPhotoBrowser alloc] initWithPhotos:idmPhotos];
+    // Set options
+    self.browser.displayActionButton = YES; // Show action button to allow sharing, copying, etc (defaults to YES)
+    self.browser.displayNavArrows = NO; // Whether to display left and right nav arrows on toolbar (defaults to NO)
+    self.browser.displaySelectionButtons = NO; // Whether selection buttons are shown on each image (defaults to NO)
+    self.browser.zoomPhotosToFill = YES; // Images that almost fill the screen will be initially zoomed to fill (defaults to YES)
+    self.browser.alwaysShowControls = NO; // Allows to control whether the bars and controls are always visible or whether they fade away to show the photo full (defaults to NO)
+    self.browser.enableGrid = YES; // Whether to allow the viewing of all the photo thumbnails on a grid (defaults to YES)
+    self.browser.startOnGrid = NO; // Whether to start on the grid of thumbnails instead of the first photo (defaults to NO)
+   
+    
+    // Optionally set the current visible photo before displaying
+    //[browser setCurrentPhotoIndex:1];
 }
 
 
@@ -222,8 +275,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
            }else{
                    self.noPhotosView.hidden = NO;
                    self.photoCollectionView.hidden = YES;
-             }
-           
+             }           
        }else{
            DLog(@"Error - %@",error);
        }
@@ -248,7 +300,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                 self.spotInfo = (NSDictionary *)results;
                 DLog(@"Spot Info - %@",self.spotInfo);
                 self.spotName = (self.spotName) ? self.spotName : results[@"spotName"];
-                self.navigationItem.title = self.spotName;
+                //self.navigationItem.title = self.spotName;
+                self.navItemTitle.text = self.spotName;
                 [self.photoCollectionView reloadData];
                 
                 self.cameraButton.enabled = YES;
@@ -297,7 +350,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 -(void)reportPhoto:(NSDictionary *)reportInfo
 {
     [User reportPhoto:reportInfo completion:^(id results, NSError *error) {
-        DLog(@"Results - %@",results);
+        //DLog(@"Results - %@",results);
         
         BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
                                                        text:@"Photo Reported!"];
@@ -365,10 +418,16 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 }
 
 
-
-
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    
+    /* Set the Single Tap gesture recognizer
+    UITapGestureRecognizer *oneTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showFullScreenPhotoBrowser:)];
+    
+    [oneTapGestureRecognizer setNumberOfTapsRequired:1];
+    [oneTapGestureRecognizer setDelegate:self];*/
+    
+    
     // Set the Double Tap Gesture Recognizer
     UITapGestureRecognizer *doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(photoCardTapped:)];
     
@@ -397,6 +456,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     photoCardCell.pictureTakerView.image = [UIImage imageNamed:@"anonymousUser"];
     
     NSString *photoURLstring = self.photos[indexPath.row][@"s3name"];
+    
     //DLog(@"Photos - %@",self.photos[indexPath.item]);
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
@@ -411,7 +471,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     [photoCardCell.photoCardImage setUserInteractionEnabled:YES];
     [photoCardCell.photoCardImage setMultipleTouchEnabled:YES];
     [photoCardCell.photoCardImage addGestureRecognizer:doubleTapRecognizer];
-    
+    //[photoCardCell.photoCardImage addGestureRecognizer:oneTapGestureRecognizer];
     
     // Download photo card image
     [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:photoURLstring to:photoCardCell.photoCardImage placeholderImage:[UIImage imageNamed:@"blurBg"] completion:^(id results, NSError *error) {
@@ -435,7 +495,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     //DLog(@"selected image index - %i",indexPath.item);
-    selectedPhoto = indexPath;
+    selectedPhotoIndexPath = indexPath;
 }
 
 
@@ -462,13 +522,13 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 -(void)likePhotoWithID:(NSString *)photoId atIndexPath:(NSIndexPath *)indexPath
 {
     [Flurry logEvent:@"Photo_Liked"];
-    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
-    
+    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:indexPath];
+    //DLog(@"");
     NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
     
     NSDictionary *params = @{@"userId": [AppHelper userID],@"pictureId" : photoId,@"updateFlag" :@"1"};
     
-    [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error) {
+    [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error){
         if ([results[STATUS] isEqualToString:ALRIGHT]){
             [self resamplePhotoInfo:selectedPhotoInfo flag:@"YES" numberOfLikes:results[@"likes"] atIndex:indexPath.item];
             
@@ -476,6 +536,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             [[NSNotificationCenter defaultCenter]
              postNotificationName:kUserReloadStreamNotification object:nil];
             
+            DLog(@"Likes  - %i",[results[@"likes"] integerValue]);
             photoCardCell.numberOfLikesLabel.text = results[@"likes"];
             
             //[self updatePhotosNumberOfLikes:self.photos photoId:photoId update:results[@"likes"]];
@@ -503,7 +564,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 {
     [Flurry logEvent:@"Photo_UnLiked"];
 
-    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:selectedPhoto];
+    PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:indexPath];
     
     NSDictionary *selectedPhotoInfo = self.photos[indexPath.item];
     
@@ -528,9 +589,6 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             [AppHelper showLikeImage:self.likeImage imageNamed:@"unlike-button"];
             
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-                //[photoCardCell.likePhotoButton setSelected:NO];
-                //DLog(@"Photo card cell - %@",[photoCardCell debugDescription]);
-                //DLog(@"Set selected");
                 [UIView animateWithDuration:0.8 animations:^{
                     photoCardCell.likePhotoButton.alpha = 0;
                     [photoCardCell.likePhotoButton setSelected:NO];
@@ -538,7 +596,6 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
                 }];
             });
         }
-        
     }];
  
 }
@@ -549,7 +606,10 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     UIButton *likeButton = (UIButton *)sender;
     
-    PhotoStreamCell *cell = (PhotoStreamCell *)likeButton.superview.superview.superview;
+    //DLog(@"Photo Cell - %@ - %@",[likeButton.superview.superview class],[likeButton.superview class]);
+    
+    PhotoStreamCell *cell = (PhotoStreamCell *)likeButton.superview.superview;
+    
     NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
     
     NSString *picId = self.photos[indexPath.item][@"id"];
@@ -560,7 +620,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             
             [cell.likePhotoButton setSelected:YES];
         });
-        [self likePhotoWithID:picId atIndexPath:selectedPhoto];
+        [self likePhotoWithID:picId atIndexPath:indexPath];
         
     }else{
         
@@ -568,11 +628,9 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             
             [cell.likePhotoButton setSelected:NO];
         });
-
-        [self unlikePhotoWithID:picId atIndexPath:selectedPhoto];
-       }
-    
         
+        [self unlikePhotoWithID:picId atIndexPath:indexPath];
+     }
 }
 
 
@@ -756,7 +814,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
     self.photoInView = self.photos[indexpath.row];
-    photoToSave = cell.photoCardImage.image;
+    selectedPhoto = cell.photoCardImage.image;
     
     
     NSString *pictureTaker = self.photos[indexpath.item][@"pictureTaker"];
@@ -809,7 +867,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 }
 
 
--(void)saveLikeButtonInitialBounds:(UIButton *)button
+/*-(void)saveLikeButtonInitialBounds:(UIButton *)button
 {
     self.likeButtonBounds = button.bounds;
     DLog(@"Bouncing -%@",NSStringFromCGRect(button.bounds));
@@ -819,7 +877,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     button.contentVerticalAlignment = UIControlContentHorizontalAlignmentFill;
 
-}
+}*/
 
 /*-(void)bounceLikeButton:(id)sender
 {
@@ -865,7 +923,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         //DLog(@"SpotId - %@",self.spotID);
         NSString *randomString = [self getRandomPINString:5];
         //DLog(@"Random String - %@",randomString);
-        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navigationItem.title,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
+        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navItemTitle.text,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
         
         
         activityItems = @[self.albumSharePhoto,shareText];
@@ -875,7 +933,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         
         //DLog(@"Photo Cell - %@",sender.superview.superview.superview);
         PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS.",self.navigationItem.title];
+        NSString *randomString = [self getRandomPINString:5];
+        shareText = [NSString stringWithFormat:@"Check out all the photos in my shared stream %@ with Suba for iOS @ http://www.subaapp.com/albums?%@",self.navItemTitle.text,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
         
         activityItems = @[cell.photoCardImage.image,shareText];
         [Flurry logEvent:@"Share_Photo_Tapped"];
@@ -945,8 +1004,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
         trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
         
-        
-        [self resizePhoto:fullResolutionImage towidth:640.0f toHeight:852.0f completon:^(UIImage *compressedPhoto, NSError *error) {
+        //640.0f X 852.0f
+        [self resizePhoto:fullResolutionImage towidth:1136.0f toHeight:640.0f completon:^(UIImage *compressedPhoto, NSError *error) {
             NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
             [self uploadPhoto:imageData WithName:trimmedString];
         }];
@@ -1020,10 +1079,31 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     NSString *picTakerId = cellInfo[@"pictureTakerId"];
     
     [self performSegueWithIdentifier:@"PHOTOSTREAM_USERPROFILE" sender:picTakerId];
-    DLog(@"Cell info -  %@\nUserId -%@",cellInfo,picTakerId);
+    //DLog(@"Cell info -  %@\nUserId -%@",cellInfo,picTakerId);
 }
 
-
+-(NSMutableArray *)prepareComments:(NSArray *)commentsInfo
+{
+    
+    for (NSDictionary *comment in commentsInfo){
+        //DLog(@"This is the comment we are decoding - %@",[comment description]);
+        NSString *commentText = comment[@"commentText"];
+        NSString *authorName = comment[@"authorName"];
+        NSString *authorImage = comment[@"authorImage"];
+        NSString *timestamp = comment[@"timestamp"];
+        
+        UIImage *imageOwner = [UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@%@", kS3_BASE_URL,authorImage]]]];
+        
+        NSDate *dateTime = [NSDate dateWithTimeIntervalSince1970:([timestamp doubleValue])/1000];
+        NSDictionary *commentInfo = @{@"commentText": commentText,@"commentDate":timestamp,
+                                      @"authorName":authorName,@"authorImage":[UIImage imageNamed:@"anonymousUser"]};
+        
+        DLog(@"Date time - %@",[NSDate dateWithTimeInterval:-252750 sinceDate:dateTime]);
+        
+        [comments addObject:[Comment commentWithProperties:commentInfo]];
+    }
+    return comments;
+}
 
 #pragma mark - UIActionSheet Delegate Methods
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -1032,7 +1112,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         
         if(buttonIndex == 0){
             //User wants to save photo
-            [self savePhoto:photoToSave];
+            [self savePhoto:selectedPhoto];
         }else if (buttonIndex == 1){
             DLog(@"User wants to delete photo");
             NSInteger index = [self.photos indexOfObject:self.photoInView];
@@ -1042,7 +1122,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     }else if (actionSheet.tag == 1000){
         if(buttonIndex == 0){
             //User wants to save photo
-            [self savePhoto:photoToSave];
+            [self savePhoto:selectedPhoto];
         }
            
     }else if(actionSheet.tag == 2000){
@@ -1120,9 +1200,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
     trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
     
-    DLog(@"Image resolution - %@",NSStringFromCGSize(image.size));
+    //DLog(@"Image resolution - %@",NSStringFromCGSize(image.size));
     
-    [self resizePhoto:image towidth:640.0f toHeight:852.0f
+    // 640 X 852
+    
+    [self resizePhoto:image towidth:1136.0f toHeight:640.0f
             completon:^(UIImage *compressedPhoto, NSError *error) {
                 if (!error) {
                     NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
@@ -1438,7 +1520,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 -(void)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue
 {
     AlbumSettingsViewController *albumVC = segue.sourceViewController;
-    self.navigationItem.title = albumVC.spotName;
+    self.navItemTitle.text = albumVC.spotName;
 }
 
 
@@ -1450,7 +1532,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
             albumVC.spotID = (NSString *)sender;
             albumVC.spotInfo = self.spotInfo;
             albumVC.whereToUnwind = [self.parentViewController childViewControllers][0];
-            DLog(@"WhereToUnwind - %@",[albumVC.whereToUnwind class]);
+            //DLog(@"WhereToUnwind - %@",[albumVC.whereToUnwind class]);
         }
     }else if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
         if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]){
@@ -1460,6 +1542,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         }
     }else if ([segue.identifier isEqualToString:@"PHOTOSTREAM_USERPROFILE"]){
         UserProfileViewController *uVC = segue.destinationViewController;
+        DLog(@"Sender UserId - %@",sender);
         uVC.userId = sender;
     }
 }
@@ -1472,26 +1555,129 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     
     if (sender.state == UIGestureRecognizerStateEnded)
     {
-        NSString *photoId = self.photos[selectedPhoto.item][@"id"];
+        NSString *photoId = self.photos[selectedPhotoIndexPath.item][@"id"];
         
-        if ([self.photos[selectedPhoto.item][@"userLikedPhoto"] isEqualToString:@"NO"]) {
+        if ([self.photos[selectedPhotoIndexPath.item][@"userLikedPhoto"] isEqualToString:@"NO"]){
             
-            [self likePhotoWithID:photoId atIndexPath:selectedPhoto];
+            [self likePhotoWithID:photoId atIndexPath:selectedPhotoIndexPath];
             
         }else{
-                [self unlikePhotoWithID:photoId atIndexPath:selectedPhoto];
+                [self unlikePhotoWithID:photoId atIndexPath:selectedPhotoIndexPath];
         }
         
     }
 }
 
+- (void)showFullScreenPhotoBrowser:(UITapGestureRecognizer *)sender{
+    
+    if (sender.state == UIGestureRecognizerStateEnded)
+    {
+        /*toggler++;
+         //NSLog(@"The togger is %i",toggler);
+        if (toggler % 2 == 1) {
+            [self showView];
+        }else{
+            [self hideView];
+        }*/
+        
+        //[self preparePhotoBrowser:nil];
+        
+        // Present
+        [self.navigationController pushViewController:self.browser animated:YES];
+
+    }
+}
+
+
+- (void)showView{
+   /*
+    CGRect viewFrame = self.viewToAnimate.frame;
+    CGFloat newHeight = self.view.frame.size.height;
+    viewFrame.size.height += newHeight;
+    
+    [UIView animateWithDuration:.3 animations:^{
+        self.viewToAnimate.frame = viewFrame;
+        
+    } completion:^(BOOL finished) {
+        [self.viewToAnimate updateAsynchronously:YES completion:NULL];
+    }];*/
+}
+
+- (void)hideView{
+    
+    /*CGRect viewFrame = self.viewToAnimate.frame;
+    CGFloat newHeight = self.view.frame.size.height;
+    viewFrame.size.height -= newHeight;
+    
+    [UIView animateWithDuration:.3 animations:^{
+        self.viewToAnimate.frame = viewFrame;
+    } completion:^(BOOL finished) {
+       [self.viewToAnimate setNeedsDisplay];
+    }];*/
+}
+
+
+
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
+{
+    // Has the user scrolled more than half of the photo currently in view
+    // Get the  x content offset (Since we're doing horizontal scrolling)
+    // The scale factor tells us the index of the image being viewed
+    
+    //CGFloat xpos = self.photoCollectionView.contentOffset.x;
+    //CGFloat ypos = scrollView.frame.origin.y;
+    int multiFactor = (int)floorf(self.photoCollectionView.contentOffset.x/300.0);
+    
+    int page = 300.0f;
+    [scrollView setContentOffset:CGPointMake(multiFactor*page,0) animated:NO];
+    
+    //DLog(@"Y-POS - %f",scrollView.frame.origin.y);
+}
+
+-(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    //CGFloat xpos = self.photoCollectionView.contentOffset.x;
+    //CGFloat ypos = self.photoCollectionView.frame.origin.y;
+    //int multiFactor = (int)floorf(self.photoCollectionView.contentOffset.x/300.0);
+    
+    [self scrollToCorrect:scrollView];
+}
+
+
+-(void)scrollToCorrect:(UIScrollView*)scrollView
+{
+    CGFloat xpos = self.photoCollectionView.contentOffset.x;
+    int multiFactor = (int) floorf(self.photoCollectionView.contentOffset.x/300.0);
+    int quotient = (int)(xpos/300.0);
+    
+    int step = 300 * quotient;
+    
+    int lag = xpos - step;
+    
+    if (lag <= 150) {
+        // Move to the next image
+        multiFactor = quotient;
+        
+    }else multiFactor = quotient + 1;
+    
+    
+    
+    int page = 300.0f;
+    //CGFloat ypos = scrollView.frame.origin.y;
+    //DLog(@"Y-POS - %f\nContent View y- %@",scrollView.frame.origin.y,NSStringFromUIEdgeInsets(scrollView.contentInset));
+    
+    [scrollView setContentOffset:CGPointMake(multiFactor*page,0) animated:YES];
+}
+
+
 
 
 #pragma mark - PhotoBrowser Delegate
--(void)photoBrowser:(IDMPhotoBrowser *)photoBrowser didDismissAtPageIndex:(NSUInteger)index
+/*-(void)photoBrowser:(IDMPhotoBrowser *)photoBrowser didDismissAtPageIndex:(NSUInteger)index
 {
     [photoBrowser dismissViewControllerAnimated:YES completion:nil];
-}
+}*/
+
 
 
 
@@ -1506,7 +1692,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     [coder encodeObject:self.photos forKey:SpotPhotosKey];
     //[coder encodeObject:@(selectedButton) forKey:SelectedButtonKey];
     
-    //DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos - %@",self.spotInfo,self.spotName,self.spotID,self.photos);
+    //DLog(@"self.spotInfo -%@\nself.spotName -%@\nself.spotID - %@\nself.photos -%@",self.spotInfo,self.spotName,self.spotID,self.photos);
 }
 
 
@@ -1536,9 +1722,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
         [self loadSpotImages:self.spotID];
     }
     
-    if (self.spotName) {
-        //DLog(@"SpotName - %@\nSpotId - %@",self.spotName,self.spotID);
-        self.navigationItem.title = self.spotName;
+    if (self.spotName){
+        self.navItemTitle.text = self.spotName;
     }
     
     //2. If spotInfo is nil,loadspotInfo
@@ -1550,6 +1735,177 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 }
 
 
+#pragma mark - MWPhotoBrowser Delegate
+-(NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser
+{
+    //DLog(@"Number of photos - %i",[self.photos count]);
+    return [self.photos count];
+}
+
+
+-(id<MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index
+{
+    //DLog(@"Index of photo is - %i",index);
+    
+    if (index < [self.photos count]){
+        NSString *photoURLstring = self.photos[index][@"s3name"];
+        NSURL *photoSrc = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoURLstring]];
+        //DLog(@"PhotoSRC - %@",photoSrc);
+        MWPhoto *photo = [MWPhoto photoWithURL:photoSrc];
+        
+        return photo;
+    }
+    
+    return nil;
+}
+
+
+
+- (IBAction)commentOnPhoto:(UIButton *)sender
+{
+    
+    //[self performSegueWithIdentifier:@"CommentsSegue" sender:nil];
+    
+    // Set Up EBPagesVC
+    ebPhotoPagesController = [[EBPhotoPagesController alloc]
+                            initWithDataSource:self
+                            delegate:self];
+    
+    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+    
+    NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
+    if (cell.photoCardImage.image == nil) {
+        [AppHelper showAlert:@"No Image" message:@"Image not loaded" buttons:@[@"OK"] delegate:nil];
+    }else{
+        
+        selectedPhoto = cell.photoCardImage.image;
+        selectedPhotoIndexPath = indexPath;
+        
+      [self presentViewController:ebPhotoPagesController animated:YES completion:^{
+         // [ebPhotoPagesController enterCommentsMode];
+          [ebPhotoPagesController startCommenting];
+      }];
+    }
+}
+
+
+
+
+#pragma mark - EBPhotoPages Datasource
+- (BOOL)photoPagesController:(EBPhotoPagesController *)photoPagesController
+    shouldExpectPhotoAtIndex:(NSInteger)index
+{
+    //if(index < 1){
+        return YES;
+   // }
+    
+    //return NO;
+}
+
+
+- (BOOL)photoPagesController:(EBPhotoPagesController *)photoPagesController
+shouldHandleLongPressGesture:(UILongPressGestureRecognizer *)recognizer
+             forPhotoAtIndex:(NSInteger)index{
+    
+    return NO;
+}
+
+- (void)photoPagesController:(EBPhotoPagesController *)controller
+                imageAtIndex:(NSInteger)index
+           completionHandler:(void (^)(UIImage *))handler
+{
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        
+        handler(selectedPhoto);
+    });
+}
+
+
+
+- (BOOL)photoPagesController:(EBPhotoPagesController *)photoPagesController shouldAllowCommentingForPhotoAtIndex:(NSInteger)index
+{
+    return YES;
+}
+
+
+- (void)photoPagesController:(EBPhotoPagesController *)controller
+numberOfcommentsForPhotoAtIndex:(NSInteger)index
+           completionHandler:(void (^)(NSInteger))handler
+{
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        DLog(@"Number of comments - %i",[comments count]); 
+        handler([comments count]);
+    });
+}
+
+
+- (void)photoPagesController:(EBPhotoPagesController *)controller
+     commentsForPhotoAtIndex:(NSInteger)index
+           completionHandler:(void (^)(NSArray *))handler
+{
+    
+    NSString *selectedPhotoId = self.photos[selectedPhotoIndexPath.row][@"id"];
+    [Photo showCommentsForPhotoWithID:selectedPhotoId completion:^(id results, NSError *error) {
+        if (!error){
+            
+            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                comments = [self prepareComments:results[@"photoComments"]];
+                
+                DLog(@"Comments - %@\nPhoto comments - %@",[comments description],results[@"photoComments"]);
+                handler(comments);
+            }
+        }
+    }];
+    
+}
+
+
+- (BOOL)photoPagesController:(EBPhotoPagesController *)photoPagesController shouldAllowActivitiesForPhotoAtIndex:(NSInteger)index
+{
+    return NO;
+}
+
+
+- (BOOL)photoPagesController:(EBPhotoPagesController *)photoPagesController shouldAllowMiscActionsForPhotoAtIndex:(NSInteger)index
+{
+    return NO;
+}
+
+
+#pragma mark - EBPPhotoPagesDelegate
+- (void)photoPagesControllerDidDismiss:(EBPhotoPagesController *)photoPagesController
+{
+    selectedPhoto = nil;
+    ebPhotoPagesController = nil;
+}
+
+
+- (void)photoPagesController:(EBPhotoPagesController *)controller didPostComment:(NSString *)commentText forPhotoAtIndex:(NSInteger)index
+{
+    NSDictionary *photoInfo = self.photos[selectedPhotoIndexPath.row];
+    //DLog(@"Selected photo info - %@\nComment - %@",photoInfo,commentText);
+    NSString *userId = [User currentlyActiveUser].userID;
+    NSDictionary *params = @{@"actualComment": commentText,@"photoId" : photoInfo[@"id"],@"userId" : userId};
+    
+    [User commentOnPhoto:params completion:^(id results, NSError *error) {
+        if (!error) {
+            if ([results[STATUS] isEqualToString:ALRIGHT]){
+                
+                [comments addObject:results[@"comment"]];
+                DLog(@"Setting comments");
+                [controller setComments:comments forPhotoAtIndex:index];
+                
+            }else{
+                DLog(@"error - %@",results);
+            }
+        }else{
+            DLog(@"Error - %@",error);
+
+        }
+    }];
+}
 
 
 

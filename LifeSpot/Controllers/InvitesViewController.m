@@ -242,10 +242,11 @@ static BOOL isFiltered = NO;
            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"userName" ascending:YES];
            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
            NSArray *sortedUsers = [subaUsers sortedArrayUsingDescriptors:sortDescriptors];
-           
+           //DLog(@"Suba users - %i",[self.subaUsers count]);
            self.subaUsers = [NSMutableArray arrayWithArray:sortedUsers];
            NSDictionary *userToRemove = nil;
            for (NSDictionary *user in self.subaUsers){
+               //DLog(@"Username class - %@ ----- %@ --- %@",[user[@"userName"] class],user[@"userName"],user[@"id"]);
                if ([user[@"userName"] class] != [NSNull class]) {
                    if ([user[@"userName"] isEqualToString:[AppHelper userName]]) {
                        userToRemove = user;
@@ -429,8 +430,6 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
             phone = @"[None]";
             
         }*/
-        
-        
     }
     
     completion(contacts);
@@ -493,7 +492,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                                         blue:(20.0f/255.0f)
                                                         alpha:1];
         
-        smsComposer.body = [NSString stringWithFormat:@"Hi.I've found this cool app we can use to share albums\nDownload @ http://subaapp.com"];
+        smsComposer.body = [NSString stringWithFormat:@"I've been using this awesome app to create and share photo memories\nDownload now @ http://bit.ly/suba_m so we can share one together"];
         
         
         [self presentViewController:smsComposer animated:NO completion:nil];
@@ -547,7 +546,8 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
               [Flurry logEvent:@"Facebook_Share_Completed"];  
             }else if (error){
             
-                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Failed share" message:@"We could not share your album to your facebook contacts" delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK" , nil];
+                DLog(@"Facebook Share error - %@",error.debugDescription);
+                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Failed share" message:@"We could not share your stream with your facebook contacts" delegate:nil cancelButtonTitle:nil otherButtonTitles:@"OK" , nil];
                 [alert show];
             }else if ([results[@"completionGesture"] isEqualToString:@"cancel"]){
                 //NSLog(@"Share didComplete");
@@ -739,10 +739,10 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         
         // Check whether this cell is contained in last selected indexPaths
         if ([self.invitedSubaUsers containsObject:userId]){
-            DLog(@"%@ is part of invites",userName);
+            //DLog(@"%@ is part of invites",userName);
             subaUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
         }else if(![self.invitedSubaUsers containsObject:userId]){
-            DLog(@"%@ has not been invited so removing the checkmark",userName);
+            //DLog(@"%@ has not been invited so removing the checkmark",userName);
             subaUserCell.accessoryType = UITableViewCellAccessoryNone;
         }
 

@@ -28,6 +28,26 @@
 }
 
 
++ (Photo *)photoWithId:(NSString *)photoId s3URL:(NSURL *)s3URL photoTaker:(NSString *)photoTakerId
+{
+   Photo *photo = [[Photo alloc] init];
+   NSString *s3URLString = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,s3URL];
+   photo.s3Name = [NSURL URLWithString:s3URLString];
+   photo.photoId = [photoId integerValue];
+   photo.photoTakerId = photoTakerId;
+    
+   return photo;
+}
+
++ (void)showCommentsForPhotoWithID:(NSString *)photoId completion:(GeneralCompletion)completionBlock
+{
+    [[SubaAPIClient sharedInstance] GET:@"photo/comments" parameters:@{@"photoId": photoId} success:^(NSURLSessionDataTask *task, id responseObject) {
+        completionBlock(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completionBlock(nil,error);
+    }];
+}
+
 
 -(void)updateLikes:(NSString *)path IncrementFlag:(NSString *)updateFlag Params:(NSDictionary *)params completionBlock:(PhotoLikedCompletionBlock)block
 {
@@ -41,6 +61,8 @@
         block(nil,error);
     }];
     
-    
 }
+
+
+
 @end
