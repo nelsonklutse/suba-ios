@@ -241,14 +241,20 @@
 
 
 -(void)logout{
+    
     [AppHelper logout];
     
     AppDelegate *appDelegate = [UIApplication sharedApplication].delegate;
     
     UIViewController *topVC = [appDelegate topViewController];
-    [topVC.navigationController popToRootViewControllerAnimated:YES];
     
-    [topVC removeFromParentViewController];
+    DLog(@"Top View Controller - %@\n Navigation Controller - %@",[topVC class], topVC.navigationController);
+    
+    //[topVC.navigationController popToRootViewControllerAnimated:YES];
+    
+    DLog(@"Top VC - %@",[[topVC parentViewController] class]);
+    //[topVC removeFromParentViewController];
+    
     [appDelegate resetMainViewController];
     
     [Flurry logEvent:@"Logout"];

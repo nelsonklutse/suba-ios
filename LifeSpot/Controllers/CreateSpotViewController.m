@@ -13,6 +13,12 @@
 #import "User.h"
 #import "Privacy.h"
 #import "Spot.h"
+#import <MapKit/MapKit.h>
+
+typedef enum {
+    kCreate = 0,
+    kJoin
+} AddStreamType;
 
 @interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>{
     NSString *currentCity;
@@ -20,12 +26,20 @@
     NSArray *subaLocations;
 }
 
-@property (copy,nonatomic) NSString *spotName;
+@property (copy,nonatomic) NSString *streamName;
+@property (copy,nonatomic) NSString *streamCode;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
 @property (strong,nonatomic) NSArray *otherVenues;
 @property (retain,nonatomic) Location *userLocation;
 @property (strong,nonatomic) Location *chosenVenueLocation;
 @property (strong,nonatomic) NSDictionary *createdSpotDetails;
+@property (weak, nonatomic) IBOutlet UIScrollView *createStreamView;
+
+@property (retain, nonatomic) IBOutlet UIView *joinStreamView;
+@property (weak, nonatomic) IBOutlet UITextField *streamCodeField;
+@property (weak, nonatomic) IBOutlet UIButton *joinStreamButton;
+@property (weak, nonatomic) IBOutlet UISegmentedControl *addStreamSegmentedControl;
+@property (weak, nonatomic) IBOutlet MKMapView *streamLocationMapView;
 
 @property (weak, nonatomic) IBOutlet UIView *loadingDataView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *joiningSpotIndicator;
@@ -36,7 +50,7 @@
 @property (weak, nonatomic) IBOutlet UITextField *joinSpotId;
 
 
-- (IBAction)joinSpotAction:(id)sender;
+- (IBAction)joinStreamAction:(id)sender;
 - (IBAction)createSpotAction:(UIButton *)sender;
 - (IBAction)dismissKeyPad:(id)sender;
 - (IBAction)showNearbyLocations:(id)sender;
@@ -46,6 +60,10 @@
 - (void)joinStream:(NSString *)code;
 - (IBAction)unWindToCreateSpotFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToCreateSpotFromDone:(UIStoryboardSegue *)segue;
+- (IBAction)addStreamSegmentChanged:(id)sender;
+
+- (IBAction)dismissVC:(id)sender;
+-(void)updateMapView:(MKMapView *)mapView WithLocation:(Location *)location;
 @end
 
 @implementation CreateSpotViewController
@@ -57,7 +75,11 @@ static CLLocationManager *locationManager;
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
     self.createSpotButton.enabled = NO;
+    self.joinStreamButton.enabled = NO;
+    self.joinStreamView.alpha = 0;
     
+    [self.currentLocationButton sizeToFit];
+    self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
     [self askLocationPermission];
 }
 
@@ -66,10 +88,12 @@ static CLLocationManager *locationManager;
 {
     [super viewWillAppear:animated];
     
-    [self.spotNameField becomeFirstResponder];
+    //[self.spotNameField becomeFirstResponder];
     
     if (locationManager) {
         [locationManager startUpdatingLocation];
+    }else{
+        
     }
     
     [Flurry logEvent:@"Create_Stream_Button_Tapped"];
@@ -92,17 +116,10 @@ static CLLocationManager *locationManager;
 }
 
 
-- (IBAction)joinSpotAction:(id)sender
+- (IBAction)joinStreamAction:(id)sender
 {
-    
-   UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join A Stream" message:@"Enter code for the stream you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
-    
-    alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
-    
-    
-    [alertView show];
-    //[self performSegueWithIdentifier:@"JOIN_STREAM_SEGUE" sender:@"1"];
-    
+    self.streamCode = self.streamCodeField.text;
+    [self joinStream:self.streamCode];
 }
 
 
@@ -110,7 +127,7 @@ static CLLocationManager *locationManager;
 {
     [AppHelper showLoadingDataView:self.loadingDataView indicator:self.joiningSpotIndicator flag:YES];
     
-    DLog(@"joining");
+   
     [[User currentlyActiveUser] joinSpotCompletionCode:code completion:^(id results, NSError *error) {
         DLog(@"Result - %@",results);
         [AppHelper showLoadingDataView:self.loadingDataView
@@ -128,13 +145,11 @@ static CLLocationManager *locationManager;
             
         }else if ([results[STATUS] isEqualToString:@"error"]){
             // There is no spot with this code
-            [AppHelper showNotificationWithMessage:@"We could not find a stream with the entered code"
+            [AppHelper showNotificationWithMessage:@"Looks like that code is incorrect"
                                               type:kSUBANOTIFICATION_ERROR
                                   inViewController:self
                                    completionBlock:nil];
         }
-        
-        
     }];
     
 }
@@ -151,24 +166,26 @@ static CLLocationManager *locationManager;
     if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
         [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }else{
-    if ([locationManager location]) {
+        
+    if ([locationManager location]){
+        
         [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location] completionHandler:^(NSArray *placemarks, NSError *error) {
             
-            if (!error) {
+            NSString *viewPrivacy = @"0";
+            NSString *addPrivacy = @"0";
+            NSString *spotKey = @"NONE";
+            
+            self.streamName = self.spotNameField.text;
+            User *user = [User currentlyActiveUser];
+            Privacy *privacy = [[Privacy alloc] initWithView:viewPrivacy AddPrivacy:addPrivacy];
+            Spot *spot = [[Spot alloc] initWithName:self.streamName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
+            
+            
+            if (!error){
                 CLPlacemark *placemark = placemarks[0];
                 //DLog(@"Placemarks - %@",placemark.locality);
                 currentCity = placemark.locality;
                 currentCountry = placemark.country;
-                
-                NSString *viewPrivacy = @"0";
-                NSString *addPrivacy = @"0";
-                NSString *spotKey = @"NONE";
-                
-                self.spotName = self.spotNameField.text;
-                
-                User *user = [User currentlyActiveUser];
-                Privacy *privacy = [[Privacy alloc] initWithView:viewPrivacy AddPrivacy:addPrivacy];
-                Spot *spot = [[Spot alloc] initWithName:self.spotName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
                 self.chosenVenueLocation.city = currentCity;
                 self.chosenVenueLocation.country = currentCountry;
                 
@@ -187,7 +204,23 @@ static CLLocationManager *locationManager;
                 }];
                 
             }else{
-                DLog(@"Error - %@",error);
+                // We could not geocode location
+                
+                [user createSpot:spot completion:^(id results, NSError *error) {
+                    [self.creatingSpotIndicator stopAnimating];
+                    if (!error){
+                        
+                        // There were no errors
+                        self.createdSpotDetails = (NSDictionary *)results;
+                        [self performSegueWithIdentifier:@"spotWasCreatedSegue" sender:nil];
+                        
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                    }else{
+                        DLog(@"Error - %@",error);
+                    }
+                }];
+
+                //DLog(@"Error - %@",error);
             }
             
         }];
@@ -205,13 +238,13 @@ static CLLocationManager *locationManager;
 -(void)askLocationPermission
 {
     if ([CLLocationManager locationServicesEnabled]){
-        //if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
+        //if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized){
             
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
             [locationManager startUpdatingLocation];
             
-       // }
+        //}
     }
 }
 
@@ -231,9 +264,10 @@ static CLLocationManager *locationManager;
             self.chosenVenueLocation = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.venueForCurrentLocation];
             self.chosenVenueLocation.city = (city != nil) ? city : nil ;
             self.chosenVenueLocation.country = (country != nil) ? country : nil;
-            //DLog(@"Chosen Venue details - %@",self.chosenVenueLocation);
             
             [self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
+            [self.currentLocationButton sizeToFit];
+            self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         }
     }];
 }
@@ -254,20 +288,32 @@ static CLLocationManager *locationManager;
 }
 
 
-
+#pragma mark - Location Manager Delegate
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
     
     CLLocation *here = [locations lastObject];
-    
+      DLog(@"now location - %@\n here - %@",self.chosenVenueLocation,here);
     if (here != nil){
+        
         if (!self.chosenVenueLocation) {
             NSString *latitude = [NSString stringWithFormat:@"%.8f",here.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",here.coordinate.longitude];
             self.userLocation = [[Location alloc] initWithLat:latitude Lng:longitude];
             
+            CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([self.userLocation.latitude doubleValue],[self.userLocation.longitude doubleValue]);
+            
             // Go to Foursquare for location
             [self foursquareVenueMatchingCurrentLocation:self.userLocation];
+            
+            [self.streamLocationMapView setCenterCoordinate:twoDCordinate animated:YES];
+            [self updateMapView:self.streamLocationMapView WithLocation:self.userLocation];
+        }else{
+            
+           CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([self.chosenVenueLocation.latitude doubleValue], [self.chosenVenueLocation.longitude doubleValue]);
+            [self.streamLocationMapView setCenterCoordinate:twoDCordinate animated:YES];
+            [self updateMapView:self.streamLocationMapView WithLocation:self.chosenVenueLocation];
         }
+        
         
     }
 }
@@ -289,6 +335,22 @@ static CLLocationManager *locationManager;
     }
 }
 
+
+-(void)updateMapView:(MKMapView *)mapView WithLocation:(Location *)location
+{
+    
+    CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([location.latitude doubleValue], [location.longitude doubleValue]);
+    
+    MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(twoDCordinate, 500, 500);
+    MKCoordinateRegion adjustedRegion = [mapView regionThatFits:viewRegion];
+    [mapView setShowsBuildings:YES];
+    [mapView setShowsUserLocation:YES];
+    [mapView setRegion:adjustedRegion animated:YES];
+    
+    self.currentLocationButton.alpha = 0.8;
+}
+
+
 #pragma mark - AlertView Delegate Methods
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
@@ -308,13 +370,25 @@ static CLLocationManager *locationManager;
 #pragma mark - TextField Delegate Methods
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-    [self.spotNameField resignFirstResponder];
+    [textField resignFirstResponder];
+    
+    if (textField.text.length > 0) {
+        if (textField == self.streamCodeField) {
+            self.streamCode = textField.text;
+            [self joinStream:self.streamCode];
+        }
+    }
+    
+    
     return YES;
 }
 
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
-    if (![textField.text isEqualToString:@""]) {
+    
+    if (textField == self.spotNameField && ![textField.text isEqualToString:@""]) {
         self.createSpotButton.enabled = YES;
+    }else if (textField == self.streamCodeField && ![textField.text isEqualToString:@""]){
+        self.joinStreamButton.enabled = YES;
     }
     
     return YES;
@@ -335,7 +409,6 @@ static CLLocationManager *locationManager;
         PhotoStreamViewController *pVC = segue.destinationViewController;
         
         pVC.spotID = sender;
-        //DLog(@"SpotID - %@",pVC.spotID);
     }
 }
 
@@ -350,8 +423,30 @@ static CLLocationManager *locationManager;
     self.venueForCurrentLocation = (foursquareVC.currentLocationSelected == nil) ? self.venueForCurrentLocation : foursquareVC.currentLocationSelected;
     
     [self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
+    [self.currentLocationButton sizeToFit];
+    self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+    
     self.chosenVenueLocation = (foursquareVC.venueChosen == nil) ? self.chosenVenueLocation : foursquareVC.venueChosen;
+    [self updateMapView:self.streamLocationMapView WithLocation:self.chosenVenueLocation];
     DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
+}
+
+- (IBAction)addStreamSegmentChanged:(UISegmentedControl *)sender
+{
+    if (sender.selectedSegmentIndex == kCreate) {
+        self.createStreamView.alpha = 1;
+        self.joinStreamView.alpha = 0;
+        [self.streamCodeField resignFirstResponder];
+    }else if (sender.selectedSegmentIndex == kJoin){
+        self.joinStreamView.alpha = 1;
+        [self.streamCodeField becomeFirstResponder];
+        self.createStreamView.alpha = 0;
+    }
+}
+
+- (IBAction)dismissVC:(id)sender
+{
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 

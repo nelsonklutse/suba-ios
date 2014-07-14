@@ -30,4 +30,5 @@ typedef enum{
 @property (strong,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSString *spotID;
 @property NSInteger numberOfPhotos;
+- (IBAction)flipPhotoToShowRemix:(id)sender;
 @end

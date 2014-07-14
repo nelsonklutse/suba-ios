@@ -11,19 +11,29 @@
 #import "ActivityViewController.h"
 #import "PhotoStreamViewController.h"
 #import "MainStreamViewController.h"
+#import "CreateStreamViewController.h"
 #import <SDImageCache.h>
 
 @implementation AppDelegate
 
 -(UITabBarController *)mainTabBarController
 {
-    if (!_mainTabBarController) {
+    if (!_mainTabBarController){
         _mainTabBarController = [[UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]] instantiateViewControllerWithIdentifier:@"MAINTAB_BAR"];
         
         return _mainTabBarController;
     }
     
     return _mainTabBarController;
+}
+
+-(SubaTutorialController *)viewController
+{
+    if (!_viewController) {
+        _viewController = [[UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]] instantiateViewControllerWithIdentifier:@"onboardingController"];
+    }
+    
+    return _viewController;
 }
 
 -(SubaAPIClient *)apiBaseURL
@@ -45,6 +55,78 @@
     
     // Facebook SDK * login flow *
     // Attempt to handle URLs to complete any auth (e.g., SSO) flow.
+    
+    /*if ([[url scheme] isEqualToString:@"suba"]){
+        DLog(@" custom URL - %@",url);
+        NSArray *queryString = [[url query] componentsSeparatedByString: @"="];
+        NSString *taskName = [[queryString lastObject] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        
+        if ([taskName isEqualToString:@"create-first-stream"]){
+            DLog(@"Create forst stream");
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@""
+                                                                message:@"Create First Stream"
+                                                               delegate:nil
+                                                      cancelButtonTitle:@"OK"
+                                                      otherButtonTitles:nil, nil];
+            
+            
+            [alertView show];
+            
+            
+            // Present Create Stream View Controller
+            //UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+            //CreateStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"CreateStreamVC"];
+            
+            
+        } else if ([taskName isEqualToString:@"add-first-photo-to-stream"]) {
+            
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@""
+                                                                message:@"Add First Photo To Stream"
+                                                               delegate:nil
+                                                      cancelButtonTitle:@"OK"
+                                                      otherButtonTitles:nil, nil];
+            [alertView show];
+            
+        } else if ([taskName isEqualToString:@"request-photos"]){
+            
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@""
+                                                                message:@"Request Photos"
+                                                               delegate:nil
+                                                      cancelButtonTitle:@"OK"
+                                                      otherButtonTitles:nil, nil];
+            [alertView show];
+            
+        } else {
+            
+            NSArray *queryString = [[url query] componentsSeparatedByString: @"&"];
+            
+            NSString *taskNameQS = [queryString objectAtIndex:0];
+            NSString *streamNameQS = [queryString lastObject];
+            
+            NSArray *taskNameComp = [taskNameQS componentsSeparatedByString: @"="];
+            taskName = [[taskNameComp lastObject] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            
+            NSArray *streamNameComp = [streamNameQS componentsSeparatedByString: @"="];
+            NSString *nameOfStream = [[streamNameComp lastObject] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+            
+            if ([taskName isEqualToString:@"checkout-public-stream"]){
+                
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@""
+                                                                    message:[NSString stringWithFormat:@"Checkout Public Stream (id): %@",
+                                                                             nameOfStream]
+                                                                   delegate:nil
+                                                          cancelButtonTitle:@"OK"
+                                                          otherButtonTitles:nil, nil];
+                [alertView show];
+            }
+            
+        }
+        
+        return YES;
+        
+    }*/
+
+    
     return [FBAppCall handleOpenURL:url sourceApplication:sourceApplication fallbackHandler:^(FBAppCall *call) {
         // Facebook SDK * App Linking *
         // For simplicity, this sample will ignore the link if the session is already
@@ -85,7 +167,7 @@
 -(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
         // Override point for customization after application launch.
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    //self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
     
     //Navbar customization
@@ -99,117 +181,18 @@
     [UINavigationBar appearance].barTintColor = navbarTintColor;
     [[UINavigationBar appearance] setTintColor:[UIColor whiteColor]];
     
-    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0], NSFontAttributeName,nil];
+    NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"Helvetica-Light" size:17.0], NSFontAttributeName,nil];
     
     [[UINavigationBar appearance] setTitleTextAttributes:textTitleOptions];
-    //[[UINavigationBar appearance] setTranslucent:NO];
     [[UINavigationBar appearance] setShadowImage:[[UIImage alloc] init]];
     [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
     //End of Navbar Customization
     
-    
-    // Init the pages texts, and pictures.
-    ICETutorialPage *layer1 = [[ICETutorialPage alloc] initWithSubTitle:@""
-        description:@"Ever been to a party or event and\n wished you could access the pictures others\n took without waiting a decade for them?"
-        pictureName:@"1.png"];
-    
-    //DLog(@"Layer 1 frame - %@",NSStringFromCGRect(layer1.));
-    
-    ICETutorialPage *layer2 = [[ICETutorialPage alloc] initWithSubTitle:@""
-            description:@"What if you could see all those great\n photos people took with their phones?"
-                                                            pictureName:@"2.png"];
-    ICETutorialPage *layer3 = [[ICETutorialPage alloc] initWithSubTitle:@""
-                                                            description:@"Suba gathers them all into an album\n as they are taken. We call this a stream"
-                                                            pictureName:@"3.png"];
-    ICETutorialPage *layer4 = [[ICETutorialPage alloc] initWithSubTitle:@""
-                description:@"You can see nearby streams or\n streams from your favourite locations"
-                                                            pictureName:@"4.png"];
-    ICETutorialPage *layer5 = [[ICETutorialPage alloc] initWithSubTitle:@""
-                                                            description:@"And you can enjoy and\n share the whole experience"
-                                                            pictureName:@"5.png"];
+    [[UITabBar appearance] setTintColor:navbarTintColor ];
+    [[UITabBarItem appearance] setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"Helvetica-Thin" size:13.0f], NSFontAttributeName, nil] forState:UIControlStateNormal];
     
     
-    
-    // Set the common style for SubTitles and Description (can be overrided on each page).
-    ICETutorialLabelStyle *subStyle = [[ICETutorialLabelStyle alloc] init];
-    [subStyle setFont:TUTORIAL_SUB_TITLE_FONT];
-    [subStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
-    [subStyle setLinesNumber:TUTORIAL_SUB_TITLE_LINES_NUMBER];
-    [subStyle setOffset:TUTORIAL_SUB_TITLE_OFFSET];
-    
-    ICETutorialLabelStyle *descStyle = [[ICETutorialLabelStyle alloc] init];
-    [descStyle setFont:TUTORIAL_DESC_FONT];
-    [descStyle setTextColor:TUTORIAL_LABEL_TEXT_COLOR];
-    [descStyle setLinesNumber:TUTORIAL_DESC_LINES_NUMBER];
-    [descStyle setOffset:TUTORIAL_DESC_OFFSET];
-    
-    //DLog(@"");
-    
-    // Load into an array.
-    NSArray *tutorialLayers = @[layer1,layer2,layer3,layer4,layer5];
-    
-    UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
-    self.rootNavController = [mainStoryboard instantiateInitialViewController];
-    
-    self.viewController = (SubaTutorialController *)[mainStoryboard instantiateViewControllerWithIdentifier:@"onboardingController"];
-    
-    self.viewController.autoScrollEnabled = YES;
-    self.viewController.autoScrollLooping = YES;
-    self.viewController.autoScrollDurationOnPage = TUTORIAL_DEFAULT_DURATION_ON_PAGE;
-    
-    [self.viewController setPages:tutorialLayers];
-    
-    
-    // Set the common styles, and start scrolling (auto scroll, and looping enabled by default)
-    [self.viewController setCommonPageSubTitleStyle:subStyle];
-    [self.viewController setCommonPageDescriptionStyle:descStyle];
-    
-    //DLog(@"[AppHelper userID] : %@",[AppHelper userID]);
-    
-    if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
-        // First launch or from logout
-        //DLog(@"No VC present \nuserid : %@",[AppHelper userID]);
-        
-        __unsafe_unretained typeof(self) weakSelf = self;
-        
-        // Set button 1 action.
-        [self.viewController setButton1Block:^(UIButton *button){
-           // DLog(@"Facebook Button pressed.");
-            [weakSelf openFBSession];
-            [weakSelf.viewController stopScrolling];
-        }];
-        
-        // Set button 2 action, stop the scrolling.
-        
-        [self.viewController setButton2Block:^(UIButton *button){
-            //DLog(@"Button 2 pressed.");
-            //DLog(@"Auto-scrolling stopped.");
-            
-            //[weakSelf.viewController stopScrolling];
-            
-            [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
-            
-            //weakSelf.viewController per
-            
-        }];
-        
-        // Run it.
-        [self.viewController startScrolling];
-        
-        [self.rootNavController setViewControllers:@[self.viewController]];
-        self.window.rootViewController = self.rootNavController;
-        
-        
-   }else{
-        // Setting Tab Bar as root view controller
-        //DLog(@"Setting TabBar Controller as the root view controller");
-        self.window.rootViewController = self.mainTabBarController;
-    }
-    
-    
-    
-    
-    [self.window makeKeyAndVisible];
+    //[self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -225,16 +208,15 @@
     [Appirater setDebug:NO];
     [Appirater appLaunched:YES]; 
     
-    
-    /*if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
-        DLog(@"userid - %@",[AppHelper userID]);
-        self.window.rootViewController = self.mainTabBarController;
+   /*
+    if (![[AppHelper userID] isEqualToString:@"-1"] && [AppHelper userID] != NULL) {
+       
+        
        
     }else{*/
-        // Register application wide default preferences
-    
-        //DLog(@"userid - %@",[AppHelper userID]);
-    
+        
+    if ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL) {
+        
         NSDictionary *appDefaults = @{
                                       FIRST_NAME : @"",
                                       LAST_NAME : @"",
@@ -245,17 +227,21 @@
                                       PROFILE_PHOTO_URL : @"-1",
                                       FACEBOOK_ID : @"-1",
                                       NUMBER_OF_ALBUMS : @"0",
-                                      NUMBER_OF_APP_SESSIONS : [NSNumber numberWithInteger:0]
-                                      };
-    
-    
-    if ([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL) {
+                                      kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES : @"0",
+                                      NUMBER_OF_APP_SESSIONS : [NSNumber numberWithInteger:0]};
+
+        DLog(@"registering app defaults");
         [[NSUserDefaults standardUserDefaults] registerDefaults:appDefaults];
-    } 
+        
+    }else{
+         DLog(@"userid - %@",[AppHelper userID]);
+         self.window.rootViewController = self.mainTabBarController;
+    }
+    
     
     // Setting up Flurry SDK
-    //[Flurry setCrashReportingEnabled:YES];
-    //[Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
+    [Flurry setCrashReportingEnabled:YES];
+    [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
     
     
     
@@ -278,28 +264,24 @@
         
         UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
         PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
-        
+         
         pVC.spotID = dict[@"spotId"];
-        //pVC.spotName = userInfo[@"aps"][@"spotName"];
         self.window.rootViewController = self.mainTabBarController;
         
         UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
         ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
         
-        //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
-        
-        //DLog(@"Userinfo - %@",userInfo[@"spotId"]);
         [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
                                  sender:[NSString stringWithFormat:@"%@",dict[@"spotId"]]];
     }
     
 
-    /*[[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
+    [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
-       
+        //DLog(@"Register for push notification") ;
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
-    }];*/
+    }];
    
     if (![[AppHelper placesCoachMarkSeen] isEqualToString:@"YES"]) {
        [AppHelper setPlacesCoachMark:@"NO"];
@@ -329,7 +311,7 @@
         [AppHelper setShareStreamCoachMark:@"NO"];
     }
     
-    [self.window makeKeyAndVisible];
+    //[self.window makeKeyAndVisible];
     
     
     // Check whether we have an update
@@ -437,9 +419,6 @@
                     
                 }];
             }
-       // }
-   // }
-    
     [self monitorNetworkChanges];
 }
 
@@ -518,12 +497,9 @@
 
 
 -(void)application:(UIApplication *) application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-    //DLog(@"RECIEVED REMOTE NOTIFS");
-    
-    //NSLog(@"Root View Controller - %@\nChildView Controllers - %@",[self.window.rootViewController class],[[self.window.rootViewController childViewControllers] description]);
+   
     
      NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
-    DLog(@"Notifications  %@",userInfo);
     
     if ([notifications isEqualToString:@"0"]){
         [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
@@ -541,14 +517,12 @@
         [AppHelper showNotificationWithMessage:userInfo[@"aps"][@"alert"] type:kSUBANOTIFICATION_SUCCESS inViewController:[self topViewController] completionBlock:nil];
         
     }else{
-        DLog(@"UserInfo - %@",[userInfo debugDescription]);
         [self.mainTabBarController setSelectedIndex:2];
         
         UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
         PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
         
         pVC.spotID = userInfo[@"spotId"];
-        //pVC.spotName = userInfo[@"aps"][@"spotName"];
         self.window.rootViewController = self.mainTabBarController;
         
         UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
@@ -576,7 +550,7 @@
     
     
     [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
-        DLog(@"Opening FB Session with error - %@\nSession - %@",error,[session debugDescription]);
+        //DLog(@"Opening FB Session with error - %@\nSession - %@",error,[session debugDescription]);
         
         if (session.isOpen){
             [AppHelper setFacebookSession:@"YES"];
@@ -586,7 +560,7 @@
             NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-                DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                //DLog(@"FB Auth Result - %@\nError - %@",result,error);
                 if (!error) {
                     NSDictionary<FBGraphUser> *user = result;
                     
@@ -767,6 +741,8 @@
 
 
 - (UIViewController *)topViewController{
+    DLog(@"Root View Controller - %@",[[UIApplication sharedApplication].keyWindow.rootViewController class]);
+    
     return [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
 }
 
@@ -781,35 +757,22 @@
         return [self topViewController:lastViewController];
     }
     UIViewController *presentedViewController = (UIViewController *)rootViewController.presentedViewController;
+    
     return [self topViewController:presentedViewController];
 }
 
 
 -(void)resetMainViewController
 {
-    self.window.rootViewController = nil;
-        __unsafe_unretained typeof(self) weakSelf = self;
+    self.window.rootViewController = [[UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]] instantiateInitialViewController];
     
-    // Set button 1 action.
-    [self.viewController setButton1Block:^(UIButton *button){
-        //DLog(@"Facebook Button pressed.");
-        [weakSelf openFBSession];
-        [weakSelf.viewController stopScrolling];
-    }];
+    __unsafe_unretained typeof(self) weakSelf = self;
+    weakSelf.rootNavController = (UINavigationController *)self.window.rootViewController;
     
-    // Set button 2 action, stop the scrolling.
-    
-    [self.viewController setButton2Block:^(UIButton *button){
-     [weakSelf.viewController performSegueWithIdentifier:@"AgreeTermsSegue" sender:@(button.tag)];
-        
-    }];
-    
-    // Run it.
-    //[self.viewController startScrolling];
-    
-    [self.rootNavController setViewControllers:@[self.viewController]];
-    self.window.rootViewController = self.rootNavController;
-    
+    [weakSelf.rootNavController setViewControllers:@[self.viewController]];
+    DLog(@"Self.view controller - %@ in Root Nav - %@",[self.viewController class],[weakSelf.rootNavController class]);
+    weakSelf.window.rootViewController = self.rootNavController;
+     
     [self.window makeKeyAndVisible];
 }
 

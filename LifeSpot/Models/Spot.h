@@ -32,7 +32,7 @@ typedef void (^SpotInfoChangedCompletion) (id results,NSError *error);
 
 // Selectors
 + (void)fetchMembersForSpot:(NSString *)spotId completion:(SpotMembersLoadedCompletionBlock)completion;
-+ (void)fetchSpotInfo:(NSString *)spotId User:(NSString *)userId completion:(SpotInfoLoadedCompletion)completion;
++ (void)fetchSpotInfo:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion;
 + (void)fetchSpotImagesUsingSpotId:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion;
 + (void)updateSpotInfo:(NSDictionary *)info completion:(SpotInfoChangedCompletion)completion;
 @end

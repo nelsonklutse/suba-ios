@@ -8,14 +8,14 @@
 
 #import "SubaAPIClient.h"
 
-static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
-//static NSString * const LifeSpotsAPIBaseURLString  = @"http://54.200.15.155/";
+static NSString * const SubaAPIBaseURLString = @"http://54.201.118.129/";
+//static NSString * const SubaAPIBaseURLString  = @"http://54.200.15.155/";
 
-//static NSString * const LifeSpotsAPIBaseURLString  =  @"http://127.0.0.1:9000/";
+//static NSString * const SubaAPIBaseURLString  =  @"http://127.0.0.1:9000/";
 
-//static NSString * const  LifeSpotsAPIBaseURLString  =  @"http://10.1.0.88:9000/";
-//static NSString * const LifeSpotsAPIBaseURLString =  @"http://54.186.126.173/";
-//static NSString * const LifeSpotsAPIBaseURLString =  @"http://api-dev.subaapp.com/";
+//static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.140:9000/";
+//static NSString * const SubaAPIBaseURLString =  @"http://172.20.10.4:9000/";
+//static NSString * const SubaAPIBaseURLString =  @"http://api-dev.subaapp.com/";
 
 @implementation SubaAPIClient
 
@@ -29,18 +29,18 @@ static NSString * const LifeSpotsAPIBaseURLString = @"http://54.201.118.129/";
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
         
         __sharedInstance = [[SubaAPIClient alloc]
-                            initWithBaseURL:[NSURL URLWithString:LifeSpotsAPIBaseURLString]
+                            initWithBaseURL:[NSURL URLWithString:SubaAPIBaseURLString]
                        sessionConfiguration:configuration];
     });
     
-    [__sharedInstance.requestSerializer setValue:@"com.suba.subaapp" forHTTPHeaderField:@"x-suba-api-token"];
+    [__sharedInstance.requestSerializer setValue:@"com.suba.subaapp-ios" forHTTPHeaderField:@"x-suba-api-token"];
     
     return __sharedInstance;
 }
 
 + (instancetype)subaAPIBaseURL
 {
-    return [NSURL URLWithString:LifeSpotsAPIBaseURLString];
+    return [NSURL URLWithString:SubaAPIBaseURLString];
 }
 
 @end

@@ -280,7 +280,6 @@
     [reusableViews removeAllObjects];
     
     [self scrollToPage:tmpCurrentPage animated:NO];
-    
     [self setupScrollIndicator];
 }
 

@@ -17,7 +17,27 @@
 
 @implementation AppHelper
 
-
++(NSString *)kindOfDeviceScreen
+{
+    NSString *deviceScreenType = nil;
+    
+    if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]){
+        
+        CGSize result = [[UIScreen mainScreen] bounds].size;
+        CGFloat scale = [UIScreen mainScreen].scale;
+        result = CGSizeMake(result.width * scale, result.height * scale);
+        
+        if(result.height == 960){
+            //DEVICE SCREEN IS iPHONE 4
+            deviceScreenType = kIPHONE_4_SCREEN;
+        }
+        if(result.height == 1136){
+            //DEVICE SCREEN IS iPHONE 5
+            deviceScreenType = kIPHONE_5_SCREEN;
+        }
+    }
+        return deviceScreenType;
+}
 
 + (BOOL)validateEmail:(NSString *)string {
     
@@ -407,6 +427,32 @@
 }
 
 
++(BOOL)showFirstTimeView
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults boolForKey:SHOW_FIRST_TIME_VIEW]; 
+}
+
++(void)setShowFirstTimeView:(BOOL)flag
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setBool:flag forKey:SHOW_FIRST_TIME_VIEW];
+    [userDefaults synchronize];
+}
+
+
++(NSDictionary *)inviteCodeDetails
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults objectForKey:ACTIVE_SPOT_CODE];
+}
+
++(void)saveInviteCodeDetails:(NSDictionary *)code{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:code forKey:ACTIVE_SPOT_CODE];
+    [userDefaults synchronize];
+}
+
 + (NSString *)userSession
 {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -443,9 +489,23 @@
 }
 
 
++(NSString *)userStatus
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:kSUBA_USER_STATUS];
+}
+
++(void)setUserStatus:(NSString *)status
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setValue:status forKey:kSUBA_USER_STATUS];
+    [userDefaults synchronize];
+}
+
+
 +(NSString *)hasUserInvited
 {
-   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     return [userDefaults valueForKey:USER_HAS_INVITED];
 }
 
@@ -457,23 +517,23 @@
 }
 
 
-/*+ (NSDictionary *)userPreferences{
++ (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *userPrefs = @{API_TOKEN : [userDefaults valueForKey:API_TOKEN],
                                 EMAIL : [userDefaults valueForKey:EMAIL],
                                 FIRST_NAME : [userDefaults valueForKey:FIRST_NAME],
                                 LAST_NAME : [userDefaults valueForKey:LAST_NAME],
                                 USER_NAME : [userDefaults valueForKey:USER_NAME],
+                                PROFILE_PHOTO_URL : [userDefaults valueForKey:PROFILE_PHOTO_URL],
                                 FACEBOOK_ID : [userDefaults valueForKey:FACEBOOK_ID],
                                 SESSION : [userDefaults valueForKey:SESSION],
                                 NUMBER_OF_ALBUMS : [userDefaults valueForKey:NUMBER_OF_ALBUMS]
                                 };
-    return userPrefs;
-    
-}*/
+    return userPrefs;    
+}
 
 #pragma mark - API calls
-+ (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(UserAuthenticatedCompletion)completionBlock{
++ (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(GeneralCompletion)completionBlock{
     
     if ([type isEqualToString:FACEBOOK_LOGIN]){
         
@@ -492,15 +552,17 @@
                       @"fbLogin" : type
                       }
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
-             DLog(@"This is straight from the server\n%@",responseObject);
-             if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
+             //DLog(@"This is straight from the server\n%@",responseObject);
+             if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
+                 
                  [Flurry logEvent:@"Facebook_SignUp"];
                  [self savePreferences:responseObject];
                  
                  [self setFacebookID:user[@"id"]];
                  [self setProfilePhotoURL:user[PROFILE_PHOTO_URL]];
                  [self setFacebookLogin:@"YES"];
-                 
+                 //[self setShowFirstTimeView:YES];
+                 [self setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
                  completionBlock(responseObject,nil);
              }
              
@@ -513,16 +575,15 @@
     }else{
         
         // Do Native Sign Up
-        DLog(@"Doing native sign up");
         [[SubaAPIClient sharedInstance]
          POST:@"signUp"
          parameters:user
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
-             if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
-                 DLog(@"Response from sign up - %@",responseObject);
+             if ([responseObject[STATUS] isEqualToString:ALRIGHT]){
                  [AppHelper savePreferences:responseObject];
                  [self setFacebookLogin:@"NO"];
-                 //[self setUserSession:@"login"];
+                 [self setShowFirstTimeView:YES];
+                 [self setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
                  completionBlock(responseObject,nil);
              }
          }
@@ -574,29 +635,22 @@
     [alert show];
 }
 
-+(void)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc
++(CLLocationManager *)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc
 {
     //BOOL locationEnabled = NO;
     if ([CLLocationManager locationServicesEnabled]){
-        //if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
-            
+        
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = vc;
-            [locationManager startUpdatingLocation];
-       /* }else{
-            [AppHelper showAlert:@"Location Denied"
-                         message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
-                         buttons:@[@"OK"] delegate:nil];
-        }*/
-
-        
+       
     }else{
+        
        [self showAlert:@"Location Services Disabled"
                message:@"Location services is disabled for this app. Please enable location services to see nearby spots" buttons:@[@"OK"] delegate:nil];
-        //locationEnabled = NO;
+        
     }
     
-   // return locationEnabled;
+    return locationManager;
 }
 
 +(void)showLoadingDataView:(UIView *)view indicator:(id)indicator flag:(BOOL)flag
@@ -660,6 +714,177 @@
 
 
 
+#pragma mark - General Helpers
++(void)makeInitialPlaceholderViewWithSize:(NSInteger)labelSize view:(UIView *)contextView name:(NSString *)person
+{
+    [[contextView subviews]
+     makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    CGRect frame = CGRectZero;
+    NSString *initials = [[self initialStringForPersonString:person] uppercaseString];
+    int numberOfCharacters = initials.length;
+    
+    if (numberOfCharacters == 1){
+        
+        frame = CGRectMake(contextView.bounds.origin.x+(contextView.bounds.size.width/2)-5, contextView.bounds.origin.y, contextView.bounds.size.width, contextView.bounds.size.height);
+    }else if (numberOfCharacters == 2){
+        
+        frame = CGRectMake(contextView.bounds.origin.x+(contextView.bounds.size.width/2)-10, contextView.bounds.origin.y, contextView.bounds.size.width, contextView.bounds.size.height);
+    }
+
+    
+    UIFont *font = [UIFont fontWithName:@"AvenirNext-Regular" size:labelSize];
+    
+    UILabel *initialsLabel = [[UILabel alloc] initWithFrame:contextView.bounds];
+    initialsLabel.textColor = [UIColor whiteColor];
+    initialsLabel.font = font;
+    initialsLabel.text = [[self initialStringForPersonString:person] uppercaseString];
+    contextView.backgroundColor = [self circleColor];
+    
+    [contextView addSubview:initialsLabel];
+}
+
++(UIColor *)circleColor
+{
+   return [UIColor colorWithHue:arc4random() % 256 / 256.0 saturation:0.7 brightness:0.8 alpha:1.0];
+}
+
++(NSString *)initialStringForPersonString:(NSString *)personString
+{
+    NSString *initials = nil;
+    NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
+    NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
+    
+    for (NSString *component in mutableComps) {
+        if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]) {
+            [mutableComps removeObject:component];
+        }
+    }
+    
+    if ([mutableComps count] >= 2) {
+        NSString *firstName = mutableComps[0];
+        NSString *lastName = mutableComps[1];
+        
+        initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+    } else if ([mutableComps count]) {
+        NSString *name = mutableComps[0];
+        initials =  [name substringToIndex:1];
+    }
+    
+    return initials;
+}
+
+
++ (void)fillView:(UIView *)view WithImage:(NSString *)imageURL
+{
+    [[view subviews]
+     makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    CGRect frame = CGRectMake(view.bounds.origin.x, view.bounds.origin.y, view.bounds.size.width, view.bounds.size.height);
+    
+    UIImageView *imageView = [[UIImageView alloc] initWithFrame:frame];
+    imageView.contentMode = UIViewContentModeScaleAspectFill;
+    [imageView setImageWithURL:[NSURL URLWithString:imageURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+    
+    view.backgroundColor = [UIColor clearColor];
+    
+    [view addSubview:imageView];
+    
+    
+
+}
+
+
++ (NSInteger)numberOfPhotoStreamEntries
+{
+   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+   NSString *numberOfStreamEntries = [userDefaults valueForKey:kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES];
+    return [numberOfStreamEntries integerValue];
+}
+
+
++ (void)increasePhotoStreamEntries
+{
+    // Get the current number of stream entries
+    NSInteger numberOfStreamEntries = [self numberOfPhotoStreamEntries] + 1;
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setValue:[NSString stringWithFormat:@"%i",numberOfStreamEntries] forKey:kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES];
+    
+    [userDefaults synchronize];
+}
+
+
++(void)openFBSession:(GeneralCompletion)completion
+{
+    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+        
+        
+        DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
+        
+        if (error) {
+            DLog(@"Facebook Error - %@\nFriendly Error - %@",[error debugDescription],error.localizedDescription);
+        }else if (session.isOpen){
+            [AppHelper setFacebookSession:@"YES"];
+           
+            
+            
+            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
+            
+            [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+                DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                if (!error) {
+                    NSDictionary<FBGraphUser> *user = result;
+                    
+                    NSString *userEmail = [user valueForKey:@"email"];
+                    if (userEmail == NULL) {
+                        [AppHelper showAlert:@"Facebook Error"
+                                     message:@"There was an issue retrieving your facebook email address."
+                                     buttons:@[@"OK"] delegate:nil];
+                        
+                        /*[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
+                         self.connectingToFacebookView.alpha = 0;*/
+                        
+                    }else{
+                        NSString *pictureURL = [[[result valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+                        
+                        [AppHelper setProfilePhotoURL:pictureURL];
+                        
+                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                        
+                        
+                        
+                        NSDictionary *fbSignUpDetails = @{
+                                                          @"id" :user.id,
+                                                          FIRST_NAME: user.first_name,
+                                                          LAST_NAME : user.last_name,
+                                                          EMAIL :  userEmail,
+                                                          USER_NAME : user.username,
+                                                          @"pass" : @"",
+                                                          PROFILE_PHOTO_URL : pictureURL
+                                                          };
+                        
+                        
+                        [AppHelper createUserAccount:fbSignUpDetails WithType:FACEBOOK_LOGIN completion:^(id response, NSError *error) {
+                            if (!error){
+                                DLog(@"Response - %@",result);
+                                completion(response,nil);
+                            }else{
+                                DLog(@"Error - %@",error);
+                                [AppHelper showAlert:@"Authentication Error"
+                                             message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
+                                             buttons:@[@"OK"]
+                                            delegate:nil];
+                                
+                            }
+                        }];
+                    }
+                }
+            }];
+        }
+        
+    }];
+    
+
+}
 
 @end
 

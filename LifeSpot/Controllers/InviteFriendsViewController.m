@@ -254,7 +254,7 @@ static BOOL isFiltered = NO;
                     //failure((__bridge NSError *)error);
                     DLog(@"Access to contacts refused");
                     [AppHelper showAlert:@"Contacts Access Denied"
-                                 message:@"We do not have access to your contacts. To allow us to access your contacts,please go to Settings->Privacy->Contacts"
+                                 message:@"We do not have access to your contacts. To allow us to access your contacts,please go to Settings->Privacy->Contacts and enable for Suba"
                                  buttons:@[@"OK"] delegate:nil];
                 } else {
                     

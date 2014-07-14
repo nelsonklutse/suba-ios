@@ -12,10 +12,12 @@
 
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
+@property (weak, nonatomic) IBOutlet UIView *noRemoteNotificationsView;
 @property (weak, nonatomic) IBOutlet UITableView *notificationsTableView;
 @property (weak, nonatomic) IBOutlet UIView *loadingActivityIndicatorView;
 
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingActivityIndicator;
+- (IBAction)turnOnNotifications:(id)sender;
 @end
 
 @implementation ActivityViewController
@@ -25,10 +27,31 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view.
     
-    [self fetchNotificationsFromProvider];
+	self.noRemoteNotificationsView.alpha = 0;
+    UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
+    navImageView.contentMode = UIViewContentModeScaleAspectFit;
+    navImageView.image = [UIImage imageNamed:@"logo"];
+    
+    self.navigationItem.titleView = navImageView;
+    
+    NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+    if (remoteNotificationType == 0) {
+        // Show give us notifications
+        self.noRemoteNotificationsView.alpha = 1;
+        self.notificationsTableView.alpha = 0;
+    }else{
+        self.noRemoteNotificationsView.alpha = 0;
+        self.notificationsTableView.alpha = 1;
+       [self fetchNotificationsFromProvider];
+    }
+    
+    
+    DLog(@"Notification enabled for app - %u",[[UIApplication sharedApplication] enabledRemoteNotificationTypes]);
 }
+
+
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -45,7 +68,8 @@
     
     [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:YES];
     
-    [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications" parameters:@{@"userId": [AppHelper userID]}
+    [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications"
+                                       parameters:@{@"userId": [AppHelper userID]}
                                           success:^(NSURLSessionDataTask *task, id responseObject){
                 
                 [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:NO];
@@ -56,14 +80,10 @@
                     DLog(@"Notifications - %@",attachments);
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
-                   // if ([badgeValue integerValue] >= 5) {
-                     //   [self.tabBarController.tabBar.items[2] setBadgeValue:@"5"];
-                //    }
-               // else{
-                      [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];  
-                 //   }
+                   
+                      [self.tabBarController.tabBar.items[1] setBadgeValue:badgeValue];
+                      [self.notificationsTableView reloadData];
                     
-                    [self.notificationsTableView reloadData];
                     }else{
                         DLog(@"There are no notifications for this user");
                     }
@@ -147,4 +167,8 @@
 }
 
 
+- (IBAction)turnOnNotifications:(id)sender
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kUserDidSignUpNotification object:nil];
+}
 @end

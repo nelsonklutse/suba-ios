@@ -8,32 +8,32 @@
       "scale" : "2x"
     },
     {
-      "orientation" : "portrait",
-      "idiom" : "iphone",
       "extent" : "full-screen",
-      "minimum-system-version" : "7.0",
+      "idiom" : "iphone",
       "subtype" : "retina4",
+      "filename" : "newSplashBackground@2x.png",
+      "minimum-system-version" : "7.0",
+      "orientation" : "portrait",
       "scale" : "2x"
     },
     {
       "orientation" : "portrait",
       "idiom" : "iphone",
       "extent" : "full-screen",
-      "filename" : "iphone4_launcher.png",
+      "filename" : "newSplashBackground4.png",
       "scale" : "1x"
     },
     {
       "orientation" : "portrait",
       "idiom" : "iphone",
       "extent" : "full-screen",
-      "filename" : "iphone4_launher@2x.png",
+      "filename" : "newSplashBackground4@2x.png",
       "scale" : "2x"
     },
     {
       "orientation" : "portrait",
       "idiom" : "iphone",
       "extent" : "full-screen",
-      "filename" : "iphone5_launch.png",
       "subtype" : "retina4",
       "scale" : "2x"
     }

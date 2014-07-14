@@ -29,6 +29,7 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 @interface User : NSObject
 
 @property (readonly,nonatomic,copy) NSString *userID;
+//@property (readonly,nonatomic,copy) NSString *status;
 @property (readonly,nonatomic,copy) NSString *userName;
 @property (readonly,nonatomic,copy) NSString *email;
 @property (readonly,nonatomic,copy) NSString *password;
@@ -37,8 +38,9 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 @property (readonly,nonatomic) NSURL *profilePhotoURL;
 
 + (User *)currentlyActiveUser;
++ (User *)userWithID:(NSString *)userID;
 + (User *)userWithId:(NSString *)userId userName:(NSString *)username profilePhotoURL:(NSURL *)url;
-
++ (void)updateUserStat:(NSString *)stat completion:(GeneralCompletion)completionBlock;
 - (id)initWithAttributes:(NSDictionary *)attributes;
 - (id)initWithUserName:(NSString *)userName Email:(NSString *)email AndPassword:(NSString *)password;
 
@@ -60,10 +62,14 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 - (void)isUserFollowing:(NSString *)otherUserId completion:(IsUserFollowing)completion;
 - (void)likePhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 - (void)deleteStream:(NSString *)spotId completion:(GeneralCompletion)completion;
+- (void)inviteUsersToStreamViaEmail:(NSDictionary *)params completion:(GeneralCompletion)completion;
+- (void)fetchGlobalStreams:(NSDictionary *)params completion:(GeneralCompletion)completion;
++ (void)updateFullName:(NSDictionary *)userInfo completion:(UserProfileInfoUpdatedCompletion)completion;
 
 + (void)allUsers:(GeneralCompletion)completion;
 + (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 + (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
-//+ (void)saveInviteeNumber:(NSDictionary *)params completion:(GeneralCompletion)completion;
++ (void)enterInviteCodeToJoinStream:(NSDictionary *)params completion:(GeneralCompletion)completion;
++ (void)createGuestAccount:(GeneralCompletion)completion;
 
 @end

@@ -60,11 +60,11 @@
     }];
 }
 
-+(void)fetchSpotInfo:(NSString *)spotId User:(NSString *)userId completion:(SpotInfoLoadedCompletion)completion
++(void)fetchSpotInfo:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
 {
     //DLog(@"SpotId - %@\nUserId - %@",spotId,userId);
     [[SubaAPIClient sharedInstance] GET:@"spot/info"
-                                  parameters:@{@"spotId":spotId, @"userId":userId}
+                                  parameters:@{@"spotId":spotId}
                                      success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -72,9 +72,18 @@
     }];
 }
 
+
+
 +(void)fetchSpotImagesUsingSpotId:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
 {
-    [[SubaAPIClient sharedInstance] GET:@"spot/photos/all" parameters:@{@"spotId": spotId,@"userId":[AppHelper userID]} success:^(NSURLSessionDataTask *task, id responseObject) {
+    NSDictionary *params = nil;
+    if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
+         params = @{@"spotId": spotId,@"tempUserKey":kSUBA_USER_TEMPORARY_ID};
+    }else{
+       params = @{@"spotId": spotId,@"userId":[AppHelper userID]};
+    } 
+    DLog(@"Params - %@",params); 
+    [[SubaAPIClient sharedInstance] GET:@"spot/photos/all" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
@@ -85,7 +94,7 @@
 {
     [[SubaAPIClient sharedInstance] POST:@"spot/info/edit" parameters:info success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+    } failure:^(NSURLSessionDataTask *task, NSError *error){
         completion(nil,error);
     }];
 }

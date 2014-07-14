@@ -15,6 +15,7 @@
 
 @property (weak, nonatomic) IBOutlet UIButton *loginBtn;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loginSpinner;
+@property (strong, nonatomic) IBOutlet UIScrollView *loginScrollView;
 
 - (void)loginUserWithEmail:(NSString *)email AndPassword:(NSString *)password;
 @end
@@ -25,14 +26,15 @@
 {
     [super viewDidLoad];
     self.loginBtn.enabled = NO;
+    self.navigationController.navigationBarHidden = YES;
 	// Do any additional setup after loading the view.
     
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    [self.userNameField becomeFirstResponder];
     [super viewWillAppear:YES];
-}
+    [self.userNameField becomeFirstResponder];
+    }
 
 - (void)didReceiveMemoryWarning
 {
@@ -41,37 +43,42 @@
 }
 
 - (IBAction)loginAction:(UIButton *)sender {
+    
     self.userName = self.userNameField.text;
     self.pass = self.pwdField.text;
-    [self loginUserWithEmail:self.userName AndPassword:self.pass];
     
+    [self loginUserWithEmail:self.userName AndPassword:self.pass];
 }
 
 
 
 
 #pragma mark - API Calls
--(void)loginUserWithEmail:(NSString *)email AndPassword:(NSString *)password{
+-(void)loginUserWithEmail:(NSString *)email AndPassword:(NSString *)password
+{
     [self.loginSpinner startAnimating];
     
     [AppHelper loginUserWithEmailOrUserName:email
                                 AndPassword:password
                             completionBlock:^(id results, NSError *error) {
-                                
+                                DLog(@"Results - %@",results);
                                 [self.loginSpinner stopAnimating];
                                 
                                 if (!error) {
                                     if ([results[STATUS] isEqualToString:ALRIGHT]) {
                                         //DLog(@"")
                                         [AppHelper savePreferences:results];
-                                        [self performSegueWithIdentifier:@"FromLoginPersonalSpotsTab" sender:nil];
+                                        [AppHelper setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
+                                        
+                                        [Flurry logEvent:@"Login_Action"];
+                                        [self performSegueWithIdentifier:@"Login_MainTabBar_Segue" sender:nil];
+                                        
                                     }else{
                                         [AppHelper showAlert:results[STATUS] message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
                                     }
-
-                                    
                                 }else{
-                                    DLog(@"Error localizedDescription - %@\nError Description - %@\nError localizedFailureReason - %@",error.localizedDescription,error.description,error.localizedFailureReason);
+                                    
+                                    DLog(@"Error localizedDescription - %@\nError Description - %@\nError localizedFailureReason - %@",error.localizedDescription,error.userInfo,error.localizedFailureReason);
                                     
                                     [AppHelper showAlert:@"Login Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                                 }
@@ -82,10 +89,18 @@
 
 
 #pragma mark - Textfield delegate method
+-(BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    [self.loginScrollView setContentOffset:CGPointMake(self.loginScrollView.frame.origin.x,50.0f)];
+    return YES;
+}
+
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-    if (textField == self.userNameField) {
+    if (textField == self.userNameField && textField.text.length > 0) {
         [self.pwdField becomeFirstResponder];
+    }else if (textField == self.userNameField && textField.text.length <= 0){
+        [textField resignFirstResponder];
     }
     
     if (textField == self.pwdField) { // if we are in the password field

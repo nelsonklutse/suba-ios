@@ -7,12 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <EBPhotoCommentProtocol.h>
 
 @class Photo;
 @class User; 
 
-@interface Comment : NSObject<EBPhotoCommentProtocol>
+@interface Comment : NSObject
 
 @property (copy,nonatomic,readonly) User *user;
 @property (copy,nonatomic,readonly) Photo *photo;

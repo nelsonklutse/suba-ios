@@ -9,7 +9,8 @@
 #import "FoursquareLocationsViewController.h"
 #import "FoursquareVenueCell.h"
 #import "CreateSpotViewController.h"
-#import "AlbumSettingsViewController.h"
+#import "StreamSettingsViewController.h"
+#import "CreateStreamViewController.h"
 #import "Location.h"
 
 @interface FoursquareLocationsViewController ()<UITableViewDataSource,UITableViewDelegate,UISearchBarDelegate,UISearchDisplayDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
@@ -33,7 +34,7 @@
 - (void)displaySubaLocations:(Location *)locationPassed;
 - (void)showLoadingLocationsView:(BOOL)flag;
 - (NSArray *)retrieveVenueDetails:(NSDictionary *)venue;
-- (IBAction)dismissViewController:(UIBarButtonItem *)sender;
+//- (IBAction)dismissViewController:(UIBarButtonItem *)sender;
 @end
 
 @implementation FoursquareLocationsViewController
@@ -208,7 +209,7 @@ static CLLocationManager *locationManager;
         NSArray *venueDets = [self retrieveVenueDetails:(NSDictionary *)self.locations[indexPath.row]];
         
         cell.venueName.text = venueDets[0];
-        cell.distanceLabel.text = [NSString stringWithFormat:@"%@meters",venueDets[1]];
+        cell.distanceLabel.text = [NSString stringWithFormat:@"%@ meters",venueDets[1]];
         if ([venueDets count] == 3) {
             [cell.venueIcon setImageWithURL:[NSURL URLWithString:venueDets[2]] placeholderImage:[UIImage imageNamed:@"PointerIcon"]];
         }else{
@@ -403,31 +404,6 @@ static CLLocationManager *locationManager;
 }
 
 
-- (IBAction)locationChosen:(id)sender {
-    /*NSLog(@"The delegate of this class is - %@",[self.delegate class]);
-    if ([self.delegate respondsToSelector:@selector(viewController:DidSetLocation:)]) {
-        
-        if (self.currentLocationSelected != nil) {
-            
-            NSString *placeSelected = self.currentLocationSelected;
-            NSDictionary *venue = [self.locations[self.lastSelected.row] objectForKey:@"location"];
-            NSString *address = [venue objectForKey:@"address"];
-            NSString *city = [venue objectForKey:@"city"];
-            NSString *country = [venue objectForKey:@"country"];
-            NSString *latitude = [venue objectForKey:@"lat"];
-            NSString *longitude = [venue objectForKey:@"lng"];
-            
-            Location *chosenLocation = [[Location alloc] initWithLat:latitude Lng:longitude PlaceName:placeSelected Address:address City:city Country:country];
-            
-            [self.delegate viewController:self DidSetLocation:chosenLocation];
-       
-        }
-    }
-    
-    [self.presentingViewController dismissViewControllerAnimated:YES
-                                                      completion:nil];*/
-}
-
 
 -(NSArray *)retrieveVenueDetails:(NSDictionary *)venue{
     NSMutableArray *venueDetails = [NSMutableArray arrayWithCapacity:2];
@@ -449,26 +425,52 @@ static CLLocationManager *locationManager;
     
        return venueDetails;
 }
-
-- (IBAction)dismissViewController:(UIBarButtonItem *)sender
+- (IBAction)dismissVC:(id)sender
 {
-    //DLog(@"Presenting View Controller - %@",[[self.presentingViewController childViewControllers][0] class]);
+    /*[self dismissViewControllerAnimated:YES completion:nil];*/
+    DLog();
+    if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]){
+        [self performSegueWithIdentifier:@"FoursquareToCreateSegueCancel" sender:nil];
+    }else if ([self.presentingViewController isKindOfClass:[StreamSettingsViewController class]]){
+        [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueCancel" sender:nil];
+    }
+    [self dismissViewControllerAnimated:YES completion:nil];
+
+}
+
+- (IBAction)locationChangeDone:(id)sender
+{
+    DLog(@"Presenting view controller - %@",[self.presentingViewController class]);
+    if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]){
+        DLog(@"Going to create stream VC");
+        
+        [self performSegueWithIdentifier:@"FoursquareToCreateSegueDone" sender:nil];
+    }else if ([self.presentingViewController isKindOfClass:[StreamSettingsViewController class]]){
+        [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueDone" sender:nil];
+    }
+}
+
+/*- (IBAction)dismissViewController:(UIBarButtonItem *)sender
+{
+    
+    //CreateStreamViewController *createStreamVC = (CreateStreamViewController *)self.presentingViewController;
+    
     if (sender.tag == 100) {
         //DLog(@"Presenting View Controller - %@",self.presentingViewController);
-        if ([self.presentingViewController isKindOfClass:[UINavigationController class]]){
-            [self performSegueWithIdentifier:@"FoursquareToCreateSegueCancel" sender:nil];
+        if ([self.presentingViewController isKindOfClass:[CreateStreamViewController class]]){
+            [self performSegueWithIdentifier:@"FoursquareToCreateStreamCancel" sender:nil];
         }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
             [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueCancel" sender:nil];
         }
+        
     }else if (sender.tag == 200){
-        if ([self.presentingViewController isKindOfClass:[UINavigationController class]]){
-            [self performSegueWithIdentifier:@"FoursquareToCreateSegueDone" sender:nil];
+        if ([self.presentingViewController isKindOfClass:[CreateStreamViewController class]]){
+            [self performSegueWithIdentifier:@"FoursquareToCreateStreamDone" sender:nil];
         }else if ([self.presentingViewController isKindOfClass:[AlbumSettingsViewController class]]){
             [self performSegueWithIdentifier:@"FoursquareToAlbumSettingsSegueDone" sender:nil];
         }
- 
     }
-}
+}*/
 
 
 #pragma mark Content Filtering
@@ -566,7 +568,7 @@ static CLLocationManager *locationManager;
         NSString *longitude = [NSString stringWithFormat:@"%.8f",self.userLocation.coordinate.longitude];
        self.venueChosen = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.currentLocationSelected];
         
-        [self dismissViewController:self.doneButton];
+        [self locationChangeDone:self.doneButton];
     }
 }
 

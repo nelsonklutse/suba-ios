@@ -31,6 +31,32 @@
 #define SPOT_ID @"spotId"
 #define NUMBER_OF_APP_SESSIONS @"sessions_started"
 #define USER_HAS_INVITED @"user_has_invited"
+#define SHOW_FIRST_TIME_VIEW @"firstTimeView"
+
+#define CREATE_ACCOUNT_TO_REMIX_PHOTOS @"You'll need a free Suba account to remix photos. Create one now? It will take seconds."
+
+
+#define CREATE_ACCOUNT_TO_LIKE_PHOTOS @"You'll need a free Suba account to like photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SHARE_STREAM @"You'll need a free Suba account to share the stream. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SAVE_PHOTOS @"You'll need a free Suba account to save photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_DELETE_PHOTOS @"You'll need a free Suba account to delete photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SHARE_PHOTOS @"You'll need a free Suba account to share photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SAVE_PHOTOS @"You'll need a free Suba account to save photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_REPORT_PHOTOS @"You'll need a free Suba account to report photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_TAKE_PHOTOS @"You'll need a free Suba account to add photos. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_STREAM_SETTINGS @"You'll need a free Suba account to see stream settings. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SEE_PROFILE @"You'll need a free Suba account to see user profile. Create one now? It will take seconds."
+
+#define CREATE_ACCOUNT_TO_SEE_MEMBERS @"You'll need a free Suba account to invite people to this stream. Create one now? It will take seconds."
 
 
 // Other
@@ -43,7 +69,7 @@
 #define FB_SESSION @"FacebookSession"
 #define NATIVE @"0"
 #define IS_SPOT_ACTIVE @"ACTIVE_ALBUM"
-#define ACTIVE_SPOT_ID @"ActiveSpotId"
+#define ACTIVE_SPOT_CODE @"ActiveSpotId"
 #define SPOT_IS_ACTIVE_MESSAGE @"SPOT_ACTIVE_MESSAGE"
 #define SPOT_BACKGROUND_IMAGE_URL @"SPOT_BACKGROUND_IMAGE_URL"
 #define SPOT_CREATOR_IMAGE_URL @"creatorPhoto"
@@ -79,6 +105,14 @@
 #define kSUBA_SHARE_STREAM_COACHMARK_SEEN @"shareStreamCoachMarkSeen"
 #define kSUBA_PHOTOCARD_GAP 10
 #define kSUBA_SHARE_IMAGE_URL @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/icons/facebook_v1.jpg"
+#define kSUBA_GLOBAL_STREAM @"GLOBAL"
+#define kSUBA_STREAM_VENUE @"venue"
+
+#define kIPHONE_4_SCREEN @"iPhone4Screen"
+#define kIPHONE_5_SCREEN @"iPhone5Screen"
+
+#define kEMPTY_STRING_WITH_SPACE @" "
+#define kEMPTY_STRING_WITHOUT_SPACE @""
 
 // Notifications
 #define kFBInfoWasFetchedNotification @"FbUserInfoNotification"
@@ -90,6 +124,20 @@
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
 #define kUserReloadStreamNotification @"kUserJoinedSpot"
+
+// User Status
+#define kSUBA_USER_STATUS_ANONYMOUS @"anonymous"
+#define kSUBA_USER_STATUS_CONFIRMED @"confirmed"
+#define kSUBA_USER_TEMPORARY_ID @"tempId"
+#define kSUBA_ACCOUNT_NEEDS_UPDATE_NOTIFICATION @"updateFullName"
+#define kSUBA_USER_STATUS @"userStatus"
+#define kSUBA_GUEST_USER_ID @"-1"
+
+
+// User Streams
+#define kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES @"photoStreamEntries"
+
+#define kSUBA_APP_COLOR  [UIColor colorWithRed:217/255.0f green:77/255.0f blue:20/255.0f alpha:1.0f]
 
 
 #endif

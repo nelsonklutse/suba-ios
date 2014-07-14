@@ -7,22 +7,38 @@
 //
 
 #import "SignUpViewController.h"
+#import "PhotoStreamViewController.h"
+#import <TPKeyboardAvoidingScrollView.h>
 
 @interface SignUpViewController ()<UITextFieldDelegate>
 
 
 
+@property (copy,nonatomic) NSString *firstName;
+@property (copy,nonatomic) NSString *lastName;
 @property (copy,nonatomic) NSString *userName;
 @property (copy,nonatomic) NSString *email;
 @property (copy,nonatomic) NSString *password;
+@property (copy,nonatomic) NSString *confirmPassword;
 
+@property (weak, nonatomic) IBOutlet UITextField *firstNameField;
+@property (weak, nonatomic) IBOutlet UITextField *lastNameField;
 @property (weak, nonatomic) IBOutlet UIButton *signUpButton;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *userNameCheckerIndicator;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *signUpActivityIndicator;
+@property (weak, nonatomic) IBOutlet UITextField *emailField;
+@property (weak, nonatomic) IBOutlet UITextField *userNameField;
+@property (weak, nonatomic) IBOutlet UITextField *passwordField;
+@property (weak, nonatomic) IBOutlet UITextField *confirmPasswordField;
 
+
+- (IBAction)signUp:(UIButton *)sender;
+
+- (void)checkAllTextFields;
 - (void)checkUserName:(NSString *)userName;
 - (void)createUserAccount:(NSDictionary *)params;
-
+- (void)keyboardWillShowNotification:(NSNotification *)aNotification;
+- (void)keyboardWillHidesNotification:(NSNotification *)aNotification;
 @end
 
 @implementation SignUpViewController
@@ -34,10 +50,15 @@ bool isUserNameAvailable = NO;
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     self.signUpButton.enabled = NO;
+    
+    /*[[NSNotificationCenter defaultCenter]
+     addObserver:self selector:@selector(keyboardWillShowNotification:) name:UIKeyboardWillShowNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHidesNotification:) name:UIKeyboardWillHideNotification object:nil];*/
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    [self.emailField becomeFirstResponder];
+    //[self.firstNameField becomeFirstResponder];
     [super viewWillAppear:YES];
 }
 
@@ -47,66 +68,88 @@ bool isUserNameAvailable = NO;
     // Dispose of any resources that can be recreated.
 }
 
+-(void)checkAllTextFields
+{
+    if (![self.confirmPasswordField.text isEqualToString:@""]) {
+        
+        if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]
+            && ![self.firstNameField.text isEqualToString:@""] && ![self.lastNameField.text isEqualToString:@""]
+            && ![self.passwordField.text isEqualToString:@""]){
+            // Now all the fields are not empty
+            
+            //1. Let's first check whether the email is correct
+            if ([AppHelper validateEmail:self.emailField.text]){
+                // If the email is correct,begin to process everything else
+                
+                
+                if ([self.userNameField.text isEqualToString:self.passwordField.text]){
+                    
+                    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Yet to sign up" message:@"Your username and password appear to be the same" delegate:nil cancelButtonTitle:@"I'll check" otherButtonTitles:nil];
+                    
+                    [alertView show];
+                }else{
+                    
+                    self.firstName = self.firstNameField.text;
+                    self.lastName = self.lastNameField.text;
+                    self.userName = self.userNameField.text;
+                    self.email = self.emailField.text;
+                    self.confirmPassword = self.confirmPasswordField.text;
+                    self.password = self.passwordField.text;
+                    
+                    NSDictionary *params = @{
+                                             @"firstName":self.firstName,
+                                             @"lastName":self.lastName,
+                                             @"email": self.email,
+                                             @"pass":self.password,
+                                             @"userName":self.userName,
+                                             @"fbLogin" : NATIVE
+                                             };
+                    
+                    [self createUserAccount:params]; // Sign the user up
+                }
+            }else{
+                UIAlertView *alertView = [[UIAlertView alloc]
+                                          initWithTitle:@"Email check"
+                                          message:@"We could not verfiy your email address format.Please check again"
+                                          delegate:nil
+                                          cancelButtonTitle:@"I'll check"
+                                          otherButtonTitles:nil];
+                
+                [alertView show];
+            }
+        }
+        
+    }
+
+}
+
+
 - (IBAction)signUp:(UIButton *)sender {
     
+    if (![self.confirmPasswordField.text isEqualToString:self.passwordField.text]) {
+        [AppHelper showAlert:@"Password Error" message:@"Your passwords do not match" buttons:@[@"Will check again"] delegate:nil];
+    }else{
+    
     //Save these in a model
+    self.firstName = self.firstNameField.text;
+    self.lastName = self.lastNameField.text;
     self.email = self.emailField.text;
     
     self.userName = self.userNameField.text;
     self.password = self.passwordField.text;
     
-    if (![self.emailField.text isEqualToString:@""] &&
-        ![self.userNameField.text isEqualToString:@""]){
-        // Now all the fields are not empty
-        
-        //1. Let's first check whether the email is correct
-        if ([AppHelper validateEmail:self.emailField.text]){
-            // If the email is correct,begin to process everything else
-            
-            
-            if ([self.userNameField.text isEqualToString:self.passwordField.text]){
-                
-                UIAlertView *alertView = [[UIAlertView alloc]
-                                          initWithTitle:@"Yet to sign up"
-                                          message:@"Your username and password appear to be the same"
-                                          delegate:nil
-                                          cancelButtonTitle:@"I'll check"
-                                          otherButtonTitles:nil];
-                
-                        [alertView show];
-            }else{
-                
-                
-                self.email = self.emailField.text;
-                self.userName = self.userNameField.text;
-                self.password = self.passwordField.text;
-                
-                NSDictionary *params = @{
-                                         @"email": self.email,
-                                         @"pass":self.password,
-                                         @"userName":self.userName,
-                                         @"fbLogin" : NATIVE
-                                         };
-                
-                [self createUserAccount:params]; // Sign the user up
-            }
-        }else{
-            UIAlertView *alertView = [[UIAlertView alloc]
-                                      initWithTitle:@"Email check"
-                                      message:@"We could not verfiy your email address format"
-                                      delegate:nil
-                                      cancelButtonTitle:@"I'll check"
-                                      otherButtonTitles:nil];
-            
-            [alertView show];
-        }
-    }
+    [self checkAllTextFields];
+  }
 }
 
-- (IBAction)dismissKeypad:(UIButton *)sender {
+- (IBAction)dismissKeypad:(id)sender{
+   
+    [self.firstNameField resignFirstResponder];
+    [self.lastNameField resignFirstResponder];
     [self.emailField resignFirstResponder];
     [self.userNameField resignFirstResponder];
     [self.passwordField resignFirstResponder];
+    [self.confirmPasswordField resignFirstResponder];
 }
 
 
@@ -114,13 +157,17 @@ bool isUserNameAvailable = NO;
 #pragma mark - UITextField Delegate Methods
 - (BOOL)textFieldShouldReturn:(UITextField *)textField
 {
-    if (textField == self.emailField)[self.userNameField becomeFirstResponder];
-    if (textField == self.userNameField)[self.passwordField becomeFirstResponder];
+    if (textField == self.firstNameField)[self.lastNameField becomeFirstResponder];
+    if (textField == self.lastNameField)[self.userNameField becomeFirstResponder];
+    if (textField == self.userNameField)[self.emailField becomeFirstResponder];
+    if (textField == self.emailField)[self.passwordField becomeFirstResponder];
+    if (textField == self.passwordField)[self.confirmPasswordField becomeFirstResponder];
     
-    if (textField == self.passwordField && ![textField.text isEqualToString:@""]) {
+    if (textField == self.confirmPasswordField && ![textField.text isEqualToString:@""]) {
         
-        if (![self.emailField.text isEqualToString:@""] &&
-            ![self.userNameField.text isEqualToString:@""]){
+        if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]
+             && ![self.firstNameField.text isEqualToString:@""] && ![self.lastNameField.text isEqualToString:@""]
+            && ![self.passwordField.text isEqualToString:@""]){
             // Now all the fields are not empty
             
             //1. Let's first check whether the email is correct
@@ -177,9 +224,12 @@ bool isUserNameAvailable = NO;
 
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
     
-    if (textField == self.passwordField) {
-        if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]){
-            //DLog(@"SignUp Button enabled");
+    
+    if (textField == self.confirmPasswordField && ![self.confirmPasswordField.text isEqualToString:@""]){
+        if (![self.firstNameField.text isEqualToString:@""] && ![self.lastNameField.text isEqualToString:@""]
+            && ![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]
+            && ![self.passwordField.text isEqualToString:@""]){
+            
             self.signUpButton.enabled = YES;
         }
     }
@@ -228,10 +278,10 @@ bool isUserNameAvailable = NO;
             [self.signUpActivityIndicator stopAnimating];
         if (!error){
             NSMutableDictionary *analyticsParams = [NSMutableDictionary dictionaryWithDictionary:@{USER_NAME:[AppHelper userName]}];
-            DLog(@"Username for Flurry - %@",[AppHelper userName]); 
+            DLog(@"User status = %@",[AppHelper userStatus]);   
+                [Flurry logEvent:@"Native_SignUp" withParameters:analyticsParams];
+               [self performSegueWithIdentifier:@"FromSignUpPersonalSpotsTab" sender:nil];
             
-            [self performSegueWithIdentifier:@"FromSignUpPersonalSpotsTab" sender:nil];
-            [Flurry logEvent:@"Native_SignUp" withParameters:analyticsParams];
         }else{
             DLog(@"Error : %@",error);
             [AppHelper showAlert:@"Sign Up Failed"
@@ -239,6 +289,19 @@ bool isUserNameAvailable = NO;
         }
     }];
   }
+}
+
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"SignUpToPhotoStream"]) {
+        PhotoStreamViewController *pVC = segue.destinationViewController;
+        NSDictionary *streamInfo = (NSDictionary *)sender;
+        pVC.spotID = streamInfo[@"streamId"];
+        pVC.spotName = streamInfo[@"streamName"];
+        pVC.numberOfPhotos = [streamInfo[@"photos"] integerValue];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACTIVE_SPOT_CODE];
+    }
 }
 
 
@@ -273,6 +336,20 @@ bool isUserNameAvailable = NO;
     self.userNameField.text = self.userName;
 }
 
+#pragma mark - Handle the keyboard
+-(void)keyboardWillShowNotification:(NSNotification *)aNotification
+{
+    DLog(@"Keyboard notification Info -%@",[aNotification description]);
+    NSDictionary *userInfo = [aNotification userInfo];
+    NSValue *keyboardFrame = userInfo[UIKeyboardFrameBeginUserInfoKey];
+    CGFloat frame = keyboardFrame.CGSizeValue.height;
+    
+    UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+    [scrollView setContentOffset:CGPointMake(scrollView.frame.origin.x, scrollView.frame.origin.y + frame) animated:YES];
+}
 
-
+-(void)keyboardWillHidesNotification:(NSNotification *)aNotification
+{
+    DLog(@"Keyboard notification Info - %@",[aNotification description]);
+}
 @end

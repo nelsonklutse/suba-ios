@@ -14,16 +14,25 @@
 
 @property (weak, nonatomic) IBOutlet UIView *loadingPictureView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingPictureIndicator;
-@property (weak, nonatomic) IBOutlet UIButton *commentButton;
-@property (weak, nonatomic) IBOutlet UIImageView *pictureTakerView;
+@property (weak, nonatomic) IBOutlet UIView *pictureTakerView;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfLikesLabel;
 @property (weak, nonatomic) IBOutlet UIButton *likePhotoButton;
 @property (weak, nonatomic) IBOutlet UILabel *pictureTakerName;
 
+@property (weak, nonatomic) IBOutlet UIImageView *remixedImageView;
+@property (weak, nonatomic) IBOutlet UIView *footerView;
+@property (weak, nonatomic) IBOutlet UIView *headerView;
+@property (weak, nonatomic) IBOutlet UIView *photoCardFooterView;
+@property (weak, nonatomic) IBOutlet UIButton *toggleDoodleButton;
+
+@property (weak, nonatomic) IBOutlet UILabel *numberOfRemixersLabel;
 
 
 
-
+- (void)setBorderAroundView:(UIView *)view;
+- (void)makeInitialPlaceholderView:(UIView *)contextView name:(NSString *)person;
+- (UIColor *)circleColor;
+-(void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
 //- (void)bounceLikeButton;
 //- (void)saveInitialBounds;
 @end

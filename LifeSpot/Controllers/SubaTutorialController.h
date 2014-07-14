@@ -6,8 +6,9 @@
 //  Copyright (c) 2014 Eric Hackman. All rights reserved.
 //
 
-#import "ICETutorialController.h"
+#import <UIKit/UIKit.h>
 
-@interface SubaTutorialController : ICETutorialController
+@interface SubaTutorialController : UIViewController
 
+//- (IBAction)unwindBackToCreateAccount:(UIStoryboardSegue *)segue;
 @end

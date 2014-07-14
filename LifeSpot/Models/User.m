@@ -53,11 +53,20 @@
     return self;
 }
 
-+(User *)currentlyActiveUser{
++ (User *)userWithID:(NSString *)userID
+{
+    User *user = [[User alloc] init];
+    user.userID = userID;
+    
+    return user;
+}
+
++ (User *)currentlyActiveUser{
     User *user = [[User alloc] init];
     user.userID = [[NSUserDefaults standardUserDefaults] valueForKey:API_TOKEN];
     user.photos = [NSMutableDictionary dictionary];
     user.spots = [NSMutableArray array];
+    
     return user;
 }
 
@@ -72,7 +81,8 @@
   
 }
 
--(void)savePreferences:(NSDictionary *)preferences{
+-(void)savePreferences:(NSDictionary *)preferences
+{
     
 }
 
@@ -112,13 +122,40 @@
     NSDictionary *locationDetails = nil;
     //DLog(@");
     if (spot.venue != nil) {
-        locationDetails = @{
-                            @"latitude": spot.venue.latitude,
-                            @"longitude" : spot.venue.longitude,
-                            @"albumVenue" : spot.venue.placeName,
-                            @"city" : spot.venue.city,
-                            @"country" : spot.venue.country
-                            };
+        if (spot.venue.city == nil && spot.venue.country != nil){
+            
+            locationDetails = @{
+                                @"latitude": spot.venue.latitude,
+                                @"longitude" : spot.venue.longitude,
+                                @"albumVenue" : spot.venue.placeName,
+                                @"country" : spot.venue.country
+                                };
+        }else if (spot.venue.country == nil && spot.venue.city != nil){
+            
+            locationDetails = @{
+                                @"latitude": spot.venue.latitude,
+                                @"longitude" : spot.venue.longitude,
+                                @"albumVenue" : spot.venue.placeName,
+                                @"city" : spot.venue.city
+                                };
+        }else if(!spot.venue.city && !spot.venue.country){
+            
+            locationDetails = @{
+                                @"latitude": spot.venue.latitude,
+                                @"longitude" : spot.venue.longitude,
+                                @"albumVenue" : spot.venue.placeName
+                                };
+        }else{
+            
+            locationDetails = @{
+                                @"latitude": spot.venue.latitude,
+                                @"longitude" : spot.venue.longitude,
+                                @"albumVenue" : spot.venue.placeName,
+                                @"city" : spot.venue.city,
+                                @"country" : spot.venue.country
+                                };
+        }
+        
         
     }else{
         locationDetails = @{
@@ -149,6 +186,38 @@
         }
         
         
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
+
+/*- (void)addDoodleToPhoto:(NSDictionary *)info completion:(GeneralCompletion)completion
+{
+    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
+    
+    NSURL *URL = [NSURL URLWithString:[NSString stringWithFormat:@"%@",[SubaAPIClient subaAPIBaseURL]]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:URL];
+    
+    //NSURL *filePath = [NSURL fileURLWithPath:@"file://path/to/image.png"];
+    
+    NSURLSessionUploadTask *uploadTask = [manager uploadTaskWithRequest:request fromData:info[@"fileData"] progress:(NSProgress *__autoreleasing *)progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error) {
+        if (error) {
+            completion(nil,error);
+        } else {
+            completion(responseObject,nil);
+        }
+    }];
+    
+    [uploadTask resume];
+}*/
+
+
++ (void)updateFullName:(NSDictionary *)userInfo completion:(UserProfileInfoUpdatedCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"user/account/update/fullName" parameters:userInfo success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
     }];
@@ -262,9 +331,12 @@
 
 
 -(void)joinSpot:(NSString *)spotId completion:(SpotJoinedCompletionBlock)completion
-{    [[SubaAPIClient sharedInstance] GET:@"spot/join"
+
+{
+    [[SubaAPIClient sharedInstance] GET:@"spot/join"
                                    parameters:@{ @"userId":self.userID, @"spotId": spotId}
                                       success:^(NSURLSessionDataTask *task, id responseObject){
+                                          DLog(@"Joined user to stream");
                                           DLog(@"Back from server - %@",responseObject);
                                           
                                           [AppHelper updateNumberOfAlbums:1];
@@ -365,7 +437,25 @@
 }
 
 
-+(void)allUsers:(GeneralCompletion)completion
+-(void)inviteUsersToStreamViaEmail:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"user/stream/invite" parameters:params success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error); 
+    }];
+}
+
+- (void)fetchGlobalStreams:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] GET:@"streams/global" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){ 
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
++ (void)allUsers:(GeneralCompletion)completion
 {
     [[SubaAPIClient sharedInstance] GET:@"users/all" parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
         completion(responseObject,nil);
@@ -394,6 +484,39 @@
         completion(responseObject,nil);
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         completion(nil,error);
+    }];
+}
+
+
++(void)enterInviteCodeToJoinStream:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] GET:@"stream/join/secret" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
+
++(void)createGuestAccount:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"account/create/guest" parameters:nil success:^(NSURLSessionDataTask *task, id responseObject) {
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
++(void)updateUserStat:(NSString *)stat completion:(GeneralCompletion)completionBlock
+{
+    NSString *userID = [AppHelper userID];
+    
+    [[SubaAPIClient sharedInstance] POST:@"user/stats/update"
+                              parameters:@{@"userId": userID, stat: @"1"}
+                                 success:^(NSURLSessionDataTask *task, id responseObject) {
+        completionBlock(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completionBlock(nil,error);
     }];
 }
 

@@ -8,23 +8,23 @@
 
 #import <Foundation/Foundation.h>
 
-typedef void (^UserAuthenticatedCompletion) (id results,NSError *error);
+typedef void (^GeneralCompletion) (id results,NSError *error);
 typedef void (^UserNameCheckerCompletion) (id results,NSError *error);
 typedef void (^UserLoggedInCompletion) (id results,NSError *error);
 typedef void (^NotificationCompletion) ();
 
 @interface AppHelper : NSObject
 
-+ (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(UserAuthenticatedCompletion)completionBlock;
++ (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(GeneralCompletion)completionBlock;
 
 + (void)checkUserName:(NSString *)userName completionBlock:(UserNameCheckerCompletion)completionBlock;
 
 + (void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName AndPassword:(NSString *)password completionBlock:(UserLoggedInCompletion)completionBlock;
 
-
++ (NSString *)kindOfDeviceScreen;
 + (void)savePreferences:(NSDictionary *)prefs;
 + (void)saveSessionWithOptions:(NSArray *)options;
-//+ (NSDictionary *)userPreferences;
++ (NSDictionary *)userPreferences;
 + (BOOL)validateEmail:(NSString *)string;
 + (BOOL)CheckPasswordMinLength:(NSInteger *)length password:(NSString *)string;
 + (NSString *)firstName;
@@ -58,12 +58,21 @@ typedef void (^NotificationCompletion) ();
 + (NSString *)facebookSession;
 + (void)setFacebookSession:(NSString *)flag;
 
++ (BOOL)showFirstTimeView;
++ (void)setShowFirstTimeView:(BOOL)flag;
+
 + (NSString *)userSession;
 + (void)setUserSession:(NSString *)flag;
 
 + (NSInteger)appSessions;
 + (void)increaseAppSessions;
-//+ (void)resetAppSession;
+
+
++ (NSString *)userStatus;
++ (void)setUserStatus:(NSString *)status;
+
++ (NSDictionary *)inviteCodeDetails; 
++ (void)saveInviteCodeDetails:(NSDictionary *)code;
 
 + (NSString *)hasUserInvited;
 + (void)userHasInvited:(NSString *)flag;
@@ -89,9 +98,27 @@ typedef void (^NotificationCompletion) ();
 #pragma mark - Convenience Methods
 + (void)showAlert:(NSString *)title message:(NSString *)message buttons:(NSArray *)alertButtons delegate:(UIViewController *)delegate;
 
-+(void)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc;
++(CLLocationManager *)checkForLocation:(CLLocationManager *)locationManager delegate:(id)vc;
 
 + (void)showLoadingDataView:(UIView *)view indicator:(UIActivityIndicatorView *)indicator flag:(BOOL)flag;
 + (void)showLikeImage:(UIImageView *)imgView imageNamed:(NSString *)imageName;
 
+
+#pragma mark - General Helpers
++ (void)makeInitialPlaceholderViewWithSize:(NSInteger)labelSize view:(UIView *)contextView name:(NSString *)person;
++ (UIColor *)circleColor;
++ (NSString *)initialStringForPersonString:(NSString *)personString;
++ (void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
+
++ (NSInteger)numberOfPhotoStreamEntries;
++ (void)increasePhotoStreamEntries;
+
++ (void)openFBSession:(GeneralCompletion)completion;
+
+
 @end
+
+
+
+
+

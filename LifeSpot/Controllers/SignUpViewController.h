@@ -15,11 +15,4 @@
 
 @interface SignUpViewController : UIViewController
 
-@property (weak, nonatomic) IBOutlet UITextField *emailField;
-@property (weak, nonatomic) IBOutlet UITextField *userNameField;
-@property (weak, nonatomic) IBOutlet UITextField *passwordField;
-
-
-- (IBAction)signUp:(UIButton *)sender;
-
 @end
