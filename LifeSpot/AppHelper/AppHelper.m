@@ -550,7 +550,8 @@
                       PASSWORD : user[PASSWORD],
                       @"profilePhoto" : user[PROFILE_PHOTO_URL],
                       @"fbLogin" : type
-                      }
+                }
+         
          success:^(NSURLSessionDataTask __unused *task,id responseObject) {
              //DLog(@"This is straight from the server\n%@",responseObject);
              if ([responseObject[STATUS] isEqualToString:ALRIGHT]){

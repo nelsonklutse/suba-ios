@@ -84,7 +84,13 @@
     progressView.progressTintColor = [UIColor colorWithRed:0.850f green:0.301f blue:0.078f alpha:1];
     [page addSubview:progressView];
     
-    [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:page placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView completion:^(id results, NSError *error) {
+    [[S3PhotoFetcher s3FetcherWithBaseURL]
+                    downloadPhoto:imageURL to:page
+                 placeholderImage:[UIImage imageNamed:@"blurBg"]
+                     progressView:progressView
+                   downloadOption:SDWebImageContinueInBackground
+                       completion:^(id results, NSError *error){
+                           
         [progressView removeFromSuperview];
     }];
     return page;

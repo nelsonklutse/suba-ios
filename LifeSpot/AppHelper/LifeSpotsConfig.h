@@ -33,7 +33,7 @@
 #define USER_HAS_INVITED @"user_has_invited"
 #define SHOW_FIRST_TIME_VIEW @"firstTimeView"
 
-#define CREATE_ACCOUNT_TO_REMIX_PHOTOS @"You'll need a free Suba account to remix photos. Create one now? It will take seconds."
+#define CREATE_ACCOUNT_TO_REMIX_PHOTOS @"You'll need a free Suba account to doodle on photos. Create one now? It will take seconds."
 
 
 #define CREATE_ACCOUNT_TO_LIKE_PHOTOS @"You'll need a free Suba account to like photos. Create one now? It will take seconds."
@@ -84,8 +84,8 @@
 //#define kS3_BASE_URL @"https://s3.amazonaws.com/com.subaapp.photos/"
 #define DECREMENT @"0"
 #define INCREMENT @"1"
-#define PUSH_PROVIDER_BASE_URL @"http://54.201.18.151/"
-#define REGISTER_DEVICE_TOKEN_URL @"http://54.201.18.151/reporttoken"
+#define PUSH_PROVIDER_BASE_URL @"http://push-prod.subaapp.com/"
+#define REGISTER_DEVICE_TOKEN_URL @"reporttoken"
 #define ARC4RANDOM_MAX  0x100000000
 #define sANYONE @"ANYONE"
 #define sONLY_MEMBERS @"ONLY_MEMBERS"
@@ -124,6 +124,7 @@
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
 #define kUserReloadStreamNotification @"kUserJoinedSpot"
+#define kUserRegisterForPushNotification @"kUserRegisteredForPushNotification"
 
 // User Status
 #define kSUBA_USER_STATUS_ANONYMOUS @"anonymous"

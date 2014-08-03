@@ -9,7 +9,7 @@
 #import "LSPushProviderAPIClient.h"
 
 //static NSString * const  LSPushProviderBASEURL  =  @"http://54.201.18.151/";
-static NSString * const  LSPushProviderBASEURL  = @"http://54.186.145.142";
+static NSString * const  LSPushProviderBASEURL  = @"http://push-prod.subaapp.com/";
 
 @implementation LSPushProviderAPIClient
 

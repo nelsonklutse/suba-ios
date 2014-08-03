@@ -23,7 +23,7 @@ typedef enum {
 #define SpotInfoKey @"SpotInfoKey"
 #define SpotIdKey @"SpotIdKey"
 
-@interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate>
+@interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,MFMailComposeViewControllerDelegate>
 
 @property (strong,nonatomic) NSArray *members;
 //@property (strong,nonatomic) NSDictionary *spotInfo;
@@ -203,8 +203,25 @@ typedef enum {
 
 - (IBAction)inviteByEmailButtonTapped:(UIButton *)sender
 {
+    DLog(@"Spot Info - %@",self.spotInfo); 
+    NSString *shareText = [NSString stringWithFormat:@"Join my photo stream \"%@\" on Suba at https://subaapp.com/download",self.spotInfo[@"spotName"]];
     
-    [self performSegueWithIdentifier:@"EmailInvitesSegue" sender:self.spotID];
+    MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
+    mailComposer.mailComposeDelegate = self;
+    [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotInfo[@"spotName"]]];
+    
+    
+    [mailComposer setMessageBody:shareText isHTML:NO];
+    /*if (selectedPhoto != nil) {
+        NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
+        [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+    }*/
+    
+    [Flurry logEvent:@"Share_Stream_Email_Done"];
+    
+    [self presentViewController:mailComposer animated:YES completion:nil];
+    
+    //[self performSegueWithIdentifier:@"EmailInvitesSegue" sender:self.spotID];
     
     /*if (self.emailTextField.alpha == 1) {
         // Send emails
@@ -320,7 +337,7 @@ typedef enum {
         if ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"]) {
            smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. This is where everyone is sharing their pics from this event! Download Suba here: http://appstore.com/suba",self.spotInfo[@"spotName"]];
         }else{
-            smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. Download Suba here: http://appstore.com/suba and enter the invite code \"%@\" ",self.spotInfo[@"spotName"],self.spotInfo[@"spotCode"]];
+            smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. Download Suba here: http://subaapp.com/download and enter the invite code \"%@\" ",self.spotInfo[@"spotName"],self.spotInfo[@"spotCode"]];
         }
         
         
@@ -463,6 +480,34 @@ typedef enum {
 {
     
 }
+
+
+#pragma mark - MFMailComposeViewController
+-(void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+    
+    switch (result)
+    {
+        case MFMailComposeResultCancelled:
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"Email_Share_Cancelled"];
+            break;
+        case MFMailComposeResultSent:
+            //DLog(@"SMS sent");
+            [Flurry logEvent:@"Email_Share_Sent"];
+            break;
+        case MFMailComposeResultFailed:
+            //DLog(@"SMS sending failed");
+            [Flurry logEvent:@"Email_Share_Failed"];
+            break;
+        default:
+            DLog(@"Email not sent");
+            break;
+    }
+    
+    [controller dismissViewControllerAnimated:YES completion:nil];
+}
+
 
 
 #pragma mark - State Preservation and Restoration

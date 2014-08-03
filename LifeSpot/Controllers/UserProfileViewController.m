@@ -21,7 +21,8 @@
 #define UserProfileInfoKey @"UserProfileInfoKey"
 #define UserIdKey @"UserIdKey"
 
-@interface UserProfileViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UITextFieldDelegate>
+@interface UserProfileViewController()<UICollectionViewDataSource,UICollectionViewDelegate,UITextFieldDelegate>
+
 @property (weak, nonatomic) IBOutlet UICollectionView *normalUserStreamCollectionView;
 @property (weak, nonatomic) IBOutlet UICollectionView *createAccountCollectionView;
 @property (weak, nonatomic) IBOutlet UICollectionView *noStreamCollectionView;
@@ -36,6 +37,7 @@
 @property (copy,nonatomic) NSString *userPassword;
 @property (copy,nonatomic) NSString *userPasswordConfirm;
 
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *facebookLoginIndicator;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *settingsButton;
 @property (weak, nonatomic) IBOutlet UIView *createAccountView;
 @property (weak, nonatomic) IBOutlet UIView *createAccountOptionsView;
@@ -245,10 +247,11 @@
 
 - (IBAction)facebookLoginAction:(id)sender
 {
-    [self.fbLoginIndicator stopAnimating];
-    
+    [self.fbLoginIndicator startAnimating];
+    [self.facebookLoginIndicator startAnimating];
     [AppHelper openFBSession:^(id results, NSError *error) {
         [self.fbLoginIndicator stopAnimating];
+        [self.facebookLoginIndicator stopAnimating];
         [Flurry logEvent:@"Account_Confirmed_Facebook"];
         self.userProfileInfo = [AppHelper userPreferences];
         DLog(@"User Profile Info - %@",[self.userProfileInfo description]);
@@ -436,15 +439,15 @@
     navImageView.image = [UIImage imageNamed:@"logo"];
     self.navigationItem.titleView = navImageView;
     
-    NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
+    //NSString *userId = ( self.userId ) ? self.userId : [User currentlyActiveUser].userID;
     
     //If user id is -1 and user has not yet entered a stream, show no stream view
     
+    //[self figureOutWhichCollectionViewToShow];
+    
+    //DLog(@"UserId - %@",userId);
+    
     [self figureOutWhichCollectionViewToShow];
-    
-    DLog(@"UserId - %@",userId);
-    
-    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshStream) name:kUserReloadStreamNotification object:nil];
 
@@ -476,16 +479,31 @@
     [self.createAccountCollectionView.pullToRefreshView setBorderColor:[UIColor redColor]];*/
     
     
-    
     [self figureOutWhichCollectionViewToShow];
+    
     
        /* [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(photoTappedAtIndex:) name:kPhotoGalleryTappedAtIndexNotification object:nil];*/
 }
 
 
+- (void)showMainSettings
+{
+    
+    [self performSegueWithIdentifier:@"UserProfileToMainSettingsSegue" sender:@(1)];
+}
+
 -(void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
+    DLog();
+    if (self.shouldAutoInvite == YES){
+        self.shouldAutoInvite = NO;
+        [self performSelector:@selector(showMainSettings) withObject:nil afterDelay:0];
+        
+    }else{
+    
+    
     
     NSString  *userId = ( self.userId ) ? self.userId : [AppHelper userID];
     DLog(@" Crrent UserId -%@\nApp user - %@",userId,[AppHelper userID]);
@@ -498,16 +516,10 @@
         [self fetchUserStreams:[AppHelper userID]];
         [self fetchUserInfo:[AppHelper userID]];
     }
-    
-    //DLog(@"USER_ID - %@",[AppHelper userID]);
-    
-    if (self.shouldAutoInvite == YES){
-        [self performSegueWithIdentifier:@"UserProfileToMainSettingsSegue" sender:@(1)];
+        
+     [self figureOutWhichCollectionViewToShow];
     }
     
-    [self figureOutWhichCollectionViewToShow];
-    
-    self.shouldAutoInvite = NO;
 }
 
 
@@ -576,7 +588,7 @@
             //If the user has created spots
             
             if ([spots count] > 0){
-                DLog(@"Streams - %@",spots);
+                DLog(@"Number of streams user is a member of - %i",[spots count]);
                 NSArray *createdSpots = spots;
                 NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
                 NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
@@ -664,6 +676,8 @@
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    
+    
     static NSString *cellIdentifier = @"USER_STREAMS_CELL";
     
     UserProfileCell *userStreamsCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
@@ -974,15 +988,20 @@
      if (kind == UICollectionElementKindSectionHeader) {
          headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"ProfileHeaderView" forIndexPath:indexPath];
          
-         NSURL *profilePhotoURL = nil;
-      if (self.userProfileInfo){
-          
-         NSString *userName = self.userProfileInfo[@"userName"];
+         if ([headerView.userProfileView.subviews count] > 0) {
+             [[headerView.userProfileView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+         }
          
-         if (self.userProfileInfo[@"firstName"] && self.userProfileInfo[@"lastName"]) {
+         NSURL *profilePhotoURL = nil;
+         
+         if (self.userProfileInfo){
+        
+             NSString *userName = self.userProfileInfo[@"userName"];
+             if (self.userProfileInfo[@"firstName"] && self.userProfileInfo[@"lastName"]) {
              NSString *userFullName = [NSString stringWithFormat:@"%@ %@",self.userProfileInfo[@"firstName"],self.userProfileInfo[@"lastName"]];
              
              headerView.userFullName.text = userFullName;
+             
              [headerView makeInitialPlaceholderViewWithSize:30.0
                                                        view:headerView.userProfileView
                                                        name:userFullName];
@@ -1036,7 +1055,11 @@
             NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
             NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
             [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
-     }
+    }else{
+        
+        [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue"
+                                  sender:self.userSpots[indexPath.item]];
+    }
 
 }
     

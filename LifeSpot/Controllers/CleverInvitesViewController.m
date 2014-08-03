@@ -97,11 +97,11 @@ static BOOL isFiltered = NO;
         phoneNumber = [self.phoneContacts[indexPath.row] objectForKey:@"phoneNumber"];
     }
     
-    if ([self.messageRecipients containsObject:phoneNumber]) {
+    /*if ([self.messageRecipients containsObject:phoneNumber]) {
         contactCell.accessoryType = UITableViewCellAccessoryCheckmark;
     }else if(![self.messageRecipients containsObject:phoneNumber]){
         contactCell.accessoryType = UITableViewCellAccessoryNone;
-    }
+    }*/
     
     contactCell.contactImageView.image = contactImage;
     contactCell.contactNameLabel.text = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
@@ -376,9 +376,9 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, InviteType inv
             NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
             self.phoneContacts = sortedContacts;
             
-            for (NSDictionary *contact in self.phoneContacts) {
+            /*for (NSDictionary *contact in self.phoneContacts) {
                 [self.messageRecipients addObject:contact[@"phoneNumber"]];
-            }
+            }*/
             //[self updateNumberOfInvitesLabel:[self.messageRecipients count]];
             [self.cleverInvitesTableView reloadData];
             
@@ -399,9 +399,10 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, InviteType inv
             NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
             self.phoneContacts = sortedContacts;
             
-            for (NSDictionary *contact in self.phoneContacts) {
+            /*for (NSDictionary *contact in self.phoneContacts) {
                 [self.messageRecipients addObject:contact[@"phoneNumber"]];
-            }
+            }*/
+            
             //[self updateNumberOfInvitesLabel:[self.messageRecipients count]];
             [self.cleverInvitesTableView reloadData];
         }

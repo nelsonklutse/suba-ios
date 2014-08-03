@@ -93,7 +93,8 @@
 
 
 
-- (IBAction)actionBtn:(id)sender {
+- (IBAction)actionBtn:(id)sender
+{
 }
 
 -(void)fetchUserWatchingSpotsAtLocation

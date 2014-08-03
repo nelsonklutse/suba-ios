@@ -265,7 +265,7 @@ static CLLocationManager *locationManager;
             self.chosenVenueLocation.city = (city != nil) ? city : nil ;
             self.chosenVenueLocation.country = (country != nil) ? country : nil;
             
-            [self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
+            //[self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
             [self.currentLocationButton sizeToFit];
             self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         }
@@ -279,7 +279,7 @@ static CLLocationManager *locationManager;
                              parameters:@{@"latitude": here.latitude,@"longitude" : here.longitude}
                                 success:^(NSURLSessionDataTask *task,id responseObject){
                                     if ([responseObject[STATUS] isEqualToString:ALRIGHT]) {
-                                        //DLog(@"Suba Locations - %@",responseObject[@"subaLocations"]);
+                                        DLog(@"Suba Locations - %@",responseObject[@"subaLocations"]);
                                         subaLocations = responseObject[@"subaLocations"];
                                     }
                                 } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -303,7 +303,7 @@ static CLLocationManager *locationManager;
             CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([self.userLocation.latitude doubleValue],[self.userLocation.longitude doubleValue]);
             
             // Go to Foursquare for location
-            [self foursquareVenueMatchingCurrentLocation:self.userLocation];
+            //[self foursquareVenueMatchingCurrentLocation:self.userLocation];
             
             [self.streamLocationMapView setCenterCoordinate:twoDCordinate animated:YES];
             [self updateMapView:self.streamLocationMapView WithLocation:self.userLocation];
@@ -338,16 +338,20 @@ static CLLocationManager *locationManager;
 
 -(void)updateMapView:(MKMapView *)mapView WithLocation:(Location *)location
 {
-    
-    CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([location.latitude doubleValue], [location.longitude doubleValue]);
-    
-    MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(twoDCordinate, 500, 500);
-    MKCoordinateRegion adjustedRegion = [mapView regionThatFits:viewRegion];
-    [mapView setShowsBuildings:YES];
-    [mapView setShowsUserLocation:YES];
-    [mapView setRegion:adjustedRegion animated:YES];
-    
-    self.currentLocationButton.alpha = 0.8;
+    @try {
+        CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([location.latitude doubleValue], [location.longitude doubleValue]);
+        
+        MKCoordinateRegion viewRegion = MKCoordinateRegionMakeWithDistance(twoDCordinate, 500, 500);
+        MKCoordinateRegion adjustedRegion = [mapView regionThatFits:viewRegion];
+        [mapView setShowsBuildings:YES];
+        [mapView setShowsUserLocation:YES];
+        [mapView setRegion:adjustedRegion animated:YES];
+        
+        self.currentLocationButton.alpha = 0.8;
+
+    }
+    @catch (NSException *exception) {}
+    @finally {}
 }
 
 
@@ -428,7 +432,7 @@ static CLLocationManager *locationManager;
     
     self.chosenVenueLocation = (foursquareVC.venueChosen == nil) ? self.chosenVenueLocation : foursquareVC.venueChosen;
     [self updateMapView:self.streamLocationMapView WithLocation:self.chosenVenueLocation];
-    DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
+    //DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
 }
 
 - (IBAction)addStreamSegmentChanged:(UISegmentedControl *)sender

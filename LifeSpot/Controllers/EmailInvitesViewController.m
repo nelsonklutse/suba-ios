@@ -222,21 +222,34 @@ typedef enum{
 
 - (IBAction)sendInvites:(UIBarButtonItem *)sender
 {
-    NSString *emailInvites = self.emailsTextField.text;
-    NSDictionary *params = @{@"userId" : [User currentlyActiveUser].userID,
-                             @"streamId" : self.streamId,
-                             @"emails":emailInvites};
-    
-    DLog(@"Params - %@",params);
-    [[User currentlyActiveUser] inviteUsersToStreamViaEmail:params completion:^(id results, NSError *error) {
-        DLog(@"results - %@",results);
-        if (!error){
-            if ([results[STATUS] isEqualToString:ALRIGHT]){
-                // Email invites sent
-                [self dismissViewControllerAnimated:YES completion:nil];
+    @try {
+        NSString *emailInvites = self.emailsTextField.text;
+        
+        DLog(@"Emails - %@\nStream ID: %@\nUserID: %@",emailInvites,self.streamId,[User currentlyActiveUser].userID);
+        
+        NSDictionary *params = @{@"userId" : [User currentlyActiveUser].userID,
+                                 @"streamId" : self.streamId,
+                                 @"emails":emailInvites};
+        
+        DLog(@"Params - %@",params);
+        [[User currentlyActiveUser] inviteUsersToStreamViaEmail:params completion:^(id results, NSError *error) {
+            DLog(@"results - %@",results);
+            if (!error){
+                if ([results[STATUS] isEqualToString:ALRIGHT]){
+                    // Email invites sent
+                    [self dismissViewControllerAnimated:YES completion:nil];
+                }
             }
-        }
-    }];
+        }];
+
+    }
+    @catch (NSException *exception) {
+        // What to do when there's an error
+        [AppHelper showAlert:@"Invites Error" message:@"We encountered an error inviting your friends, Please try again" buttons:@[@"OK"] delegate:nil];
+    }
+    @finally {
+        
+    }
 }
 
 

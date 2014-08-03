@@ -73,7 +73,13 @@
         NSString *firstName = mutableComps[0];
         NSString *lastName = mutableComps[1];
         
-        initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+        if (firstName.length > 0 && lastName.length > 0) {
+            initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+        }else{
+           initials =  [NSString stringWithFormat:@"%@", [firstName substringToIndex:1]]; 
+        }
+        
+        
     } else if ([mutableComps count]) {
         NSString *name = mutableComps[0];
         initials =  [name substringToIndex:1];

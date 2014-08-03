@@ -34,3 +34,7 @@ pod 'TPKeyboardAvoiding', '~> 1.2.3'
 pod 'ionicons'
 
 pod 'DBCamera', '~> 2.3'
+
+pod 'SDWebImage','3.2'
+
+pod 'IDMPhotoBrowser'

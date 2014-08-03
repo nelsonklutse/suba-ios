@@ -14,5 +14,6 @@
 @property (copy,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,nonatomic) NSString *spotID;
+@property (strong,nonatomic) NSString *streamCreator;
 
 @end

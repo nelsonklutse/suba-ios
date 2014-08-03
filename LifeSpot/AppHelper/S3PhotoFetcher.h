@@ -7,8 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <SDWebImage/UIImageView+WebCache.h>
 
 @class DACircularProgressView;
+
 
 #define kS3_BASE_URL @"https://s3.amazonaws.com/com.intruptiv.mypyx-photos/"
 //#define kS3_BASE_URL @"https://s3.amazonaws.com/com.subaapp.photos/"
@@ -28,7 +30,8 @@ typedef void (^PhotoDeletedCompletion) (id results,NSError *error);
 -(void)downloadPhoto:(NSString *)photoURL
                   to:(UIImageView *)imgView
     placeholderImage:(UIImage *)img
-        progressView:(DACircularProgressView *)progressView 
+        progressView:(DACircularProgressView *)progressView
+      downloadOption:(SDWebImageOptions)option
           completion:(PhotoDownloadedCompletion)completion;
 
 + (void)deletePhotoFromStream:(NSDictionary *)photoInfo completion:(PhotoDeletedCompletion)completion;

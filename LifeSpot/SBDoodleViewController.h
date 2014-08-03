@@ -2,7 +2,7 @@
 //  SBViewController.h
 //  Doodling
 //
-//  Created by Drew on 6/25/14.
+//  Created by Nelson Klutse on 6/25/14.
 //  Copyright (c) 2014 Suba. All rights reserved.
 //
 
@@ -16,6 +16,8 @@
 }
 
 @property (strong,nonatomic) UIImage *imageToRemix;
+@property (strong,nonatomic) NSString *imageToRemixURL;
+
 @property  NSInteger remixImageID;
 @property (strong,nonatomic) UIImage *savedPhoto;
 @property (strong,nonatomic) NSURL *imageAssetURL;

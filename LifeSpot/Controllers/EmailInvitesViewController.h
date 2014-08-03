@@ -10,5 +10,5 @@
 
 @interface EmailInvitesViewController : UIViewController
 
-@property (strong,nonatomic) NSString *streamId;
+@property (strong,nonatomic) NSString *streamId; 
 @end

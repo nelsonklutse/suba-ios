@@ -2,7 +2,7 @@
 //  SBColorButton.h
 //  Doodling
 //
-//  Created by Drew on 6/26/14.
+//  Created by Nelson Klutse on 6/26/14.
 //  Copyright (c) 2014 Suba. All rights reserved.
 //
 

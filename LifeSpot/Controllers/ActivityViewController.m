@@ -12,12 +12,15 @@
 
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
+@property (weak, nonatomic) IBOutlet UIView *notRegisteredForRemoteNotificationsView;
 @property (weak, nonatomic) IBOutlet UIView *noRemoteNotificationsView;
 @property (weak, nonatomic) IBOutlet UITableView *notificationsTableView;
 @property (weak, nonatomic) IBOutlet UIView *loadingActivityIndicatorView;
 
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingActivityIndicator;
 - (IBAction)turnOnNotifications:(id)sender;
+
+- (void)userRegisteredForPushNotification:(NSNotification *)aNotification;
 @end
 
 @implementation ActivityViewController
@@ -28,7 +31,8 @@
 {
     [super viewDidLoad];
     
-	self.noRemoteNotificationsView.alpha = 0;
+	self.notRegisteredForRemoteNotificationsView.alpha = 0;
+    self.noRemoteNotificationsView.alpha = 0;
     UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
     navImageView.contentMode = UIViewContentModeScaleAspectFit;
     navImageView.image = [UIImage imageNamed:@"logo"];
@@ -38,20 +42,40 @@
     NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
     if (remoteNotificationType == 0) {
         // Show give us notifications
-        self.noRemoteNotificationsView.alpha = 1;
+        self.notRegisteredForRemoteNotificationsView.alpha = 1;
+        self.noRemoteNotificationsView.alpha = 0;
         self.notificationsTableView.alpha = 0;
     }else{
+        self.notRegisteredForRemoteNotificationsView.alpha = 0;
         self.noRemoteNotificationsView.alpha = 0;
         self.notificationsTableView.alpha = 1;
+        [self.notificationsTableView reloadData];
        [self fetchNotificationsFromProvider];
     }
     
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userRegisteredForPushNotification:) name:kUserRegisterForPushNotification object:nil];
     
     DLog(@"Notification enabled for app - %u",[[UIApplication sharedApplication] enabledRemoteNotificationTypes]);
 }
 
 
+-(void)viewDidAppear:(BOOL)animated
+{
+    NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+    if (remoteNotificationType == 0) {
+        // Show give us notifications
+        self.notRegisteredForRemoteNotificationsView.alpha = 1;
+        self.noRemoteNotificationsView.alpha = 0;
+        self.notificationsTableView.alpha = 0;
+    }else{
+        self.notRegisteredForRemoteNotificationsView.alpha = 0;
+        self.noRemoteNotificationsView.alpha = 0;
+        self.notificationsTableView.alpha = 1;
+        [self.notificationsTableView reloadData];
+        [self fetchNotificationsFromProvider];
+    }
 
+}
 
 - (void)didReceiveMemoryWarning
 {
@@ -81,15 +105,21 @@
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
                    
-                      [self.tabBarController.tabBar.items[1] setBadgeValue:badgeValue];
+                      [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];
+                      self.noRemoteNotificationsView.alpha = 0;
+                      self.notificationsTableView.alpha = 1;
                       [self.notificationsTableView reloadData];
                     
                     }else{
                         DLog(@"There are no notifications for this user");
+                        self.noRemoteNotificationsView.alpha = 1;
+                        self.notificationsTableView.alpha = 0;
                     }
                                               
                 } failure:^(NSURLSessionDataTask *task, NSError *error) {
                     DLog(@"Error - %@",error);
+                    self.noRemoteNotificationsView.alpha = 1;
+                    self.notificationsTableView.alpha = 0;
             }];
 }
 
@@ -99,7 +129,7 @@
 #pragma mark - TableView Datasource
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 55;
+    return 60;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -171,4 +201,15 @@
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:kUserDidSignUpNotification object:nil];
 }
+
+
+-(void)userRegisteredForPushNotification:(NSNotification *)aNotification
+{
+    self.notRegisteredForRemoteNotificationsView.alpha = 0;
+    self.noRemoteNotificationsView.alpha = 0;
+    self.notificationsTableView.alpha = 1;
+    [self.notificationsTableView reloadData];
+    [self fetchNotificationsFromProvider];
+}
+
 @end

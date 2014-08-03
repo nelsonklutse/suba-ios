@@ -54,20 +54,9 @@
 {
     [super viewDidLoad];
     
-    //self.autoInvite = NO;
-    
-    // Uncomment the following line to preserve selection between presentations.
-    // self.clearsSelectionOnViewWillAppear = NO;
-    
-    // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-    // self.navigationItem.rightBarButtonItem = self.editButtonItem;
-    
     self.accountSettings = @[@"Edit Profile",@"Tell a friend",@"Rate Suba"];
     self.help = @[@"Help",@"Send Feedback",@"Licenses"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
-    
-    
-   // DLog(@"Bounds of root view - %@\nFrame of appsettingsTable - %@",NSStringFromCGRect(self.view.bounds),NSStringFromCGRect(self.appSettingsTableView.frame));
 }
 
 
@@ -77,9 +66,10 @@
     [super viewDidAppear:animated];
     
     if (self.autoInvite == YES) {
+        self.autoInvite = NO;
         [self showActionSheet];
     }
-    self.autoInvite = NO;
+    
 }
 
 

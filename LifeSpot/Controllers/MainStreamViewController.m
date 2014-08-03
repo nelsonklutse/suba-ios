@@ -58,13 +58,14 @@ typedef enum{
 @property (strong,nonatomic) NSIndexPath *currentIndexPath;
 @property (retain,nonatomic) CLLocation *currentLocation;
 @property (strong,nonatomic) NSArray *globalStreams;
+
 @property (weak, nonatomic) IBOutlet UIScrollView *welcomeBackUserFullNameView;
 
 @property (weak, nonatomic) IBOutlet UICollectionView *noLocationCollectionView;
 @property (weak, nonatomic) IBOutlet UICollectionView *noNearbyStreamsCollectionView;
 
 @property (weak, nonatomic) IBOutlet UIView *firstLaunchView;
-@property (weak, nonatomic) IBOutlet UIView *welcomeBackView;
+@property (weak, nonatomic) IBOutlet UIScrollView *welcomeBackView;
 @property (weak, nonatomic) IBOutlet UITextField *firstNameTextField;
 @property (weak, nonatomic) IBOutlet UITextField *lastNameTextField;
 @property (weak, nonatomic) IBOutlet UIButton *enterSubaButton;
@@ -120,6 +121,7 @@ typedef enum{
 - (void)showNearbyStreamsCollectionView;
 - (void)showNoNearbyStreamsCollectionView;
 - (void)moveToUserProfile:(UITapGestureRecognizer *)sender;
+- (void)moveToPhotoStream:(NSDictionary *)dataPassed;
 @end
 
 @implementation MainStreamViewController
@@ -130,67 +132,52 @@ static NSInteger selectedButton = 10;
 #pragma mark - Unwind Segues
 -(IBAction)unWindToSpots:(UIStoryboardSegue *)segue
 {
-    /*if ([segue.identifier isEqualToString:@"LEAVE_STREAM_SEGUE"]) {
+    if ([segue.identifier isEqualToString:@"LEAVE_STREAM_SEGUE"]) {
         //Show notification
-        AlbumSettingsViewController *aVC = segue.sourceViewController;
+        StreamSettingsViewController *aVC = segue.sourceViewController;
         NSString *albumName = aVC.spotName;
         NSString *spotId = aVC.spotID;
+        NSString *streamCreator = aVC.streamCreator;
         
         int counter = 0;
-        for (NSDictionary *spotToRemove in self.allStreams){
+        if ([[AppHelper userName] isEqualToString:streamCreator]){
             
-            if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
-               
-                [self.allStreams removeObject:spotToRemove];
+            for (NSDictionary *spotToRemove in self.nearbyStreams){
                 
-                // If nearby streams is showing, make my streams show
-               // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-                
-                    if (self.nearbySpotsCollectionView.alpha == 1){ // Nearby streams is showing
-                        
-                        self.nearbyNeedsUpdate = YES;
-                        
-                        [self.nearbySpotsButton setSelected:NO];
-                        [self.allSpotsButton setSelected:YES];
-                        [self.placesBeingWatchedButton setSelected:NO];
-                        
-                        self.nearbySpotsCollectionView.alpha = 0;
-                        self.allSpotsCollectionView.alpha = 1;
-                        self.placesBeingWatchedTableView.alpha = 0;
-                        [self fetchUserSpots];
-                        
-                    }else{
-                        self.myStreamsNeedsUpdate = YES;
-                        [self updateCollectionView:self.allSpotsCollectionView
-                                        withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]
-                                        updateType:kCollectionViewUpdateDelete];
-                    }
+                if ([spotToRemove[@"spotId"] integerValue] == [spotId integerValue]){
                     
-                    //DLog(@"we used to here");
+                    [self.nearbyStreams removeObject:spotToRemove];
                     
-                //});
-               // DLog(@"About to remove from stream with info -%@",self.allSpots[counter]);
-                
-                
-                break;
-                
+                    break;
+                    
+                }
+                counter += 1;
             }
-            counter += 1;
+            
+            if (self.nearbySpotsCollectionView.alpha == 1) {
+                [self updateCollectionView:self.nearbySpotsCollectionView
+                                withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]
+                                updateType:kCollectionViewUpdateDelete];
+            }
+            
+            
+
+            
+            UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
+                                                 green:(77.0f/255.0f)
+                                                  blue:(20.0f/255.0f)
+                                                 alpha:1];
+            
+            [CSNotificationView showInViewController:self
+                                           tintColor: tintColor
+                                               image:nil
+                                             message:[NSString stringWithFormat:
+                                                      @"%@ removed from your nearby streams",albumName]
+                                            duration:2.0f];
+            
         }
-        
-        UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
-                                             green:(77.0f/255.0f)
-                                              blue:(20.0f/255.0f)
-                                             alpha:1];
-        
-        [CSNotificationView showInViewController:self
-                                       tintColor: tintColor
-                                           image:nil
-                                         message:[NSString stringWithFormat:
-                                                  @"%@ removed from your list of streams",albumName]
-                                        duration:2.0f];
-        
-    }*/
+
+     }
 }
 
 -(IBAction)unWindToAllSpotsWithCreatedSpot:(UIStoryboardSegue *)segue
@@ -484,190 +471,6 @@ static NSInteger selectedButton = 10;
 }
 
 
-
-/*- (IBAction)placesButtonSelected:(UIButton *)sender
-{
-    //self.navigationItem.title = @"Places";
-    [Flurry logEvent:@"Places_Tapped"];
-    
-    selectedButton = kPlacesButton;
-    self.noDataView.alpha = 0;
-    
-    [UIView animateWithDuration:0.5 animations:^{
-        self.allSpotsCollectionView.alpha = self.nearbySpotsCollectionView.alpha = 0;
-        self.placesBeingWatchedTableView.alpha = 1;
-        
-        if ([self.placesBeingWatched count] == 0 || self.placesNeedsUpdate == YES){
-            [self fetchUserFavoriteLocations];
-        }else{
-            [self.placesBeingWatchedTableView reloadData];
-        }
-        // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-        [self.placesBeingWatchedButton setSelected:YES];
-        [self.nearbySpotsButton setSelected:NO];
-        [self.allSpotsButton setSelected:NO];
-        // });
-    }];
-}
-
-- (IBAction)nearbySpotsButtonSelected:(UIButton *)sender{
-    //self.navigationItem.title = @"Nearby Streams";
-    [Flurry logEvent:@"Nearby_Tapped"];
-    selectedButton = kNearbyButton;
-    self.noDataView.alpha = 0;
-    
-    [UIView animateWithDuration:0.5 animations:^{
-        self.allSpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
-        self.nearbySpotsCollectionView.alpha = 1;
-        
-        if ([CLLocationManager authorizationStatus] != kCLAuthorizationStatusAuthorized){
-            // If user has not given access to his location
-            DLog(@"We do not have access to location so loading global streams");
-            [self fetchGlobalStreams];
-        }else{
-        
-        if (!self.nearbyStreams || self.nearbyNeedsUpdate == YES){
-            self.currentLocation = [locationManager location];
-            
-            if (self.currentLocation != nil){
-                
-                NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
-                NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
-                
-                [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]}];
-            }
-        }else{
-            [self.nearbySpotsCollectionView reloadData];
-        }
-    }
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-            [self.placesBeingWatchedButton setSelected:NO];
-            [self.nearbySpotsButton setSelected:YES];
-            [self.allSpotsButton setSelected:NO];
-        });
-    }];
-    
-}
-
-- (IBAction)allSpotsButtonSelected:(UIButton *)sender {
-    //self.navigationItem.title = @"All Streams";
-    
-    [Flurry logEvent:@"My_Streams_Tapped"];
-    selectedButton = kAllSpotsButton;
-    
-    self.noDataView.alpha = 0;
-    [UIView animateWithDuration:0.5 animations:^{
-        self.nearbySpotsCollectionView.alpha = self.placesBeingWatchedTableView.alpha = 0;
-        self.allSpotsCollectionView.alpha = 1;
-        
-        if (!self.allStreams || self.myStreamsNeedsUpdate == YES) {
-            //DLog(@"All spots is nil");
-            [self fetchUserSpots];
-        }else{
-            //DLog(@"All spots - %@",[self.allSpots debugDescription]);
-            [self.allSpotsCollectionView reloadData];
-        }
-        
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1000), dispatch_get_main_queue(),^{
-            [self.placesBeingWatchedButton setSelected:NO];
-            [self.nearbySpotsButton setSelected:NO];
-            [self.allSpotsButton setSelected:YES];
-        });
-    }];
-    
-}
-
-
--(IBAction)switchCoachMark:(UIButton *)sender
-{
-    //UIImageView *exploreImgView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"explore_arrow"]];
-    //exploreImgView.contentMode = UIViewContentModeScaleAspectFill;
-    
-    
-    //DLog(@"CoachMark - %i",self.coachMarkImage.tag);
-    if (self.coachMarkImage.tag == kExploreCoachMark) {
-        [UIView animateWithDuration:.5 animations:^{
-            // My Coach Mark is showing.Switch to create spot
-            self.coachMarkImage.alpha = 0;
-            self.gotItButton.alpha = 0;
-            self.coachMarkView.alpha = 0;
-            self.gotItButton.titleLabel.text = @"OK";
-            //[exploreImgView removeFromSuperview];
-            [self.coachMarkImage setTag:1000];
-        }];
-        
-    }else if (self.coachMarkImage.tag == kCreateSpotCoachMark) {
-        [UIView animateWithDuration:.5 animations:^{
-            // My Coach Mark is showing.Switch to create spot
-            self.coachMarkImage.alpha = 0;
-           // NSString *deviceType = [UIDevice currentDevice].model;
-            //DLog(@"devicetype - %@",deviceType);
-            
-            
-            if ([[UIScreen mainScreen] respondsToSelector: @selector(scale)]) {
-                CGSize result = [[UIScreen mainScreen] bounds].size;
-                CGFloat scale = [UIScreen mainScreen].scale;
-                result = CGSizeMake(result.width * scale, result.height * scale);
-                
-                if(result.height == 960){
-                   // DLog(@"Using 4");
-                    
-                    //CODE IF IPHONE 4
-                self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-IPhone4"];
-                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-100, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
-                    
-                    self.gotItButton.frame = btnFrame;
-                }
-                if(result.height == 1136){
-                  //  DLog(@"Using 5");
-                    //CODE IF iPHONE 5
-                   //self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations"];
-                    self.coachMarkImage.image = [UIImage imageNamed:@"search-for-interesting-locations-IPhone5"];
-                    CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-60, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
-                    
-                    self.gotItButton.frame = btnFrame;
-                }
-            }
-            
-            //[self.view addSubview:exploreImgView];
-            [self.coachMarkImage setTag:kExploreCoachMark];
-            [AppHelper setExploreCoachMark:@"YES"];
-            self.coachMarkImage.alpha = 1;
-        }];
-        
-    }else if (self.coachMarkImage.tag == kMyStreamCoachMark) {
-        [UIView animateWithDuration:.5 animations:^{
-            // My Coach Mark is showing.Switch to create spot
-            self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"streams-near-you"];
-            [self.coachMarkImage setTag:kNearbyCoachMark];
-            [AppHelper setNearbyCoachMark:@"YES"];
-            self.coachMarkImage.alpha = 1;
-        }];
-        
-    }else if (self.coachMarkImage.tag == kNearbyCoachMark) {
-        
-        [UIView animateWithDuration:1.0 animations:^{
-            self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"locations-you-are-watching"];
-            [self.coachMarkImage setTag:kPlacesCoachMark];
-            [AppHelper setPlacesCoachMark:@"YES"];
-            self.coachMarkImage.alpha = 1;
-        }];
-    }else if (self.coachMarkImage.tag == kPlacesCoachMark) {
-        [UIView animateWithDuration:1.0 animations:^{
-            
-            // Places Coach Mark is showing.Switch to nearby
-            self.coachMarkImage.alpha = 0;
-            self.coachMarkImage.image = [UIImage imageNamed:@"create-new-stream"];
-            [self.coachMarkImage setTag:kCreateSpotCoachMark];
-            [AppHelper setCreateSpotCoachMark:@"YES"];
-            self.coachMarkImage.alpha = 1;
-        }];
-    }
-}*/
-
-
 -(void)moveToUserProfile:(UITapGestureRecognizer *)sender
 {
     DLog(@"Showing userprofile with uview - %@",sender.view);
@@ -788,11 +591,12 @@ static NSInteger selectedButton = 10;
             
             [AppHelper savePreferences:results];
             
-            DLog(@"User prefs now - %@",[[AppHelper userPreferences] description]);
+            //DLog(@"User prefs now - %@",[[AppHelper userPreferences] description]);
             [UIView animateWithDuration:.5 animations:^{
                 self.welcomeBackView.alpha = 0;
                 [self.navigationController setNavigationBarHidden:NO animated:YES];
                 self.tabBarController.tabBar.hidden = NO;
+                [self updateData];
             }];
         }
     }];
@@ -855,6 +659,15 @@ static NSInteger selectedButton = 10;
         }
     }
     
+    
+    NSString *spotID = spotDetails[@"spotId"];
+    NSString *spotName = spotDetails[@"spotName"];
+    NSInteger numberOfPhotos = [spotDetails[@"photos"] integerValue];
+    NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+    
+    DLog(@"Segu - ing");
+    [self performSelector:@selector(moveToPhotoStream:) withObject:dataPassed afterDelay:.8];
+
     
    // [self refreshAllStreams];
     
@@ -1024,22 +837,21 @@ static NSInteger selectedButton = 10;
                     }else{
                         DLog(@"Server error - %@",error);
                     }
-                    
                 }else{
                     DLog(@"Error - %@",error);
                 }
             }];
         }else{
-            
             //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
             UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
             
             alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
             alertView.tag = 10;
+            
             [alertView show];
         }
-    
 }
+
 
 -(void)checkForLocation
 {
@@ -1246,16 +1058,9 @@ static NSInteger selectedButton = 10;
         
         
     }else if (members == 1){
-        //personalSpotCell.numberOfMembers.hidden = NO;
-        //personalSpotCell.numberOfMembers.text = [NSString stringWithFormat:@"and %li other",(long)members];
-        UITapGestureRecognizer *oneTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
-        
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
+       
         
         personalSpotCell.firstMemberPhoto.hidden = NO;
-        [personalSpotCell.firstMemberPhoto addGestureRecognizer:oneTapGestureRecognizer];
-        
         personalSpotCell.secondMemberPhoto.hidden = YES;
         personalSpotCell.thirdMemberPhoto.hidden = YES;
         
@@ -1302,20 +1107,26 @@ static NSInteger selectedButton = 10;
         }
         
     }else if (members == 2){
-        UITapGestureRecognizer *oneTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
+        /*UITapGestureRecognizer *firstMemberTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
         
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
+        [firstMemberTapGestureRecognizer setNumberOfTapsRequired:1];
+        [firstMemberTapGestureRecognizer setDelegate:self];
         
-        UITapGestureRecognizer *oneTapGestureRecognizer1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
+        UITapGestureRecognizer *secondMemberTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
         
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
+        [secondMemberTapGestureRecognizer setNumberOfTapsRequired:1];
+        [secondMemberTapGestureRecognizer setDelegate:self];*/
         
         personalSpotCell.firstMemberPhoto.hidden = NO;
         personalSpotCell.secondMemberPhoto.hidden = NO;
-        [personalSpotCell.firstMemberPhoto addGestureRecognizer:oneTapGestureRecognizer];
-        [personalSpotCell.secondMemberPhoto addGestureRecognizer:oneTapGestureRecognizer1];
+        
+        /*[personalSpotCell.firstMemberPhoto setUserInteractionEnabled:YES];
+        [personalSpotCell.firstMemberPhoto setMultipleTouchEnabled:YES];
+        [personalSpotCell.firstMemberPhoto addGestureRecognizer:firstMemberTapGestureRecognizer];
+        
+        [personalSpotCell.secondMemberPhoto setUserInteractionEnabled:YES];
+        [personalSpotCell.secondMemberPhoto setMultipleTouchEnabled:YES];
+        [personalSpotCell.secondMemberPhoto addGestureRecognizer:secondMemberTapGestureRecognizer];*/
         
         personalSpotCell.thirdMemberPhoto.hidden = YES;
         
@@ -1374,28 +1185,6 @@ static NSInteger selectedButton = 10;
         }
         
     }else if(members >= 3){
-        UITapGestureRecognizer *oneTapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
-        
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
-        
-        UITapGestureRecognizer *oneTapGestureRecognizer1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
-        
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
-        
-        UITapGestureRecognizer *oneTapGestureRecognizer2 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(moveToUserProfile:)];
-        
-        [oneTapGestureRecognizer setNumberOfTapsRequired:1];
-        [oneTapGestureRecognizer setDelegate:self];
-        //personalSpotCell.numberOfMembers.hidden = NO;
-        personalSpotCell.firstMemberPhoto.hidden = NO;
-        personalSpotCell.secondMemberPhoto.hidden = NO;
-        personalSpotCell.thirdMemberPhoto.hidden = NO;
-        
-        [personalSpotCell.firstMemberPhoto addGestureRecognizer:oneTapGestureRecognizer];
-        [personalSpotCell.secondMemberPhoto addGestureRecognizer:oneTapGestureRecognizer1];
-        [personalSpotCell.thirdMemberPhoto addGestureRecognizer:oneTapGestureRecognizer2];
         
         if (spotsToDisplay[indexPath.item][@"creatorFirstName"] && spotsToDisplay[indexPath.item][@"creatorLastName"]){
             NSString *firstName = spotsToDisplay[indexPath.item][@"creatorFirstName"];
@@ -1565,6 +1354,51 @@ static NSInteger selectedButton = 10;
                 alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
                 [alertView show];
             }
+        }else if (numberOfPhotos > 0){
+            // User Tapped the name of the stream
+            DLog(@"user tapped name of stream");
+            
+            NSArray *photos = self.nearbyStreams[indexPath.item][@"photoURLs"];
+            
+            //[self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+            
+            // It is the nearby stream
+            self.currentSelectedSpot = self.nearbyStreams[indexPath.item];
+            NSString *isMember = self.nearbyStreams[indexPath.item][@"userIsMember"];
+            NSString *spotCode = self.nearbyStreams[indexPath.item][@"spotCode"];
+            NSString *spotId = self.nearbyStreams[indexPath.item][@"spotId"];
+            
+            if (isMember) {
+                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+            }else if([spotCode isEqualToString:@"NONE"]){
+                
+                // This album is public and user is not a member, so we add user to this stream
+                [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
+                    if (!error){
+                        DLog(@"Stream is public so joining spot");
+                        if ([results[STATUS] isEqualToString:ALRIGHT]){
+                            
+                            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                            
+                            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
+                        }else{
+                            DLog(@"Server error - %@",error);
+                        }
+                        
+                    }else{
+                        DLog(@"Error - %@",error);
+                    }
+                }];
+            }else{
+                
+                //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
+                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
+                
+                alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
+                alertView.tag = 10;
+                [alertView show];
+            }
+
         }
     }
 
@@ -1574,7 +1408,14 @@ static NSInteger selectedButton = 10;
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     [textField resignFirstResponder];
-    [self.welcomeBackUserFullNameView setContentOffset:CGPointMake(0,-20.0f)];
+    if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
+        
+        [self.welcomeBackView setContentOffset:CGPointMake(0,0.0f)];
+    }else{
+      [self.welcomeBackView setContentOffset:CGPointMake(0,-20.0f)];
+    }
+    
+    
     return YES;
 }
 
@@ -1603,15 +1444,15 @@ static NSInteger selectedButton = 10;
 
 -(BOOL)textFieldShouldBeginEditing:(UITextField *)textField
 {
-    /*if(textField.text.length > 0) {
-        self.enterSubaButton.enabled = YES;
-    }else self.enterSubaButton.enabled = NO;*/
-    
     // This is where we move the enter suba button up
-    [self.welcomeBackUserFullNameView setContentOffset:CGPointMake(0,140.0f)];
-    
-    
-    
+    if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_5_SCREEN]){
+        
+        [self.welcomeBackView setContentOffset:CGPointMake(0,140.0f)];
+        
+    }else if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
+        
+        [self.welcomeBackView setContentOffset:CGPointMake(0,220.0f)];
+}
     return YES;
 }
 
@@ -1777,8 +1618,13 @@ static NSInteger selectedButton = 10;
     }
         
     });
-}
+} 
 
+
+-(void)moveToPhotoStream:(NSDictionary *)dataPassed
+{
+  [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+}
 
 - (void)refreshAllStreams
 {
@@ -1800,6 +1646,8 @@ static NSInteger selectedButton = 10;
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
+    
+    
     if ([segue.identifier isEqualToString:@"PhotosStreamSegue"]) {
         if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]){
             PhotoStreamViewController *photosVC = segue.destinationViewController;
@@ -1811,6 +1659,8 @@ static NSInteger selectedButton = 10;
                 photosVC.numberOfPhotos = 1;
                 
             }else if([sender isKindOfClass:[NSDictionary class]]){
+                DLog(@"Segue Identifier - %@\nSender - %@",segue.identifier,sender);
+                
                 photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
                 photosVC.spotName = sender[@"spotName"];
                 photosVC.spotID = sender[@"spotId"];
@@ -1845,13 +1695,16 @@ static NSInteger selectedButton = 10;
         
         if (buttonIndex == 1) {
             //UserProfileViewController *userPVC = [self.storyboard instantiateViewControllerWithIdentifier:@"USERPROFILE_SCENE"];
-            DLog(@"Class - %@",[[[self.tabBarController viewControllers][3] childViewControllers][0] class]);
-            UserProfileViewController *userVC = (UserProfileViewController *)[[self.tabBarController viewControllers][2] childViewControllers][0];
-            userVC.shouldAutoInvite = YES;
-            [self.tabBarController.delegate tabBarController:self.tabBarController
-                                  shouldSelectViewController:[self.tabBarController viewControllers][2]];
+            DLog(@"Class - %@",[[[self.tabBarController viewControllers][1] childViewControllers][0] class]);
+            UserProfileViewController *userVC = (UserProfileViewController *)[[self.tabBarController viewControllers][1] childViewControllers][0];
             
-            self.tabBarController.selectedViewController = [self.tabBarController viewControllers][2];
+            userVC.shouldAutoInvite = YES;
+            
+            [self.tabBarController setSelectedIndex:1];
+            //[self.tabBarController.delegate tabBarController:self.tabBarController
+              //                    shouldSelectViewController:[self.tabBarController viewControllers][1]];
+            
+            //self.tabBarController.selectedViewController = [self.tabBarController viewControllers][1];
             
         }
     }

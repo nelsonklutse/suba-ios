@@ -26,7 +26,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *toggleDoodleButton;
 
 @property (weak, nonatomic) IBOutlet UILabel *numberOfRemixersLabel;
-
+@property (weak, nonatomic) IBOutlet UIButton *seeDoodleBtn;
 
 
 - (void)setBorderAroundView:(UIView *)view;

@@ -8,7 +8,6 @@
 
 #import "S3PhotoFetcher.h"
 #import "DACircularProgressView.h"
-#import <SDWebImage/UIImageView+WebCache.h>
 
 @implementation S3PhotoFetcher
 
@@ -45,7 +44,7 @@
         //NSURLRequest *request = [NSURLRequest requestWithURL:photoSrc];
         //NSLog(@"Making image request from - %@",[photoSrc description]);
         dispatch_async(dispatch_get_main_queue(),^{
-                [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageProgressiveDownload completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                 if (!error) {
                     mainImageView.image = image;
                     completion(image,nil);
@@ -95,10 +94,11 @@
 }
 
 
--(void)downloadPhoto:(NSString *)photoURL to:(UIImageView *)imgView placeholderImage:(UIImage *)img progressView:(DACircularProgressView *)progressView completion:(PhotoDownloadedCompletion)completion
+-(void)downloadPhoto:(NSString *)photoURL to:(UIImageView *)imgView placeholderImage:(UIImage *)img progressView:(DACircularProgressView *)progressView downloadOption:(SDWebImageOptions)option completion:(PhotoDownloadedCompletion)completion
 {
     //__weak UIImageView *targetImgView = imgView;
     __weak DACircularProgressView *pView = progressView;
+    //__weak SDWebImageOptions imageDownloadOption = option;
     dispatch_queue_t downloadPhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     
     dispatch_async(downloadPhotoQueue, ^{
@@ -107,10 +107,8 @@
         
         dispatch_async(dispatch_get_main_queue(),^{
          
-     [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageContinueInBackground progress:^(NSInteger receivedSize, NSInteger expectedSize) {
-                CGFloat progress =  (float)receivedSize/expectedSize;
-                //DLog(@"Progress - %f",progress);
-                
+     [imgView setImageWithURL:photoSrc placeholderImage:img options:option progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                CGFloat progress =  (float)receivedSize/expectedSize;  
                 pView.progress = progress;
             } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                 if (!error) {

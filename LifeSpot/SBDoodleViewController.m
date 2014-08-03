@@ -2,7 +2,7 @@
 //  SBViewController.m
 //  Doodling
 //
-//  Created by Drew on 6/25/14.
+//  Created by Nelson Klutse on 6/25/14.
 //  Copyright (c) 2014 Suba. All rights reserved.
 //
 
@@ -11,6 +11,10 @@
 #import <ionicons-codes.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
+#import "S3PhotoFetcher.h"
+#import <SDWebImage/UIImageView+WebCache.h>
+#import <DACircularProgressView.h>
+
 
 @interface SBDoodleViewController ()
 @property (weak, nonatomic) IBOutlet UIButton *closeDoodleViewButton;
@@ -39,7 +43,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
+    self.saveButton.enabled = NO;
     self.library = [[ALAssetsLibrary alloc] init];
     
     self.undoManager = [[NSUndoManager alloc] init];
@@ -55,18 +59,48 @@
     
     self.imageView.image = self.imageToRemix;
     
-    UIImage *closeButtonImage = [IonIcons imageWithIcon:icon_ios7_close_empty iconColor:[UIColor whiteColor] iconSize:40 imageSize:CGSizeMake(70, 60)];
+    /*UIImage *closeButtonImage = [IonIcons imageWithIcon:icon_ios7_close_empty iconColor:[UIColor whiteColor] iconSize:40 imageSize:CGSizeMake(70, 60)];
     
     UIImage *saveButtonImage = [IonIcons imageWithIcon:icon_ios7_upload_outline iconColor:[UIColor whiteColor] iconSize:43 imageSize:CGSizeMake(70, 60)];
     
     [self.closeDoodleViewButton setBackgroundImage:closeButtonImage forState:UIControlStateNormal];
-    [self.saveButton setBackgroundImage:saveButtonImage forState:UIControlStateNormal];
+    [self.saveButton setBackgroundImage:saveButtonImage forState:UIControlStateNormal];*/
 }
 
 -(void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    
     self.imageView.image = self.imageToRemix;
+    if (self.imageToRemix == nil) {
+        
+        
+        DACircularProgressView *progressView = [[DACircularProgressView alloc]
+                                                initWithFrame:CGRectMake((self.imageView.bounds.size.width/2) - 20, (self.imageView.bounds.size.height/2) - 20, 40.0f, 40.0f)];
+        progressView.thicknessRatio = .1f;
+        progressView.roundedCorners = YES;
+        progressView.trackTintColor = [UIColor blackColor];
+        progressView.progressTintColor = [UIColor whiteColor];
+        [self.view addSubview:progressView];
+        
+        [[S3PhotoFetcher s3FetcherWithBaseURL]
+         downloadPhoto:self.imageToRemixURL to:self.imageView
+         placeholderImage:self.imageView.image
+         progressView:progressView
+         downloadOption:SDWebImageRefreshCached
+         completion:^(id results, NSError *error) {
+             //if (!error) {
+                 [progressView removeFromSuperview];
+            // }else{
+              //   [AppHelper showAlert:@"" message:@"There was an error downloading photo" buttons:@[@"OK"] delegate:nil];
+             //}
+             
+        }];
+
+        
+        /*[self.imageView setImageWithURL:[NSURL URLWithString:self.imageToRemixURL] placeholderImage:self.imageView.image options:SDWebImageRefreshCached];*/
+    }
+    DLog(@"Image to remix - %@",self.imageToRemix);
 }
 
 - (void)didReceiveMemoryWarning
@@ -102,7 +136,7 @@
 
 //When touch is moving, draw the image dynamically
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event{
-    
+    self.saveButton.enabled = YES;
     UITouch *touch = [touches anyObject];
     
     @autoreleasepool {

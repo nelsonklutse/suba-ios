@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5053" systemVersion="13C1021" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="FVh-sH-a0Y">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13E28" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="FVh-sH-a0Y">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
     </dependencies>
@@ -99,41 +99,14 @@
                                                 <action selector="dismissViewController:" destination="FVh-sH-a0Y" id="c1R-wZ-0T0"/>
                                             </connections>
                                         </barButtonItem>
-                                        <barButtonItem key="rightBarButtonItem" title="Deselect All" id="cHN-GK-F4a">
+                                        <barButtonItem key="rightBarButtonItem" title="Send" id="cHN-GK-F4a">
                                             <connections>
-                                                <action selector="toggleSelectAll:" destination="FVh-sH-a0Y" id="Dd3-kQ-erW"/>
+                                                <action selector="sendMessage:" destination="FVh-sH-a0Y" id="XKq-sF-Hie"/>
                                             </connections>
                                         </barButtonItem>
                                     </navigationItem>
                                 </items>
                             </navigationBar>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="txA-P4-9MM" userLabel="Bottom View">
-                                <rect key="frame" x="0.0" y="526" width="320" height="44"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <subviews>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="1Uj-e0-ok3">
-                                        <rect key="frame" x="199" y="0.0" width="121" height="41"/>
-                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="121" id="eFc-Ec-8YR"/>
-                                        </constraints>
-                                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="18"/>
-                                        <state key="normal" title="Send">
-                                            <color key="titleColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                            <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                        </state>
-                                        <connections>
-                                            <action selector="sendMessage:" destination="FVh-sH-a0Y" eventType="touchUpInside" id="id1-4t-ICq"/>
-                                        </connections>
-                                    </button>
-                                </subviews>
-                                <color key="backgroundColor" red="0.85098039215686272" green="0.30196078431372547" blue="0.078431372549019607" alpha="1" colorSpace="calibratedRGB"/>
-                                <constraints>
-                                    <constraint firstAttribute="trailing" secondItem="1Uj-e0-ok3" secondAttribute="trailing" id="L9h-9n-F7L"/>
-                                    <constraint firstAttribute="bottom" secondItem="1Uj-e0-ok3" secondAttribute="bottom" constant="3" id="c4f-uR-Kxd"/>
-                                    <constraint firstItem="1Uj-e0-ok3" firstAttribute="top" secondItem="txA-P4-9MM" secondAttribute="top" id="zKa-Jf-rQz"/>
-                                </constraints>
-                            </view>
                             <searchBar contentMode="redraw" placeholder="Search" translatesAutoresizingMaskIntoConstraints="NO" id="ZPR-bB-hw1">
                                 <rect key="frame" x="0.0" y="64" width="320" height="44"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
@@ -157,12 +130,8 @@
                             <constraint firstItem="YsH-PD-k40" firstAttribute="leading" secondItem="CRf-Of-vrA" secondAttribute="leading" id="VyQ-jJ-nQw"/>
                             <constraint firstItem="YsH-PD-k40" firstAttribute="leading" secondItem="ZPR-bB-hw1" secondAttribute="leading" id="k7T-4V-kzw"/>
                             <constraint firstItem="K04-vl-R54" firstAttribute="top" secondItem="1oJ-pv-8uu" secondAttribute="top" id="kS0-kb-hqX"/>
-                            <constraint firstItem="txA-P4-9MM" firstAttribute="top" secondItem="1oJ-pv-8uu" secondAttribute="top" constant="526" id="nyH-er-RPP"/>
-                            <constraint firstItem="YsH-PD-k40" firstAttribute="trailing" secondItem="txA-P4-9MM" secondAttribute="trailing" id="o7R-Qp-nYk"/>
-                            <constraint firstItem="YsH-PD-k40" firstAttribute="bottom" secondItem="txA-P4-9MM" secondAttribute="bottom" id="sOU-wO-K0z"/>
                             <constraint firstItem="CRf-Of-vrA" firstAttribute="bottom" secondItem="ZPR-bB-hw1" secondAttribute="top" id="v0l-yF-rPS"/>
                             <constraint firstItem="YsH-PD-k40" firstAttribute="trailing" secondItem="ZPR-bB-hw1" secondAttribute="trailing" id="wE2-Qn-y6r"/>
-                            <constraint firstItem="YsH-PD-k40" firstAttribute="leading" secondItem="txA-P4-9MM" secondAttribute="leading" id="xTJ-3j-efV"/>
                         </constraints>
                     </view>
                     <extendedEdge key="edgesForExtendedLayout"/>
@@ -170,8 +139,6 @@
                     <connections>
                         <outlet property="cleverInvitesTableView" destination="YsH-PD-k40" id="p7p-g1-gDU"/>
                         <outlet property="invitesSearchBar" destination="ZPR-bB-hw1" id="UKg-aT-5zh"/>
-                        <outlet property="sendMessageButton" destination="1Uj-e0-ok3" id="ecM-Uh-0d6"/>
-                        <outlet property="toggleSelectAllContactsBarButton" destination="cHN-GK-F4a" id="7UN-Nf-fGx"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="imL-up-QRd" userLabel="First Responder" sceneMemberID="firstResponder"/>

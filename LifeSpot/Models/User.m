@@ -94,7 +94,7 @@
     [[SubaAPIClient sharedInstance] GET:@"user/spots/personal" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject){
         NSArray *albums = (NSArray *)responseObject;
         completion(albums,nil);
-        
+        DLog(@"Number of user albums - %i",[albums count]);
         //[[NSNotificationCenter defaultCenter] postNotificationName:kUserDidLoadPersonalSpotsNotification object:albums userInfo:@{@"albums": @"loaded"}];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {

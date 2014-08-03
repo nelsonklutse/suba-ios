@@ -62,6 +62,8 @@ static CLLocationManager *locationManager;
 {
     [super viewDidLoad];
 	
+    self.streamCreator = self.spotInfo[@"userName"];
+    DLog(@"Stream creator - %@",self.streamCreator);
     self.streamNameField.adjustsFontSizeToFitWidth = YES;
     self.streamCodeField.adjustsFontSizeToFitWidth = YES;
     self.locationNameButton.titleLabel.adjustsFontSizeToFitWidth = YES;
@@ -91,6 +93,12 @@ static CLLocationManager *locationManager;
         self.leaveAlbumButton.hidden = YES;
         [self.view viewWithTag:100].hidden = YES;
     }
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    self.streamCreator = self.spotInfo[@"userName"];
 }
 
 

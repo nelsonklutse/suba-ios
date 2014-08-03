@@ -16,7 +16,6 @@
 @interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,CTAssetsPickerControllerDelegate>
 
 @property (strong,nonatomic) UIImage *profilePhoto;
-@property (strong,nonatomic) NSString *fullName;
 @property (strong,nonatomic) NSString *userName;
 @property (strong,nonatomic) NSString *email;
 @property (strong,nonatomic) UIImage *capturedPhoto;
@@ -33,9 +32,13 @@
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *userChangesDoneBarButtonItem;
 @property (weak, nonatomic) IBOutlet UITextField *usrNameField;
 //@property (weak, nonatomic) IBOutlet UITextField *usrEmailField;
-@property (weak, nonatomic) IBOutlet UITextField *usrFullNameField;
+@property (weak, nonatomic) IBOutlet UITextField *firstNameField;
 @property (weak, nonatomic) IBOutlet UIImageView *profilePictureView;
+@property (weak, nonatomic) IBOutlet UITextField *lastNameField;
 @property (weak, nonatomic) IBOutlet UIButton *changeProfilePhotoButton;
+@property (weak, nonatomic) IBOutlet UIButton *changePasswordBtn;
+@property (weak, nonatomic) IBOutlet UILabel *connectedToFacebookLabel;
+@property (weak, nonatomic) IBOutlet UILabel *changeProfilePhotoLabel;
 
 - (IBAction)unWindToProfileSettings:(UIStoryboardSegue *)segue;
 - (IBAction)updateUsrDetails:(id)sender;
@@ -45,6 +48,7 @@
 - (void)userInfo;
 - (void)pickAssets;
 - (void)pickPhoto:(id)sender;
+- (void)accountConnectedToFacebook;
 @end
 
 @implementation ProfileSettingsViewController
@@ -54,11 +58,18 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
-    self.profilePictureView.layer.borderColor = [UIColor whiteColor].CGColor;
+    self.profilePictureView.layer.borderColor = [UIColor lightGrayColor].CGColor;
+    self.profilePictureView.layer.borderWidth = 2;
     self.userUpdatedInfo = [NSMutableDictionary dictionary];
     
-    
+    [self accountConnectedToFacebook];
     [self userInfo];
+}
+
+-(void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self accountConnectedToFacebook];
 }
 
 - (void)didReceiveMemoryWarning
@@ -79,10 +90,8 @@
     User *user = [User currentlyActiveUser];
     NSMutableDictionary *urlFormEncodedParams = [NSMutableDictionary dictionary];
     
-    
-    
     // First check the full name
-    if ([self.usrFullNameField.text isEqualToString:@""] && !self.userUpdatedInfo[@"picName"] && [self.usrNameField.text isEqualToString:[AppHelper userName]]) {
+    if ([self.firstNameField.text isEqualToString:@""] && !self.userUpdatedInfo[@"picName"] && [self.usrNameField.text isEqualToString:[AppHelper userName]]) {
         //FullName is not set so we show a notification
         
         [AppHelper showNotificationWithMessage:@"Please choose a name"
@@ -104,20 +113,19 @@
     
     // We are here if everything is fine
     
-    self.fullName = self.usrFullNameField.text;
+    NSString *firstName = self.firstNameField.text;
+    NSString *lastName = self.lastNameField.text;
     self.userName = self.usrNameField.text;
     //self.email = self.usrEmailField.text;
     
-    NSArray *fullNameSeparated = [self.fullName componentsSeparatedByString:@" "];
+    //NSArray *fullNameSeparated = [fullName componentsSeparatedByString:@" "];
         //NSLog(@"Full Name is separated - %@",[fullNameSeparated debugDescription]);
         
-        if ([fullNameSeparated count] == 1) {
-            NSString *firstName = fullNameSeparated[0];
+        if (firstName.length > 0 && lastName.length <= 0){
             
             [urlFormEncodedParams addEntriesFromDictionary:@{@"firstName": firstName}];
-        }else{
-            NSString *firstName = fullNameSeparated[0];
-            NSString *lastName = fullNameSeparated[1];
+        }else if(firstName.length > 0 && lastName.length > 0){
+            
             [urlFormEncodedParams addEntriesFromDictionary:@{@"firstName": firstName}];
             [urlFormEncodedParams addEntriesFromDictionary:@{@"lastName": lastName}];
         }
@@ -135,7 +143,7 @@
         [self.userUpdatedInfo addEntriesFromDictionary:@{@"form-encoded" : urlFormEncodedParams}];
         
         
-       // DLog(@"UserInfoBeing Sent -  %@",[self.userUpdatedInfo debugDescription]);
+       DLog(@"UserInfoBeing Sent -  %@",[self.userUpdatedInfo debugDescription]);
     
     if ([urlFormEncodedParams objectForKey:@"userName"]) {
         [AppHelper showLoadingDataView:self.savingUserChangesView indicator:self.savingUserChangesIndicatorView flag:YES];
@@ -216,7 +224,7 @@
 
 
 - (IBAction)dismissKeypad:(id)sender {
-    [self.usrFullNameField resignFirstResponder];
+    [self.firstNameField resignFirstResponder];
     [self.usrNameField resignFirstResponder];
 }
 
@@ -377,7 +385,6 @@
     [picker dismissViewControllerAnimated:NO completion:^{
         self.userChangesDoneBarButtonItem.enabled = YES;
     }];
-
 }
 
 
@@ -389,15 +396,16 @@
     //DLog(@"Profile photo URL - %@",[AppHelper profilePhotoURL]);
     
     if ([[AppHelper firstName] isEqualToString:@""] || [AppHelper firstName] == NULL){
-        self.usrFullNameField.placeholder = @"Full Name";
+        self.firstNameField.placeholder = @"First Name";
     }else{
-        self.fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
-        self.usrFullNameField.text = self.fullName;
+        //self.fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+        self.firstNameField.text = [AppHelper firstName];
+        self.lastNameField.text = [AppHelper lastName];
     }
     
     self.usrNameField.text = [AppHelper userName];
     //self.usrEmailField.text = [AppHelper userEmail];
-    DLog(@"Name class - %@",[[AppHelper firstName] class]);
+    //DLog(@"Name class - %@",[[AppHelper firstName] class]);
 }
 
 
@@ -407,6 +415,27 @@
     
 }
 
+-(void)accountConnectedToFacebook
+{
+    if ([[AppHelper facebookLogin] isEqualToString:@"YES"]){
+        // The user's account is connected to Facebook
+        self.connectedToFacebookLabel.hidden = NO;
+        self.firstNameField.enabled = NO;
+        self.lastNameField.enabled = NO;
+        self.usrNameField.enabled = NO;
+        self.changeProfilePhotoButton.enabled = NO;
+        self.changePasswordBtn.hidden = YES;
+        self.changeProfilePhotoLabel.hidden = YES;
+    }else{
+        self.connectedToFacebookLabel.hidden = YES;
+        self.firstNameField.enabled = YES;
+        self.lastNameField.enabled = YES;
+        self.usrNameField.enabled = YES;
+        self.changeProfilePhotoButton.enabled = YES;
+        self.changePasswordBtn.hidden = NO;
+        self.changeProfilePhotoLabel.hidden = NO;
+    }
+}
 
 
 @end

@@ -2,7 +2,7 @@
 //  SBColorPallet.m
 //  Doodling
 //
-//  Created by Drew on 7/2/14.
+//  Created by Nelson Klutse on 7/2/14.
 //  Copyright (c) 2014 Suba. All rights reserved.
 //
 
@@ -13,11 +13,12 @@
 - (id)initWithCoder:(NSCoder *)aDecoder
 {
     self = [super initWithCoder:aDecoder];
-    if (self){
-        
+    
+    if(self){
         self.layer.cornerRadius = 2;
         self.backgroundColor = [UIColor colorWithRed:0.f green:0.f blue:0.f alpha:0.8];
     }
+    
     return self;
 }
 

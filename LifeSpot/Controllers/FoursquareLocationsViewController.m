@@ -133,11 +133,11 @@ static CLLocationManager *locationManager;
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
     NSString *headerTitle = nil;
-    if (section == 0) {
-        headerTitle = @"Add Location";
+    if (section == 2) {
+        headerTitle = @"Add Your Own Location";
     }else if (section == 1){
      headerTitle = @"Pick a Location - SUBA";
-    }else if (section == 2){
+    }else if (section == 0){
         headerTitle = @"Pick a Location - FOURSQUARE";
     }
     
@@ -149,12 +149,12 @@ static CLLocationManager *locationManager;
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     NSInteger numberOfRows = 0;
-    if (section == 0) {
+    if (section == 2) {
         
         return 1;
     }else if(section == 1){
         return [self.subaLocations count];
-    }else if (section == 2){
+    }else if (section == 0){
         if (tableView == self.searchDisplayController.searchResultsTableView) {
             
             numberOfRows = [self.filteredLocations count];
@@ -169,10 +169,10 @@ static CLLocationManager *locationManager;
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 0) {
+    if (indexPath.section == 2) {
         static NSString *CellIdentifier = @"AddNewLocation";
         UITableViewCell *newLocationCell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-        newLocationCell.textLabel.text = @"Add a new  Location";
+        newLocationCell.textLabel.text = @"Add a new Location";
         
         return newLocationCell;
     }else if(indexPath.section == 1){
@@ -192,7 +192,7 @@ static CLLocationManager *locationManager;
         }
         
         return subaLocationCell;
-    }else if (indexPath.section == 2){
+    }else if (indexPath.section == 0){
     static NSString *CellIdentifier = @"VenueCell";
     FoursquareVenueCell *cell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
         // Configure the cell...
@@ -229,7 +229,7 @@ static CLLocationManager *locationManager;
     //NSLog(@"Selected");
     
     
-    if (indexPath.section == 0){
+    if (indexPath.section == 2){
         // Check whether we have access to the user's location
         if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
             
@@ -263,7 +263,7 @@ static CLLocationManager *locationManager;
             self.lastSelected = indexPath;
         }
 
-    }else if(indexPath.section == 2){
+    }else if(indexPath.section == 0){
     
     if (tableView == self.venuesTableView) {
         if (self.lastSelected != indexPath) {
@@ -372,12 +372,15 @@ static CLLocationManager *locationManager;
                                         }
          success:^(AFHTTPRequestOperation *operation, id responseObject) {
              [self showLoadingLocationsView:NO];
-             self.locations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
+             NSArray *foursquareLocations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
+             // Sort by distance
+             NSSortDescriptor *distanceSorter = [[NSSortDescriptor alloc] initWithKey:@"location.distance" ascending:YES];
+             
+             NSArray *sortDescriptors = [NSArray arrayWithObject:distanceSorter];
+             NSArray *sortedLocations = [foursquareLocations sortedArrayUsingDescriptors:sortDescriptors];
+             self.locations = [NSMutableArray arrayWithArray:sortedLocations];
+             
         [self.venuesTableView reloadData];
-        
-        /*for (NSDictionary *location in self.locations) {
-            NSLog(@"%@",[location objectForKey:@"name"]);
-        }*/
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DLog(@"Error: %@", error);

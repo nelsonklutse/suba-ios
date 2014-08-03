@@ -439,35 +439,31 @@
             
         }else{
             
-            AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+            [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications"
+                                               parameters:@{@"userId": [AppHelper userID]}
+                                                  success:^(NSURLSessionDataTask *task, id responseObject){
             
-            //DLog(@"UserId before notifs - %@",[AppHelper userID]);
+            // Handle all notifications
+            NSString *notifications = [responseObject[@"badgeCount"] stringValue];
+                                                      
+            if ([notifications isEqualToString:@"0"]) {
+                [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
+            }/*else{
+              if ([notifications integerValue] >= 5) {
+              [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"5"];
+              }*/
             
-            [manager GET:@"http://54.201.18.151/fetchnotifications" parameters:@{@"userId": [AppHelper userID]} success:^(AFHTTPRequestOperation *operation, id responseObject) {
-                
-                //Handle all notifications
-                NSString *notifications = [responseObject[@"badgeCount"] stringValue];
-                
-                if ([notifications isEqualToString:@"0"]) {
-                    [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
-                }/*else{
-                    if ([notifications integerValue] >= 5) {
-                        [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"5"];
-                    }*/
-                
-                  else{
-                        [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
-                    }
-                    
-               // }
-                
-            } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-                DLog(@"Error - %@", error);
-                DLog(@"%@",operation.responseString);
-            }];
-        }
-        
-    }
+            else{
+                [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
+            }
+
+        }failure:^(NSURLSessionDataTask *task, NSError *error){
+            
+            DLog(@"Error - %@", error);
+            
+        }];
+      }
+   }
     
     [Flurry logEvent:@"App_Started_From_Background"];
 }
@@ -485,7 +481,18 @@
 {
     NSString *sendThis = [[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]];
     
-    [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL parameters:@{@"token": sendThis, @"userId":[AppHelper userID] } success:^(NSURLSessionDataTask *task, id responseObject) {
+    [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL parameters:@{@"token": sendThis, @"userId":[AppHelper userID] } success:^(NSURLSessionDataTask *task, id responseObject){
+        NSString  *userName = nil;
+        if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+            userName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+        }else{
+            userName = [AppHelper userName];
+        }
+        
+        [Flurry logEvent:@"User_Turned_On_Push_Notification" withParameters:@{@"user": userName}];
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:kUserRegisterForPushNotification object:nil];
+        
         // Lets give this to analytics
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
         DLog(@"Error - %@",error);
