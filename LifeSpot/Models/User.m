@@ -92,9 +92,14 @@
 - (void)loadPersonalSpotsWithCompletion:(PersonalSpotsLoadedCompletionBlock)completion{
     
     [[SubaAPIClient sharedInstance] GET:@"user/spots/personal" parameters:@{@"userId":self.userID} success:^(NSURLSessionDataTask *task, id responseObject){
-        NSArray *albums = (NSArray *)responseObject;
-        completion(albums,nil);
-        DLog(@"Number of user albums - %i",[albums count]);
+        
+        //DLog(@"Response object as recieved from the server - %@\nNumber of JSON objects - %lu",responseObject,(unsigned long)[responseObject[@"spots"] count]);
+        
+            //NSArray *streams = responseObject[@"spots"];
+        
+            completion(responseObject,nil);
+        
+        //DLog(@"Number of user albums - %lu\nThe streams - %@",(unsigned long)[streams count],streams);
         //[[NSNotificationCenter defaultCenter] postNotificationName:kUserDidLoadPersonalSpotsNotification object:albums userInfo:@{@"albums": @"loaded"}];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -319,12 +324,12 @@
                                      success:^(NSURLSessionDataTask *task, id responseObject){
                                          DLog(@"Back from server - %@",responseObject);
             
-            [AppHelper updateNumberOfAlbums:1];
+            //[AppHelper updateNumberOfAlbums:1];
             completion(responseObject,nil);
 
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"Back from server - %@",error.debugDescription);
         completion(nil,error);
-
     }];
 
 }

@@ -8,12 +8,12 @@
 
 #import "ProfileSettingsViewController.h"
 #import "User.h"
-#import <CTAssetsPickerController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
-//#import <CXAlertView/CXAlertView.h>
+#import "DBCameraViewController.h"
+#import "DBCameraContainerViewController.h"
 
-@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,CTAssetsPickerControllerDelegate>
+@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,DBCameraViewControllerDelegate>
 
 @property (strong,nonatomic) UIImage *profilePhoto;
 @property (strong,nonatomic) NSString *userName;
@@ -49,10 +49,16 @@
 - (void)pickAssets;
 - (void)pickPhoto:(id)sender;
 - (void)accountConnectedToFacebook;
+
+- (IBAction)passwordModalDonePresenting:(UIStoryboardSegue *)segue;
 @end
 
 @implementation ProfileSettingsViewController
 
+-(IBAction)passwordModalDonePresenting:(UIStoryboardSegue *)segue
+{
+    
+}
 
 - (void)viewDidLoad
 {
@@ -218,8 +224,9 @@
 }
 
 
-- (IBAction)changeProfilePhotoTapped:(id)sender {
-    [self showPhotoOptions];
+- (IBAction)changeProfilePhotoTapped:(id)sender{
+    [self openCamera];
+    //[self showPhotoOptions];
 }
 
 
@@ -238,27 +245,29 @@
 - (void)pickAssets
 {
     
-    CTAssetsPickerController *picker = [[CTAssetsPickerController alloc] init];
-    picker.navigationBar.translucent = NO;
-    picker.navigationItem.rightBarButtonItem.tintColor = [UIColor whiteColor];
-    picker.maximumNumberOfSelection = 1;
-    picker.assetsFilter = [ALAssetsFilter allPhotos];
-    picker.delegate = self;
-    
-    [self presentViewController:picker animated:YES completion:NULL];
+    //[self presentViewController:picker animated:YES completion:NULL];
 }
 
 #pragma mark - Assets Picker Delegate
-
-- (void)assetsPickerController:(CTAssetsPickerController *)picker didFinishPickingAssets:(NSArray *)assets
+- (void) openCamera
 {
-    //[self.assets addObjectsFromArray:assets];
-    ALAsset *asset = (ALAsset *)assets[0];
-    ALAssetRepresentation *representation = asset.defaultRepresentation;
-    UIImage *fullResolutionImage = [UIImage imageWithCGImage:representation.fullScreenImage                                                       scale:1.0f
+    DBCameraContainerViewController *cameraContainer = [[DBCameraContainerViewController alloc] initWithDelegate:self];
+    
+    [cameraContainer setFullScreenMode];
+    
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:cameraContainer];
+    [nav setNavigationBarHidden:YES];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
+{
+    UIImage *fullResolutionImage = [UIImage imageWithCGImage:image.CGImage
+                                                       scale:1.0f
                                                  orientation:(UIImageOrientation)ALAssetOrientationUp];
+    
+    
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    //dateFormatter se
     
     [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
     NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
@@ -275,9 +284,16 @@
     
     //NSLog(@"Image Data Added to the userUpdatedInfo Dictionary");
     self.userChangesDoneBarButtonItem.enabled = YES;
-    [picker dismissViewControllerAnimated:NO completion:^{
+    
+    [cameraViewController dismissViewControllerAnimated:NO completion:^{
         self.userChangesDoneBarButtonItem.enabled = YES;
     }];
+}
+
+
+- (void)dismissCamera:(id)cameraViewController {
+    [self dismissViewControllerAnimated:YES completion:nil];
+    [cameraViewController restoreFullScreenMode];
 }
 
 
@@ -436,6 +452,10 @@
         self.changeProfilePhotoLabel.hidden = NO;
     }
 }
+
+
+
+
 
 
 @end

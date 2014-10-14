@@ -9,7 +9,11 @@
 #import <UIKit/UIKit.h>
 
 @interface SubaUsersInviteCell : UITableViewCell
-@property (weak, nonatomic) IBOutlet UIImageView *subaUserImageView;
+@property (weak, nonatomic) IBOutlet UIView *subaUserImageView;
 
 @property (weak, nonatomic) IBOutlet UILabel *userNameLabel;
+
+- (void)makeInitialPlaceholderView:(UIView *)contextView name:(NSString *)person;
+- (UIColor *)circleColor;
+-(void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
 @end

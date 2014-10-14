@@ -54,7 +54,7 @@
 {
     [super viewDidLoad];
     
-    self.accountSettings = @[@"Edit Profile",@"Tell a friend",@"Rate Suba"];
+    self.accountSettings = @[@"Edit Profile",@"Tell a Friend",@"Rate Suba"];
     self.help = @[@"Help",@"Send Feedback",@"Licenses"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
 }
@@ -306,6 +306,7 @@
     
     [actionSheet showInView:self.view];
 }
+
 
 #pragma mark - Action Sheet Delegate
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex

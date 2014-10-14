@@ -355,7 +355,7 @@ static CLLocationManager *locationManager;
     [self.joiningStreamIndicator startAnimating];
     
     [[User currentlyActiveUser] joinSpotCompletionCode:code completion:^(id results, NSError *error) {
-        DLog(@"Result - %@",results);
+            DLog(@"Result - %@",results);
           if ([results[STATUS] isEqualToString:ALRIGHT]){
             
             [Flurry logEvent:@"Join_Stream_With_Code"];

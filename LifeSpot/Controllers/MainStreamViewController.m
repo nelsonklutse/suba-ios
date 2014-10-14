@@ -69,6 +69,9 @@ typedef enum{
 @property (weak, nonatomic) IBOutlet UITextField *firstNameTextField;
 @property (weak, nonatomic) IBOutlet UITextField *lastNameTextField;
 @property (weak, nonatomic) IBOutlet UIButton *enterSubaButton;
+
+@property (weak,nonatomic) IBOutlet UITextField *searchBarField;
+
 @property (weak, nonatomic) IBOutlet UIView *seeNearbyStreamsView;
 
 @property (weak, nonatomic) IBOutlet UIView *coachMarkView;
@@ -83,6 +86,7 @@ typedef enum{
 @property (weak, nonatomic) IBOutlet UIImageView *coachMarkImage;
 @property (retain, nonatomic) IBOutlet UIBarButtonItem *plusicon;
 @property (weak, nonatomic) IBOutlet UILabel *welcomeTextLabel;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *searchBarButton;
 
 - (IBAction)unWindToSpots:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToAllSpotsWithCreatedSpot:(UIStoryboardSegue *)segue;
@@ -105,6 +109,7 @@ typedef enum{
 - (NSString *)initialStringForPersonString:(NSString *)personString;
 - (UIColor *)circleColor;
 
+- (IBAction)searchForStream:(UIBarButtonItem *)sender;
 - (void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
 
 //- (void)networkChanged:(NSNotification *)aNotification;
@@ -125,6 +130,7 @@ typedef enum{
 @end
 
 @implementation MainStreamViewController
+int searchBartoggler;
 
 static CLLocationManager *locationManager;
 static NSInteger selectedButton = 10;
@@ -190,17 +196,15 @@ static NSInteger selectedButton = 10;
     }
 }
 
--(void)unWindToMainStream:(UIStoryboardSegue *)segue
-{
-    
-}
+-(void)unWindToMainStream:(UIStoryboardSegue *)segue{}
+
 
 #pragma mark - View life cycle
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     //[self.plusicon setImage:[UIImage imageNamed:@"PlusIconWhite"]];
-    //[self.plusicon setImage:[IonIcons imageWithIcon:icon_ios7_plus_outline size:48 color:[UIColor whiteColor]]];
+    [self.searchBarButton setImage:[IonIcons imageWithIcon:icon_ios7_search size:48 color:[UIColor whiteColor]]];
     
     UIImageView *navImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 50, 40)];
     navImageView.contentMode = UIViewContentModeScaleAspectFit;
@@ -473,10 +477,10 @@ static NSInteger selectedButton = 10;
 
 -(void)moveToUserProfile:(UITapGestureRecognizer *)sender
 {
-    DLog(@"Showing userprofile with uview - %@",sender.view);
+    //DLog(@"Showing userprofile with uview - %@",sender.view);
     
     // Get the container view and increase height
-    DLog(@"Sender superview - %@",sender.view.superview.superview);
+    //DLog(@"Sender superview - %@",sender.view.superview.superview);
     
     if (sender.state == UIGestureRecognizerStateEnded){
         PersonalSpotCell *pCell = (PersonalSpotCell *)sender.view.superview.superview;
@@ -491,16 +495,16 @@ static NSInteger selectedButton = 10;
         }
         if (sender.view.tag % 10000 == 1) {
             // First Member was tapped
-            DLog(@"First Member photo was tapped");
+            //DLog(@"First Member photo was tapped");
             userID = cellInfo[@"firstMemberID"];
         }else if (sender.view.tag % 10000 == 2){
             // Second Member View was tapped
             userID = cellInfo[@"secondMemberID"];
-            DLog(@"Second Member photo was tapped");
+            //DLog(@"Second Member photo was tapped");
         }else if (sender.view.tag % 10000 == 3){
             // Third Member was tapped
             userID = cellInfo[@"thirdMemberID"];
-            DLog(@"Third Member photo was tapped");
+            //DLog(@"Third Member photo was tapped");
         }
         
         [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:userID];
@@ -521,7 +525,7 @@ static NSInteger selectedButton = 10;
         }
         NSString *streamCreatorId = cellInfo[@"creatorId"];;
     
-        DLog(@"User Profile to look at - %@",[cellInfo description]);
+        //DLog(@"User Profile to look at - %@",[cellInfo description]);
         [self performSegueWithIdentifier:@"MAINSTREAM_USERPROFILE_SEGUE" sender:streamCreatorId];
 }
 
@@ -534,7 +538,10 @@ static NSInteger selectedButton = 10;
 
 - (IBAction)showCreateStream:(id)sender
 {
-   [self performSegueWithIdentifier:@"CreateFirstStreamSegue" sender:nil];
+    
+    [self performSegueWithIdentifier:@"CREATE_STREAM_SEGUE" sender:nil];
+    
+   //[self performSegueWithIdentifier:@"CreateFirstStreamSegue" sender:nil];
 }
 
 
@@ -543,7 +550,8 @@ static NSInteger selectedButton = 10;
     //[AppHelper setShowFirstTimeView:NO];
    //[self.navigationController setNavigationBarHidden:NO animated:YES];
     //self.tabBarController.tabBar.hidden = NO;
-    [self performSegueWithIdentifier:@"CreateFirstStreamSegue" sender:nil];
+    [self performSegueWithIdentifier:@"CREATE_STREAM_SEGUE" sender:nil];
+    //[self performSegueWithIdentifier:@"CreateFirstStreamSegue" sender:nil];
 }
 
 
@@ -665,7 +673,6 @@ static NSInteger selectedButton = 10;
     NSInteger numberOfPhotos = [spotDetails[@"photos"] integerValue];
     NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
     
-    DLog(@"Segu - ing");
     [self performSelector:@selector(moveToPhotoStream:) withObject:dataPassed afterDelay:.8];
 
     
@@ -677,7 +684,7 @@ static NSInteger selectedButton = 10;
 - (void)updateCollectionView:(UICollectionView *)collectionView withUpdate:(NSArray *)updates updateType:(ColectionViewUpdateType)updateType
 {
     //DLog(@"user spots - %@",self.allSpots);
-    if (updateType == kCollectionViewUpdateInsert) {
+    /*if (updateType == kCollectionViewUpdateInsert) {
         [collectionView performBatchUpdates:^{
             [collectionView insertItemsAtIndexPaths:updates];
         } completion:^(BOOL finished) {
@@ -687,7 +694,9 @@ static NSInteger selectedButton = 10;
         [collectionView performBatchUpdates:^{
             [collectionView deleteItemsAtIndexPaths:updates];
         } completion:nil];
-    }
+    }*/
+    
+    [collectionView reloadData];
 }
 
 
@@ -726,6 +735,7 @@ static NSInteger selectedButton = 10;
     [self.nearbySpotsCollectionView reloadData];
 }
 
+
 - (void)showNoNearbyStreamsCollectionView
 {
     self.nearbySpotsCollectionView.alpha = 0;
@@ -733,6 +743,7 @@ static NSInteger selectedButton = 10;
     self.noNearbyStreamsCollectionView.alpha = 1;
     [self.noNearbyStreamsCollectionView reloadData];
 }
+
 
 -(void)fetchNearbySpots:(NSDictionary *)latLng
 {
@@ -751,7 +762,8 @@ static NSInteger selectedButton = 10;
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 
                 NSArray *nearby = results[@"nearby"];
-                DLog(@"Thare are %i Streams",[nearby count]);
+                
+                DLog(@"Thare are %lu Streams",(unsigned long)[nearby count]);
                 
                 if ([nearby count] > 0){
                    // self.noDataView.alpha = 0;
@@ -776,8 +788,6 @@ static NSInteger selectedButton = 10;
 
 - (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data
 {
-    
-    
     [[User currentlyActiveUser] joinSpotCompletionCode:spotCode completion:^(id results, NSError *error){
         if (!error) {
             if ([results[STATUS] isEqualToString:ALRIGHT]){
@@ -796,6 +806,7 @@ static NSInteger selectedButton = 10;
         }
     }];
 }
+
 
 -(void)dataLoadingView:(BOOL)flag
 {
@@ -875,7 +886,20 @@ static NSInteger selectedButton = 10;
 
 -(void)showSearchBar
 {
-    DLog(@"Showing search bar");
+    if (searchBartoggler % 2 == 0) {
+        [UIView animateWithDuration:0.3 animations:^{
+            CGRect searchBarFrame = CGRectMake(0, 0, 320, 40);
+            self.searchBarField.frame = searchBarFrame;
+            self.searchBarField.alpha = 1;
+        }];
+    }else{
+        [UIView animateWithDuration:0.3 animations:^{
+            CGRect searchBarFrame = CGRectMake(0, 0, 320, 0);
+            self.searchBarField.frame = searchBarFrame;
+            self.searchBarField.alpha = 0;
+        }];
+    }
+    searchBartoggler += 1;
 }
 
 -(void)makeInitialPlaceholderView:(UIView *)contextView name:(NSString *)person
@@ -894,6 +918,11 @@ static NSInteger selectedButton = 10;
 
 - (UIColor *)circleColor {
     return [UIColor colorWithHue:arc4random() % 256 / 256.0 saturation:0.7 brightness:0.8 alpha:1.0];
+}
+
+- (IBAction)searchForStream:(UIBarButtonItem *)sender
+{
+    [self showSearchBar];
 }
 
 - (NSString *)initialStringForPersonString:(NSString *)personString{
@@ -926,7 +955,7 @@ static NSInteger selectedButton = 10;
         
         UIImageView *imageView = [[UIImageView alloc] initWithFrame:view.frame];
         imageView.contentMode = UIViewContentModeScaleAspectFit;
-        [imageView setImageWithURL:[NSURL URLWithString:imageURL]];
+        [imageView sd_setImageWithURL:[NSURL URLWithString:imageURL]];
         
         view.backgroundColor = [UIColor clearColor];
         [view addSubview:imageView];
@@ -1653,7 +1682,11 @@ static NSInteger selectedButton = 10;
             PhotoStreamViewController *photosVC = segue.destinationViewController;
             
             if ([sender isKindOfClass:[NSArray class]]){
-                photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender];
+                photosVC.photos = [NSMutableArray arrayWithArray:
+                                        [NSOrderedSet orderedSetWithArray:(NSArray *) sender].array];
+                
+                DLog(@"Photos to display are - %i",[photosVC.photos count]);
+                
                 photosVC.spotName = sender[0][@"spot"];
                 photosVC.spotID = sender[0][@"spotId"];
                 photosVC.numberOfPhotos = 1;

@@ -8,11 +8,8 @@
 
 #import "SignUpViewController.h"
 #import "PhotoStreamViewController.h"
-#import <TPKeyboardAvoidingScrollView.h>
 
 @interface SignUpViewController ()<UITextFieldDelegate>
-
-
 
 @property (copy,nonatomic) NSString *firstName;
 @property (copy,nonatomic) NSString *lastName;
@@ -39,6 +36,7 @@
 - (void)createUserAccount:(NSDictionary *)params;
 - (void)keyboardWillShowNotification:(NSNotification *)aNotification;
 - (void)keyboardWillHidesNotification:(NSNotification *)aNotification;
+
 @end
 
 @implementation SignUpViewController

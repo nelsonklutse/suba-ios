@@ -322,7 +322,7 @@
         UIImageView *imageView = [[UIImageView alloc] initWithFrame:frame];
         imageView.contentMode = UIViewContentModeScaleAspectFill;
     if ([imageURL class] != [NSNull class]) {
-        [imageView setImageWithURL:[NSURL URLWithString:imageURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+        [imageView sd_setImageWithURL:[NSURL URLWithString:imageURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     }
     
         

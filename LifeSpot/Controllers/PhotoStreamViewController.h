@@ -29,6 +29,29 @@ typedef enum{
 @property (strong,nonatomic) NSMutableArray *photos;
 @property (strong,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSString *spotID;
+@property (strong,nonatomic) NSString *photoToShow;
+@property BOOL isLaunchingFromNotification;
+@property BOOL shouldShowPhoto;
+@property BOOL shouldShowDoodle; 
 @property NSInteger numberOfPhotos;
+
+
 - (IBAction)flipPhotoToShowRemix:(id)sender;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @end

@@ -84,12 +84,6 @@
 #define COCOAPODS_VERSION_MINOR_CSNotificationView 3
 #define COCOAPODS_VERSION_PATCH_CSNotificationView 3
 
-// CTAssetsPickerController
-#define COCOAPODS_POD_AVAILABLE_CTAssetsPickerController
-#define COCOAPODS_VERSION_MAJOR_CTAssetsPickerController 1
-#define COCOAPODS_VERSION_MINOR_CTAssetsPickerController 3
-#define COCOAPODS_VERSION_PATCH_CTAssetsPickerController 3
-
 // DACircularProgress
 #define COCOAPODS_POD_AVAILABLE_DACircularProgress
 #define COCOAPODS_VERSION_MAJOR_DACircularProgress 2
@@ -102,23 +96,11 @@
 #define COCOAPODS_VERSION_MINOR_DBCamera 3
 #define COCOAPODS_VERSION_PATCH_DBCamera 1
 
-// DCModalSegue
-#define COCOAPODS_POD_AVAILABLE_DCModalSegue
-#define COCOAPODS_VERSION_MAJOR_DCModalSegue 0
-#define COCOAPODS_VERSION_MINOR_DCModalSegue 0
-#define COCOAPODS_VERSION_PATCH_DCModalSegue 2
-
-// DKLiveBlur
-#define COCOAPODS_POD_AVAILABLE_DKLiveBlur
-#define COCOAPODS_VERSION_MAJOR_DKLiveBlur 0
-#define COCOAPODS_VERSION_MINOR_DKLiveBlur 0
-#define COCOAPODS_VERSION_PATCH_DKLiveBlur 1
-
 // GPUImage
 #define COCOAPODS_POD_AVAILABLE_GPUImage
 #define COCOAPODS_VERSION_MAJOR_GPUImage 0
 #define COCOAPODS_VERSION_MINOR_GPUImage 1
-#define COCOAPODS_VERSION_PATCH_GPUImage 4
+#define COCOAPODS_VERSION_PATCH_GPUImage 5
 
 // Harpy
 #define COCOAPODS_POD_AVAILABLE_Harpy
@@ -149,12 +131,6 @@
 #define COCOAPODS_VERSION_MAJOR_SVProgressHUD 1
 #define COCOAPODS_VERSION_MINOR_SVProgressHUD 0
 #define COCOAPODS_VERSION_PATCH_SVProgressHUD 0
-
-// TPKeyboardAvoiding
-#define COCOAPODS_POD_AVAILABLE_TPKeyboardAvoiding
-#define COCOAPODS_VERSION_MAJOR_TPKeyboardAvoiding 1
-#define COCOAPODS_VERSION_MINOR_TPKeyboardAvoiding 2
-#define COCOAPODS_VERSION_PATCH_TPKeyboardAvoiding 3
 
 // UIPhotoGallery
 #define COCOAPODS_POD_AVAILABLE_UIPhotoGallery

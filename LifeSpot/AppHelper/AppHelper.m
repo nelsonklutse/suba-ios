@@ -624,7 +624,25 @@
         }];
 }
 
-
++(void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName Password:(NSString *)password AndGuestId:(NSString *)guestId completionBlock:(UserLoggedInCompletion)completionBlock
+{
+    [[SubaAPIClient sharedInstance]
+     POST:@"login"
+     parameters:@{
+                  EMAIL: emailOrUserName,
+                  PASSWORD : password,
+                  GUEST_USER_ID : guestId
+                  } success:^(NSURLSessionDataTask *task, id responseObject) {
+                      DLog(@"Response - %@",responseObject);
+                      //[self setUserSession:@"login"];
+                      completionBlock(responseObject,nil);
+                      
+                      
+                  } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                      DLog(@"Error - %@",error);
+                      completionBlock(nil,error);
+                  }];
+}
 
 
 #pragma mark - Convenience Methods

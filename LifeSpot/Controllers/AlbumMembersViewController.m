@@ -278,16 +278,38 @@ typedef enum {
     static NSString *cellIdentifier = @"AlbumMembersCell";
     AlbumMembersCell *memberCell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     
-    memberCell.memberImageView.image = [UIImage imageNamed:@"anonymousUser"];
+    //memberCell.memberImageView.image = [UIImage imageNamed:@"anonymousUser"];
     
-    memberCell.memberUserNameLabel.text = self.members[indexPath.row][@"userName"];
+    
     memberCell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
     if (self.members[indexPath.row][@"photoURL"] != nil) {
         NSString *photoURL = self.members[indexPath.row][@"photoURL"];
+        [memberCell fillView:memberCell.memberImageView WithImage:photoURL];
         
-        [memberCell.memberImageView setImageWithURL:[NSURL URLWithString:photoURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+        if (self.members[indexPath.item][@"firstName"] && self.members[indexPath.item][@"lastName"]){
+            NSString *firstName = self.members[indexPath.item][@"firstName"];
+            NSString *lastName = self.members[indexPath.item][@"lastName"];
+            NSString *personString = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+            memberCell.memberUserNameLabel.text = personString;
+        }else{
+            NSString *userName = self.members[indexPath.row][@"userName"];
+            memberCell.memberUserNameLabel.text = userName;
+        }
         
+    }else{
+            if (self.members[indexPath.item][@"firstName"] && self.members[indexPath.item][@"lastName"]){
+                NSString *firstName = self.members[indexPath.item][@"firstName"];
+                NSString *lastName = self.members[indexPath.item][@"lastName"];
+                NSString *personString = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+                memberCell.memberUserNameLabel.text = personString;
+                [memberCell makeInitialPlaceholderView:memberCell.memberImageView name:personString];
+                
+            }else{
+                NSString *userName = self.members[indexPath.row][@"userName"];
+                memberCell.memberUserNameLabel.text = userName;
+                [memberCell makeInitialPlaceholderView:memberCell.memberImageView name:userName];
+            }
     }
     
     return memberCell;

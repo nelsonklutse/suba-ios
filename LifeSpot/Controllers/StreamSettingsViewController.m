@@ -367,7 +367,11 @@ static CLLocationManager *locationManager;
 {
     // This is a destructive action. Prompt the user later before finally deleting the album
     
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Stream" message:@"Are you sure you want to leave this album" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"I'm sure", nil];
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Stream"
+                                                    message:@"Are you sure you want to leave this stream? It will no longer display in the My Streams view."
+                                                   delegate:self
+                                          cancelButtonTitle:@"Cancel"
+                                          otherButtonTitles:@"I'm sure", nil];
     
     alert.tag = 5000;
     [alert show];

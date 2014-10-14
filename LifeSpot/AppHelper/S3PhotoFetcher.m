@@ -44,12 +44,23 @@
         //NSURLRequest *request = [NSURLRequest requestWithURL:photoSrc];
         //NSLog(@"Making image request from - %@",[photoSrc description]);
         dispatch_async(dispatch_get_main_queue(),^{
-                [imgView setImageWithURL:photoSrc placeholderImage:img options:SDWebImageProgressiveDownload completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+                /*[imgView sd_setImageWithURL:photoSrc placeholderImage:img options:SDWebImageProgressiveDownload completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
                 if (!error) {
                     mainImageView.image = image;
                     completion(image,nil);
                 }else{
                    completion(nil,error);
+                }
+            }];*/
+            
+            [imgView sd_setImageWithURL:photoSrc placeholderImage:img options:SDWebImageProgressiveDownload progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+                
+            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL *imageURL) {
+                if (!error) {
+                    mainImageView.image = image;
+                    completion(image,nil);
+                }else{
+                    completion(nil,error);
                 }
             }];
             
@@ -107,10 +118,10 @@
         
         dispatch_async(dispatch_get_main_queue(),^{
          
-     [imgView setImageWithURL:photoSrc placeholderImage:img options:option progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+     [imgView sd_setImageWithURL:photoSrc placeholderImage:img options:option progress:^(NSInteger receivedSize, NSInteger expectedSize) {
                 CGFloat progress =  (float)receivedSize/expectedSize;  
                 pView.progress = progress;
-            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
+            } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType,NSURL *url) {
                 if (!error) {
                     mainImageView.image = image;
                     //DLog(@"Image size downlaoded - %@",NSStringFromCGSize(image.size));

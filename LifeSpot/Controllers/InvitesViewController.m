@@ -14,7 +14,7 @@
 #import "LSPushProviderAPIClient.h"
 #import <AddressBook/AddressBook.h>
 #import <MessageUI/MessageUI.h>
-#import "FacebookAPIClient.h"
+#import "FacebookAPIClient.h" 
 
 #define PhoneContactsKey @"PhoneContactsKey"
 #define FacebookUsersKey @"FacebookUsersKey"
@@ -31,6 +31,7 @@
 
 
 @property (retain, nonatomic) IBOutlet UISearchBar *invitesSearchBar;
+
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *inviteBarButtonItem;
 @property (weak, nonatomic) IBOutlet UITableView *subaUsersTableView;
 @property (weak, nonatomic) IBOutlet UIView *loadingDataView;
@@ -63,10 +64,10 @@ static BOOL isFiltered = NO;
      __weak typeof(self) weakSelf = self;
     
     if (self.subaUsers) {
-        DLog(@"Suba Users - %@",self.subaUsers);
+        //DLog(@"Suba Users - %@",self.subaUsers);
     }else{
         [self displaySubaUsers];
-        DLog(@"Suba is not set");
+        //DLog(@"Suba is not set");
     }
     
     [self.subaUsersTableView addPullToRefreshActionHandler:^{
@@ -77,6 +78,8 @@ static BOOL isFiltered = NO;
     [self.subaUsersTableView.pullToRefreshView setBorderWidth:6];
     
     self.navigationController.navigationBar.topItem.title = @"";
+    
+    [self.invitesSearchBar becomeFirstResponder];
 }
 
 
@@ -173,11 +176,11 @@ static BOOL isFiltered = NO;
            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"userName" ascending:YES];
            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
            NSArray *sortedUsers = [subaUsers sortedArrayUsingDescriptors:sortDescriptors];
-           //DLog(@"Suba users - %i",[self.subaUsers count]);
            self.subaUsers = [NSMutableArray arrayWithArray:sortedUsers];
+           DLog(@"Suba users - %@",self.subaUsers);
            NSDictionary *userToRemove = nil;
            for (NSDictionary *user in self.subaUsers){
-               DLog(@"Username class - %@ ----- %@ --- %@",[user[@"userName"] class],user[@"userName"],user[@"id"]);
+               //DLog(@"Username class - %@ ----- %@ --- %@",[user[@"userName"] class],user[@"userName"],user[@"id"]);
                if ([user[@"userName"] class] != [NSNull class]) {
                    if ([user[@"userName"] isEqualToString:[AppHelper userName]]) {
                        userToRemove = user;
@@ -189,7 +192,7 @@ static BOOL isFiltered = NO;
            [AppHelper showLoadingDataView:self.loadingDataView indicator:self.loadingDataActivityIndicator flag:NO];
            
            [self.subaUsers removeObject:userToRemove];
-           [self.subaUsersTableView reloadData];
+           //[self.subaUsersTableView reloadData];
 
        }else{
            DLog(@"Error - %@",error);
@@ -210,7 +213,7 @@ static BOOL isFiltered = NO;
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     NSInteger numberOfRows = 0;
-    numberOfRows = (isFiltered) ? [self.subaUsersFilteredArray count]:[self.subaUsers count];
+    numberOfRows = [self.subaUsersFilteredArray count];
 
     return numberOfRows;
 }
@@ -218,26 +221,56 @@ static BOOL isFiltered = NO;
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *cellIdentifier = nil;
+    @try {
+        static NSString *cellIdentifier = nil;
         
-   
+        
         NSString *userName = nil;
         NSString *photoURL = nil;
         NSString *userId = nil;
         cellIdentifier = @"SubaInvitesCell";
-       
+        
         SubaUsersInviteCell *subaUserCell = (SubaUsersInviteCell *)[self.subaUsersTableView dequeueReusableCellWithIdentifier:cellIdentifier];
         
-        if (isFiltered) {
-            //DLog(@"is filtered -");
-            userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
-            photoURL = (NSString *)[self.subaUsersFilteredArray[indexPath.row] objectForKey:@"photo"];
-        }else{
+        if (isFiltered){
             
-            userName = [self.subaUsers[indexPath.row] objectForKey:@"userName"];
+            photoURL = (NSString *)[self.subaUsersFilteredArray[indexPath.row] objectForKey:@"photo"];
+            if ([self.subaUsersFilteredArray[indexPath.row] objectForKey:@"firstName"] && [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"lastName"]){
+                
+                NSString *firstName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"firstName"];
+                NSString *lastName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"lastName"];
+                userName = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+                
+                if (photoURL) {
+                    [subaUserCell fillView:subaUserCell.subaUserImageView WithImage:photoURL];
+                }else{
+                    if (firstName && lastName) {
+                        [subaUserCell makeInitialPlaceholderView:subaUserCell.subaUserImageView name:userName];
+                    }else{
+                        userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
+                        [subaUserCell makeInitialPlaceholderView:subaUserCell.subaUserImageView name:userName];
+                    }
+                }
+                
+            }else{
+                userName = [self.subaUsersFilteredArray[indexPath.row] objectForKey:@"userName"];
+            }
+            
+        }else{
             photoURL = (NSString *)[self.subaUsers[indexPath.row] objectForKey:@"photo"];
+            
+            if ([self.subaUsers[indexPath.row] objectForKey:@"firstName"] && [self.subaUsers[indexPath.row] objectForKey:@"lastName"]){
+                
+                NSString *firstName = [self.subaUsers[indexPath.row] objectForKey:@"firstName"];
+                NSString *lastName = [self.subaUsers[indexPath.row] objectForKey:@"lastName"];
+                userName = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+                
+            }else{
+                userName = [self.subaUsers[indexPath.row] objectForKey:@"userName"];
+            }
+            
+            
             userId = [self.subaUsers[indexPath.row] objectForKey:@"id"];
-            DLog(@"Username - %@",userName);
         }
         
         // Check whether this cell is contained in last selected indexPaths
@@ -248,18 +281,15 @@ static BOOL isFiltered = NO;
             //DLog(@"%@ has not been invited so removing the checkmark",userName);
             subaUserCell.accessoryType = UITableViewCellAccessoryNone;
         }
-
         
         subaUserCell.userNameLabel.text = userName;
-        
-        if(![photoURL isKindOfClass:[NSNull class]]){
-            [subaUserCell.subaUserImageView setImageWithURL:[NSURL URLWithString:photoURL]];
-        }else subaUserCell.subaUserImageView.image = [UIImage imageNamed:@"anonymousUser"];
-
+        [subaUserCell.userNameLabel sizeToFit];
         
         return subaUserCell;
-        
-  //    return nil;
+
+    }
+    @catch (NSException *exception) {}
+    @finally {}
 }
 
 
@@ -304,7 +334,8 @@ static BOOL isFiltered = NO;
     [self.subaUsersFilteredArray removeAllObjects];
         // Filter the array using NSPredicate
    
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"userName contains[c] %@",searchText];
+        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"userName = %@ OR firstName = %@ OR lastName = %@",searchText,searchText,searchText];
+    
         self.subaUsersFilteredArray = [NSMutableArray arrayWithArray:[self.subaUsers filteredArrayUsingPredicate:predicate]];
     
         [self.subaUsersTableView reloadData];
@@ -312,19 +343,25 @@ static BOOL isFiltered = NO;
 
 
 #pragma mark - UISearchBar Delegate
-
--(void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+-(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
 {
-    if (searchText.length == 0) {
+    DLog(@"searchBar.text - %@",searchBar.text);
+    
+   if (searchBar.text == 0) {
         isFiltered = NO;
     }else{
         
         isFiltered = YES;
-        [self filterContentForSearchText:searchText
+        [self filterContentForSearchText:searchBar.text
                                    scope:[[self.invitesSearchBar scopeButtonTitles]
                                           objectAtIndex:[self.invitesSearchBar selectedScopeButtonIndex]]];
     }
+  
+}
 
+-(void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    
 }
 
 
@@ -338,8 +375,12 @@ static BOOL isFiltered = NO;
 
 -(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
-    [searchBar resignFirstResponder];
+    //[searchBar resignFirstResponder];
+
     searchBar.showsCancelButton = NO;
+    [self.subaUsersFilteredArray removeAllObjects];
+    [self.subaUsersTableView reloadData];
+    
     isFiltered = NO;
 }
 

@@ -122,7 +122,11 @@
 {
     //DLog(@"SpotInfo is: %@",spotInfo);
     self.spotInfo = [NSMutableDictionary dictionaryWithDictionary:spotInfo];
-    NSArray *allphotos = spotInfo[@"photoURLs"];
+    NSArray *allphotos = [NSMutableArray arrayWithArray:
+                          [NSOrderedSet orderedSetWithArray:spotInfo[@"photoURLs"]].array];
+    
+    DLog(@"Number of Photos to load - %i",[allphotos count]);
+    
     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
     NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
@@ -202,26 +206,37 @@
 
 - (NSString *)initialStringForPersonString:(NSString *)personString {
     NSString *initials = nil;
-    NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
-    NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
-    
-    for (NSString *component in mutableComps) {
-        if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]) {
-            [mutableComps removeObject:component];
+    @try {
+        if (![personString isKindOfClass:[NSNull class]]) {
+            
+            NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
+            NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
+            
+            for (NSString *component in mutableComps) {
+                if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]
+                    || [component isEqualToString:kEMPTY_STRING_WITHOUT_SPACE]){
+                    
+                    [mutableComps removeObject:component];
+                }
+            }
+            
+            if ([mutableComps count] >= 2) {
+                NSString *firstName = mutableComps[0];
+                NSString *lastName = mutableComps[1];
+                
+                initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+            } else if ([mutableComps count] == 1) {
+                NSString *name = mutableComps[0];
+                initials =  [name substringToIndex:1];
+            }
         }
-    }
-    
-    if ([mutableComps count] >= 2) {
-        NSString *firstName = mutableComps[0];
-        NSString *lastName = mutableComps[1];
         
-        initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
-    } else if ([mutableComps count]) {
-        NSString *name = mutableComps[0];
-        initials =  [name substringToIndex:1];
-    }
+    }@catch (NSException *exception) {}
+    @finally {}
     
-    return initials;}
+    return initials;
+
+}
 
 -(void)fillView:(UIView *)view WithImage:(NSString *)imageURL
 {
@@ -233,7 +248,7 @@
     
     UIImageView *imageView = [[UIImageView alloc] initWithFrame:frame];
     imageView.contentMode = UIViewContentModeScaleAspectFill;
-    [imageView setImageWithURL:[NSURL URLWithString:imageURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+    [imageView sd_setImageWithURL:[NSURL URLWithString:imageURL] placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
     
     view.backgroundColor = [UIColor clearColor];
     

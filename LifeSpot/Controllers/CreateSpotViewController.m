@@ -68,7 +68,7 @@ typedef enum {
 
 @implementation CreateSpotViewController
 static CLLocationManager *locationManager;
-
+static CLPlacemark *placemark;
 
 - (void)viewDidLoad
 {
@@ -90,11 +90,17 @@ static CLLocationManager *locationManager;
     
     //[self.spotNameField becomeFirstResponder];
     
-    if (locationManager) {
+   
+        if ([locationManager location]){
+            
+            [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location]
+                                            completionHandler:^(NSArray *placemarks, NSError *error) {
+                placemark = placemarks[0];
+            }];
+        }
+    
         [locationManager startUpdatingLocation];
-    }else{
-        
-    }
+    
     
     [Flurry logEvent:@"Create_Stream_Button_Tapped"];
 }
@@ -129,7 +135,8 @@ static CLLocationManager *locationManager;
     
    
     [[User currentlyActiveUser] joinSpotCompletionCode:code completion:^(id results, NSError *error) {
-        DLog(@"Result - %@",results);
+        DLog(@"Join stream result - %@",results);
+        self.streamCodeField.text = kEMPTY_STRING_WITH_SPACE;
         [AppHelper showLoadingDataView:self.loadingDataView
                              indicator:self.joiningSpotIndicator flag:NO];
         
@@ -143,16 +150,14 @@ static CLLocationManager *locationManager;
             
             [self performSegueWithIdentifier:@"JOIN_STREAM_SEGUE" sender:spotId];
             
-        }else if ([results[STATUS] isEqualToString:@"error"]){
+        }else {
             // There is no spot with this code
-            [AppHelper showNotificationWithMessage:@"Looks like that code is incorrect"
-                                              type:kSUBANOTIFICATION_ERROR
-                                  inViewController:self
-                                   completionBlock:nil];
+            [AppHelper showAlert:@"Couldn't join stream"
+                         message:@"Looks like that code is incorrect. Try again?" buttons:@[@"OK"] delegate:nil];
         }
     }];
     
-}
+} 
 
 
 
@@ -168,6 +173,38 @@ static CLLocationManager *locationManager;
     }else{
         
     if ([locationManager location]){
+        
+        if (placemark != nil) {
+            NSString *viewPrivacy = @"0";
+            NSString *addPrivacy = @"0";
+            NSString *spotKey = @"NONE";
+            
+            self.streamName = self.spotNameField.text;
+            User *user = [User currentlyActiveUser];
+            Privacy *privacy = [[Privacy alloc] initWithView:viewPrivacy AddPrivacy:addPrivacy];
+            Spot *spot = [[Spot alloc] initWithName:self.streamName Key:spotKey Privacy:privacy Location:self.chosenVenueLocation User:user];
+            
+               
+                currentCity = placemark.locality;
+                currentCountry = placemark.country;
+                self.chosenVenueLocation.city = currentCity;
+                self.chosenVenueLocation.country = currentCountry;
+                
+                [user createSpot:spot completion:^(id results, NSError *error) {
+                    [self.creatingSpotIndicator stopAnimating];
+                    if (!error){
+                        
+                        // There were no errors
+                        self.createdSpotDetails = (NSDictionary *)results;
+                        [self performSegueWithIdentifier:@"spotWasCreatedSegue" sender:nil];
+                        
+                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                    }else{
+                        DLog(@"Error - %@",error);
+                    }
+                }];
+
+        }else if(placemark == nil){
         
         [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location] completionHandler:^(NSArray *placemarks, NSError *error) {
             
@@ -202,7 +239,8 @@ static CLLocationManager *locationManager;
                         DLog(@"Error - %@",error);
                     }
                 }];
-                
+            
+            
             }else{
                 // We could not geocode location
                 
@@ -222,8 +260,9 @@ static CLLocationManager *locationManager;
 
                 //DLog(@"Error - %@",error);
             }
-            
+        
         }];
+      }
     }
   }
 }
@@ -292,7 +331,7 @@ static CLLocationManager *locationManager;
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
     
     CLLocation *here = [locations lastObject];
-      DLog(@"now location - %@\n here - %@",self.chosenVenueLocation,here);
+      //DLog(@"new location - %@\n here - %@",self.chosenVenueLocation,here);
     if (here != nil){
         
         if (!self.chosenVenueLocation) {
@@ -313,8 +352,6 @@ static CLLocationManager *locationManager;
             [self.streamLocationMapView setCenterCoordinate:twoDCordinate animated:YES];
             [self updateMapView:self.streamLocationMapView WithLocation:self.chosenVenueLocation];
         }
-        
-        
     }
 }
 
@@ -411,7 +448,7 @@ static CLLocationManager *locationManager;
     
     if ([segue.identifier isEqualToString:@"JOIN_STREAM_SEGUE"]) {
         PhotoStreamViewController *pVC = segue.destinationViewController;
-        
+        //pVC.spotName =
         pVC.spotID = sender;
     }
 }

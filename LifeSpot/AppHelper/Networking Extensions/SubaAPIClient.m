@@ -1,6 +1,6 @@
 //
-//  LifespotsAPIClient.m
-//  Lifespotsapp
+//  SubaAPIClient.m
+//  Suba
 //
 //  Created by Kwame Nelson on 9/13/13.
 //  Copyright (c) 2013 Intruptiv. All rights reserved.
@@ -8,16 +8,17 @@
 
 #import "SubaAPIClient.h"
 
-static NSString *const SubaAPIBaseURLString = @"http://api.subaapp.com";
+static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
+//static NSString * const SubaAPIBaseURLString   =  @"http://54.201.118.129/";
+//static NSString * const SubaAPIBaseURLString   =  @"http://54.200.15.155/";
+//static NSString * const SubaAPIBaseURLString   =  @"http://127.0.0.1:8080/";
+//static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.200:8080/";
+//static NSString * const SubaAPIBaseURLString     =  @"http://192.168.8.101:8080/";
 
-//static NSString * const SubaAPIBaseURLString = @"http://54.201.118.129/";
-//static NSString * const SubaAPIBaseURLString  = @"http://54.200.15.155/";
-//static NSString * const SubaAPIBaseURLString  =  @"http://127.0.0.1:9000/";
-//static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.90:9000/";
-//static NSString * const SubaAPIBaseURLString =  @"http://172.20.10.4:9000/";
 //static NSString * const SubaAPIBaseURLString =  @"http://api-dev.subaapp.com/";
 
 @implementation SubaAPIClient
+
 
 + (instancetype)sharedInstance
 {
@@ -37,6 +38,8 @@ static NSString *const SubaAPIBaseURLString = @"http://api.subaapp.com";
     
     return __sharedInstance;
 }
+
+
 
 + (instancetype)subaAPIBaseURL
 {

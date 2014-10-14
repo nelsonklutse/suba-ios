@@ -60,6 +60,7 @@
     }];
 }
 
+
 +(void)fetchSpotInfo:(NSString *)spotId completion:(SpotInfoLoadedCompletion)completion
 {
     //DLog(@"SpotId - %@\nUserId - %@",spotId,userId);

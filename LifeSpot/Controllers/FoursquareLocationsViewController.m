@@ -444,8 +444,8 @@ static CLLocationManager *locationManager;
 - (IBAction)locationChangeDone:(id)sender
 {
     DLog(@"Presenting view controller - %@",[self.presentingViewController class]);
-    if ([self.presentingViewController isKindOfClass:[CreateSpotViewController class]]){
-        DLog(@"Going to create stream VC");
+    if ([self.presentingViewController isKindOfClass:[UINavigationController class]]){
+       // DLog(@"Going to create stream VC");
         
         [self performSegueWithIdentifier:@"FoursquareToCreateSegueDone" sender:nil];
     }else if ([self.presentingViewController isKindOfClass:[StreamSettingsViewController class]]){

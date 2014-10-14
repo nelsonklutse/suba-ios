@@ -19,7 +19,14 @@ typedef void (^NotificationCompletion) ();
 
 + (void)checkUserName:(NSString *)userName completionBlock:(UserNameCheckerCompletion)completionBlock;
 
-+ (void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName AndPassword:(NSString *)password completionBlock:(UserLoggedInCompletion)completionBlock;
++ (void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName
+                         AndPassword:(NSString *)password
+                     completionBlock:(UserLoggedInCompletion)completionBlock;
+
++ (void)loginUserWithEmailOrUserName:(NSString *)emailOrUserName
+                         Password:(NSString *)password
+                          AndGuestId:(NSString *)guestId
+                     completionBlock:(UserLoggedInCompletion)completionBlock;
 
 + (NSString *)kindOfDeviceScreen;
 + (void)savePreferences:(NSDictionary *)prefs;

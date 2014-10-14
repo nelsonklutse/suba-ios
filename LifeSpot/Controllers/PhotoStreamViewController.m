@@ -11,7 +11,6 @@
 #import "S3PhotoFetcher.h"
 #import "StreamSettingsViewController.h"
 #import "AlbumMembersViewController.h"
-#import <CTAssetsPickerController.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
 #import "LSPushProviderAPIClient.h"
@@ -36,6 +35,13 @@
 #import <Social/Social.h>
 #import <DACircularProgressView.h>
 #import <IDMPhotoBrowser.h>
+#import <DBCameraLibraryViewController.h>
+#import <UIImage+Crop.h>
+
+typedef enum{
+    kActionLike = 0,
+    kActionEdit
+}ActionPending;
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
@@ -45,12 +51,15 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 #define SpotIdKey @"SpotIdKey"
 #define SpotPhotosKey @"SpotPhotosKey"
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,CTAssetsPickerControllerDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,DBCameraViewControllerDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate>
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,DBCameraViewControllerDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate>
 
 {
     UIImage *selectedPhoto;
     NSIndexPath *selectedPhotoIndexPath;
-    
+    NSString *selectedPhotoId;
+    PhotoStreamCell *selectedPhotoCell;
+    NSArray *pendingActions;
+    UILabel *titleView;
 }
 
 
@@ -67,9 +76,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 @property (copy,nonatomic) NSString *userEmail;
 @property (copy,nonatomic) NSString *userPassword;
 @property (copy,nonatomic) NSString *userPasswordConfirm;
+
 @property (weak, nonatomic) IBOutlet UIView *uploadingPhoto;
 
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *uploadingPhotoIndicator;
+
 @property (weak, nonatomic) IBOutlet UIButton *addFirstPhotoCameraButton;
 
 @property (retain, nonatomic) IBOutlet UIButton *requestForPhotosButton;
@@ -143,10 +154,6 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (void)photoCardTapped:(UITapGestureRecognizer *)sender;
 - (void)share:(Mutant)objectOfInterest Sender:(UIButton *)sender;
 - (void)savePhotoToCustomAlbum:(UIImage *)photo;
-- (void)resizeImage:(UIImage*) image
-            towidth:(float) width
-           toHeight:(float) height
-          completon:(PhotoResizedCompletion)completion;
 - (void)showPhotoOptions;
 - (void)showReportOptions;
 - (void)reportPhoto:(NSDictionary *)reportInfo;
@@ -163,8 +170,11 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (void)checkAllTextFields;
 - (void)dismissCreateAccountPopUp;
 - (void)showGivePushNotificationScreen;
--(void)uploadingPhotoView:(BOOL)flag;
-@end
+- (void)uploadingPhotoView:(BOOL)flag;
+- (void)executePendingAction:(ActionPending)pendingAction;
+- (void)doodlePhoto:(PhotoStreamCell *)cell;
+- (void)findAndShowPhoto:(NSString *)photoToShow;
+@end 
 
 @implementation PhotoStreamViewController
 int toggler;
@@ -218,11 +228,13 @@ int toggler;
     _headerTitleSubtitleView.autoresizesSubviews = NO;
     
     CGRect titleFrame = CGRectMake(10, 5, 160, 24);
-    UILabel *titleView = [[UILabel alloc] initWithFrame:titleFrame];
+    titleView = [[UILabel alloc] initWithFrame:titleFrame];
     titleView.backgroundColor = [UIColor clearColor];
     titleView.textAlignment = NSTextAlignmentCenter;
     titleView.textColor = [UIColor whiteColor];
     titleView.shadowColor = [UIColor clearColor];
+    
+    //DLog(@"Setting up titleView with stream name - %@",self.spotName);
     titleView.text = (self.spotName) ? self.spotName : @"Stream";
     //[titleView sizeToFit];
     titleView.adjustsFontSizeToFitWidth = YES;
@@ -231,7 +243,7 @@ int toggler;
     
     CGRect subtitleFrame = CGRectMake((160/2), 25, 160, 44-25);
     UILabel *subtitleView = [[UILabel alloc] initWithFrame:subtitleFrame];
-    [IonIcons label:subtitleView setIcon:icon_arrow_down_b size:20.0f color:[UIColor darkGrayColor] sizeToFit:YES];
+    [IonIcons label:subtitleView setIcon:icon_arrow_down_b size:20.0f color:[UIColor whiteColor] sizeToFit:YES];
     subtitleView.backgroundColor = [UIColor clearColor];
     subtitleView.textAlignment = NSTextAlignmentCenter;
     //subtitleView.textColor = [UIColor whiteColor];
@@ -251,8 +263,6 @@ int toggler;
     [oneTapGestureRecognizer setDelegate:self];
     
     [self.navigationItem.titleView addGestureRecognizer:oneTapGestureRecognizer];
-    
-    
 }
 
 - (void)viewDidLoad
@@ -307,9 +317,10 @@ int toggler;
     if(!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
         
       // We are coming from an activity screen
+    DLog(@"Stream id - %@ coz we're coming from the activity screen",self.spotID);
     [self loadSpotImages:self.spotID];
     
-    }
+ }
     
     if(!self.photos && self.numberOfPhotos > 0 && self.spotID) {
         // We are coming from a place where spotName is not set so lets load spot info
@@ -321,6 +332,7 @@ int toggler;
             }];
             
         }
+        DLog(@"Stream id - %@",self.spotID);
         [self loadSpotImages:self.spotID];
     }
     
@@ -335,6 +347,9 @@ int toggler;
        [self loadSpotInfo:self.spotID];
        //[self loadSpotImages:self.spotID];
     }
+    
+    DLog();
+    
 }
 
 
@@ -350,6 +365,8 @@ int toggler;
     [super viewDidAppear:animated];
     self.navigationController.navigationBar.topItem.title = @"";
     [AppHelper increasePhotoStreamEntries];
+    
+    DLog();
 }
 
 
@@ -387,13 +404,25 @@ int toggler;
            NSArray *allPhotos = [results objectForKey:@"spotPhotos"];
            NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
            NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-           self.photos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
+           
+           NSArray *thePhotos = [NSMutableArray arrayWithArray:[allPhotos sortedArrayUsingDescriptors:sortDescriptors]];
+           self.photos = [NSMutableArray arrayWithArray:[NSOrderedSet orderedSetWithArray:thePhotos].array];
+           
            //DLog(@"Photos - %@",results);
            if ([self.photos count] > 0) {
                //DLog(@"Photos in spot - %@",self.photos);
                self.noPhotosView.hidden = YES;
                self.photoCollectionView.hidden = NO;
                [self.photoCollectionView reloadData];
+               
+               
+               if (self.shouldShowPhoto == YES || self.shouldShowDoodle == YES){
+                   //[self setUpTitleView];
+                   // Also find photo
+                   DLog(@"Just when we are about to pass photo to show - %@",self.photoToShow);
+                   [self findAndShowPhoto:self.photoToShow];
+               }
+               
                //[self preparePhotoBrowser:self.photos];
            }else{
                    self.noPhotosView.hidden = NO;
@@ -424,7 +453,12 @@ int toggler;
                 DLog(@"Spot Info - %@",self.spotInfo);
                 self.spotName = (self.spotName) ? self.spotName : results[@"spotName"];
                 //self.navigationItem.title = self.spotName;
-                self.navItemTitle.text = self.spotName;
+                //self.navItemTitle.text = self.spotName;
+                
+                DLog(@"Stream Name - %@",self.spotName);
+                titleView.text = self.spotName;
+                
+                
                 /*[IonIcons label:self.navItemTitle setIcon:icon_arrow_down_b
                            size:10.0f color:[UIColor whiteColor] sizeToFit:NO];
                 
@@ -500,7 +534,6 @@ int toggler;
 -(void)deletePhotoAtIndexFromStream:(NSInteger)index
 {
     [Flurry logEvent:@"Photo_Deleted"];
-
     NSInteger photoIndex = index;
     [self.photos removeObjectAtIndex:photoIndex];
     
@@ -546,11 +579,8 @@ int toggler;
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     //DLog(@"Doing this again");
-    // Set the Double Tap Gesture Recognizer
-    UITapGestureRecognizer *oneTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(photoCardTapped:)];
     
-    [oneTapRecognizer setNumberOfTapsRequired:1];
-    [oneTapRecognizer setDelegate:self];
+    
     
     static NSString *cellIdentifier = @"PhotoStreamCell";
     
@@ -563,6 +593,18 @@ int toggler;
         CGRect footerFrame  = CGRectMake(0, 410, 285, 67);
         photoCardCell.photoCardFooterView.frame = footerFrame;
     }
+    
+    // Set up the Gesture Recognizers
+    UITapGestureRecognizer *oneTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(photoCardTapped:)];
+    
+    [oneTapRecognizer setNumberOfTapsRequired:1];
+    [oneTapRecognizer setDelegate:self];
+    
+    UITapGestureRecognizer *oneTapRecognizer1 = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(photoCardTapped:)];
+    
+    [oneTapRecognizer1 setNumberOfTapsRequired:1];
+    [oneTapRecognizer1 setDelegate:self];
+
     
     
     NSString *pictureTakerName = self.photos[indexPath.row][@"pictureTaker"];
@@ -592,6 +634,7 @@ int toggler;
                               flag:YES];*/
     
     [photoCardCell makeInitialPlaceholderView:photoCardCell.pictureTakerView name:pictureTakerName];
+    DLog(@"PicTakername - %@",pictureTakerName);
     
     NSString *photoURLstring = self.photos[indexPath.item][@"s3name"];
     NSString *photoRemixURLString = self.photos[indexPath.item][@"s3RemixName"];
@@ -612,30 +655,21 @@ int toggler;
     }
     
     
-    // Add the gesture recognizer to this cell
+    // Add the gesture recognizer to original photo cell
     [photoCardCell.photoCardImage setUserInteractionEnabled:YES];
     [photoCardCell.photoCardImage setMultipleTouchEnabled:YES];
     [photoCardCell.photoCardImage addGestureRecognizer:oneTapRecognizer];
     
+    // Add the gesture recognizer to remix photo cell
     [photoCardCell.remixedImageView setUserInteractionEnabled:YES];
     [photoCardCell.remixedImageView setMultipleTouchEnabled:YES];
-    [photoCardCell.remixedImageView addGestureRecognizer:oneTapRecognizer];
+    [photoCardCell.remixedImageView addGestureRecognizer:oneTapRecognizer1];
+    
     
     // Download photo card image
-    [self downloadPhoto:photoCardCell.photoCardImage withURL:photoURLstring downloadOption:SDWebImageProgressiveDownload];
-    
-    //[S3PhotoFetcher s3FetcherWithBaseURL] download
-    
-    /*[[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:photoURLstring to:photoCardCell.photoCardImage placeholderImage:[UIImage imageNamed:@"newOverlay"] completion:^(id results, NSError *error) {
-        
-        if (!error) {
-            self.albumSharePhoto = (UIImage *)results;
-        }
-        
-        [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
-                             indicator:photoCardCell.loadingPictureIndicator
-                                  flag:NO];
-    }];*/
+    [self downloadPhoto:photoCardCell.photoCardImage
+                withURL:photoURLstring
+         downloadOption:SDWebImageProgressiveDownload];
     
     if (photoRemixURLString){
         
@@ -643,15 +677,7 @@ int toggler;
         //NSURL *photoRemixURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoRemixURLString]];
         [self downloadPhoto:photoCardCell.remixedImageView withURL:photoRemixURLString downloadOption:SDWebImageRefreshCached];
         
-        /*[photoCardCell.remixedImageView sd_setImageWithURL:photoRemixURL placeholderImage:nil options:SDWebImageRefreshCached];
-        
-        [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:photoRemixURLString to:photoCardCell.remixedImageView placeholderImage:[UIImage imageNamed:@"newOverlay"] completion:^(id results, NSError *error) {
-            
-            [AppHelper showLoadingDataView:photoCardCell.loadingPictureView
-                                 indicator:photoCardCell.loadingPictureIndicator
-                                      flag:NO];
-        }];*/
-    }else{
+     }else{
         photoCardCell.remixedImageView.image = nil;
     }
     
@@ -824,8 +850,10 @@ int toggler;
             //Ask main stream to reload
             [[NSNotificationCenter defaultCenter]
              postNotificationName:kUserReloadStreamNotification object:nil];
+            if ([results[@"likes"] intValue] == 0) {
+                photoCardCell.numberOfLikesLabel.hidden = YES;
+            }else photoCardCell.numberOfLikesLabel.text = results[@"likes"];
             
-            photoCardCell.numberOfLikesLabel.text = results[@"likes"];
             //[self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
             
             [AppHelper showLikeImage:self.likeImage imageNamed:@"unlike-button"];
@@ -844,7 +872,7 @@ int toggler;
 
 - (IBAction)likePhoto:(id)sender
 {
-    DLog(@"User status = %@",[AppHelper userStatus]);
+    //DLog(@"User status = %@",[AppHelper userStatus]);
     if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
         [UIView animateWithDuration:.5 animations:^{
             self.createAccountView.alpha = 1;
@@ -860,6 +888,7 @@ int toggler;
         
         
         NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
+        selectedPhotoIndexPath = indexPath;
         
         NSString *picId = self.photos[indexPath.item][@"id"];
         
@@ -982,76 +1011,39 @@ int toggler;
             completion(smallerImage,nil);
         });
     });
-
-
-    
 }
 
-
--(void) resizeImage:(UIImage*)image towidth:(float)width toHeight:(float)height completon:(PhotoResizedCompletion)completion
-{
-    dispatch_queue_t resizePhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_async(resizePhotoQueue, ^{
-        
-        float actualHeight = image.size.height;
-        float actualWidth = image.size.width;
-        float imgRatio = actualWidth/actualHeight;
-        float maxRatio = width/height;
-        if(imgRatio!=maxRatio){
-            if(imgRatio < maxRatio){
-                imgRatio = width/ actualHeight;
-                actualWidth = imgRatio * actualWidth;
-                actualHeight = height;
-            }
-            else{
-                imgRatio = width / actualWidth;
-                actualHeight = imgRatio * actualHeight;
-                actualWidth = width;
-            }
-        }
-        CGRect rect = CGRectMake(0.0, 0.0, actualWidth, actualHeight);
-        UIGraphicsBeginImageContext(rect.size);
-        [image drawInRect:rect];
-        UIImage *resizedImg = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-        
-        dispatch_async(dispatch_get_main_queue(),^{
-            completion(resizedImg,nil);
-        });
-    });
-    
-}
 
 - (IBAction)cameraButtonTapped:(id)sender
 {
-    /*if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]){
+    if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]){
         [UIView animateWithDuration:.5 animations:^{
             self.createAccountView.alpha = 1;
             self.noActionLabel.text = CREATE_ACCOUNT_TO_TAKE_PHOTOS;
             //self.navigationController.navigationBarHidden = YES;
         }];
         
-    }else{*/
+    }else{
         
         NSString *streamCreator = self.spotInfo[@"userName"];
         
         if ([streamCreator isEqualToString:[AppHelper userName]]) { // If user created this album no problem
-            [self showPhotoOptions];
-            
+            //[self showPhotoOptions];
+            [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
         }else{ // If user is not creator,check whether he/she can add photos
             
             BOOL userCanAddPhoto = ([self.spotInfo[@"addPrivacy"] isEqualToString:@"ANYONE"]) ? YES: NO;
             
             if (userCanAddPhoto){
-                [self showPhotoOptions];
+               // [self showPhotoOptions];
+                [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
             }else{
                 [AppHelper showAlert:@"Add Photo"
                              message:@"You are not allowed to add photos to this stream"
                              buttons:@[@"OK"] delegate:nil];
             }
-            
         }
-    //}
+    }
 }
 
 
@@ -1064,7 +1056,6 @@ int toggler;
                                                destructiveButtonTitle:nil
                                                     otherButtonTitles:@" This photo is sexually explicit",@"This photo is unrelated",nil];
     actionsheet.tag = 2000;
-    //actionsheet.destructiveButtonIndex = 1;
     [actionsheet showInView:self.view];
   
 }
@@ -1078,31 +1069,35 @@ int toggler;
     selectedPhoto = cell.photoCardImage.image;
     
     
-    NSString *pictureTaker = self.photos[indexpath.item][@"pictureTaker"];
-    
-    if ([[AppHelper userName] isEqualToString:pictureTaker]) {
-        //DLog(@"Allow the user to delete photo because -%@ = %@",[AppHelper userName],pictureTaker);
-        UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
-                                                                 delegate:self
-                                                        cancelButtonTitle:@"Cancel"
-                                                   destructiveButtonTitle:nil
-                                                        otherButtonTitles:@"Save Photo",@"Delete Photo",@"Report Photo", nil];
-        actionsheet.tag = 5000;
-        actionsheet.destructiveButtonIndex = 2;
-        [actionsheet showInView:self.view];
+    //NSString *pictureTaker = self.photos[indexpath.item][@"pictureTaker"];
+    @try {
+        NSString *pictureTakerId = self.photos[indexpath.item][@"pictureTakerId"];
         
-    }else{
-        UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
-                                                                 delegate:self
-                                                        cancelButtonTitle:@"Cancel"
-                                                   destructiveButtonTitle:nil
-                                                        otherButtonTitles:@"Save Photo",@"Report Photo", nil];
-        actionsheet.tag = 1000;
-        actionsheet.destructiveButtonIndex = 1;
-        [actionsheet showInView:self.view];
+        if ([[AppHelper userID] isEqualToString:pictureTakerId]) {
+            //DLog(@"Allow the user to delete photo because -%@ = %@",[AppHelper userName],pictureTaker);
+            UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
+                                                                     delegate:self
+                                                            cancelButtonTitle:@"Cancel"
+                                                       destructiveButtonTitle:nil
+                                                            otherButtonTitles:@"Save Photo",@"Delete Photo",@"Report Photo", nil];
+            actionsheet.tag = 5000;
+            actionsheet.destructiveButtonIndex = 2;
+            [actionsheet showInView:self.view];
+            
+        }else{
+            UIActionSheet *actionsheet = [[UIActionSheet alloc] initWithTitle:@"More Actions"
+                                                                     delegate:self
+                                                            cancelButtonTitle:@"Cancel"
+                                                       destructiveButtonTitle:nil
+                                                            otherButtonTitles:@"Save Photo",@"Report Photo", nil];
+            actionsheet.tag = 1000;
+            actionsheet.destructiveButtonIndex = 1;
+            [actionsheet showInView:self.view];
+        }
+
     }
-    
-    
+    @catch (NSException *exception) {}
+    @finally {}
     
 }
 
@@ -1124,10 +1119,8 @@ int toggler;
     mutablePhotoInfo[@"likes"] = likes;
     
     [self.photos insertObject:mutablePhotoInfo atIndex:selectedIndex];
-    
-    //DLog(@"Before mutation - %@\nAfter mutation - %@",[info debugDescription],[mutablePhotoInfo debugDescription]);
-}
 
+}
 
 
 #pragma mark - Helpers for Social Media
@@ -1191,7 +1184,7 @@ int toggler;
 }
 
 
-- (void)pickAssets
+/*- (void)pickAssets
 {
     
     CTAssetsPickerController *picker = [[CTAssetsPickerController alloc] init];
@@ -1233,33 +1226,11 @@ int toggler;
         //640.0f X 852.0f
         [self resizePhoto:fullResolutionImage towidth:1136.0f toHeight:640.0f completon:^(UIImage *compressedPhoto, NSError *error) {
             NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
+           // DLog(@"Size of image - %fKB",(unsigned long)[imageData length]/1000.0f);
             [self uploadPhoto:imageData WithName:trimmedString];
         }];
         
-        /*[self createStandardImage:representation.fullScreenImage
-                        completon:^(CGImageRef standardPhoto, NSError *error) {
-                            
-        UIImage *fullResolutionImage = [UIImage imageWithCGImage:standardPhoto
-                                                scale:1.0f
-                                                orientation:(UIImageOrientation)ALAssetOrientationUp];
-        
-         NSData *imageData = UIImageJPEGRepresentation(fullResolutionImage, 1.0);
-         [self uploadPhoto:imageData WithName:trimmedString];
-                            
-        }];*/
-        
-        
-        /*[self resizeImage:fullResolutionImage towidth:640.0f toHeight:640.0f
-                completon:^(UIImage *compressedPhoto, NSError *error) {
-                    
-                    UIImage *newImage = compressedPhoto;
-                    NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
-                    
-                    [self uploadPhoto:imageData WithName:trimmedString];
-                    
-        }];*/
-        
-    }else if([assets count] > 1){ // User selected more than one photo
+           }else if([assets count] > 1){ // User selected more than one photo
         [self uploadPhotos:assets];
     }else if([assets count] == 0){
         [AppHelper showAlert:@"Add Photo"
@@ -1267,7 +1238,7 @@ int toggler;
                      buttons:@[@"OK"] delegate:nil];
     }
     
-}
+}*/
 
 
 
@@ -1276,21 +1247,9 @@ int toggler;
     //DLog(@"Source Type - %@",sender);
     
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
-       
         
         if ([sender intValue] == kTakeCamera) {
             [self openCamera];
-            
-            /*
-             UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
-             imagePicker.sourceType = UIImagePickerControllerSourceTypeCamera;
-            imagePicker.delegate = self;
-            imagePicker.allowsEditing = NO;
-            
-            [self presentViewController:imagePicker animated:YES completion:nil];*/
-            
-        }else if([sender intValue] == kGallery){
-            [self pickAssets];
         }
        
     }else{
@@ -1300,6 +1259,7 @@ int toggler;
         
     }
 }
+
 
 - (IBAction)moveToProfile:(UIButton *)sender
 {
@@ -1486,9 +1446,10 @@ int toggler;
             
             [deleteAlert show];
         }
+        
     }else if (actionSheet.tag == 1000){
         if(buttonIndex == 0){
-            if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
+            if([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]){
                 [UIView animateWithDuration:.5 animations:^{
                     self.createAccountView.alpha = 1;
                     self.noActionLabel.text = CREATE_ACCOUNT_TO_SAVE_PHOTOS;
@@ -1593,7 +1554,7 @@ int toggler;
     [self resizePhoto:image towidth:1136.0f toHeight:640.0f
             completon:^(UIImage *compressedPhoto, NSError *error) {
                 if (!error) {
-                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
+                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, .8);
                     
                     [self uploadPhoto:imageData WithName:trimmedString];
                 }else DLog(@"Image resize error :%@",error);
@@ -1678,7 +1639,7 @@ int toggler;
                 //[self resizePhoto:imageInfo[@"imageData"] towidth:640.0f toHeight:852.0f
                 //      completon:^(UIImage *compressedPhoto, NSError *error){
                 //DLog(@"Does it even get here - %@",imageInfo[@"imageName"]);
-                NSData *imageData = UIImageJPEGRepresentation(imageInfo[@"imageData"], 1.0);
+                NSData *imageData = UIImageJPEGRepresentation(imageInfo[@"imageData"], .8);
                 [formData appendPartWithFileData:imageData name:imageInfo[@"imageName"] fileName:[NSString stringWithFormat:@"%@.jpg",imageInfo[@"imageName"]] mimeType:@"image/jpeg"];
                 //}];
             }
@@ -1856,9 +1817,7 @@ int toggler;
 
 -(void)uploadPhoto:(NSData *)imageData WithName:(NSString *)name
 {
-    @try {
-        
-        
+    @try{
         
         NSString *userId = [User currentlyActiveUser].userID;
         NSString *spotId = self.spotID;
@@ -1891,7 +1850,6 @@ int toggler;
             self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
             if (self.imageUploadProgressView.progress == 1.0){
                 self.imageUploadProgressView.hidden = YES; // or remove from superview
-                
             }
         }];
         
@@ -1910,7 +1868,7 @@ int toggler;
                     [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                 }else{
                     //[self uploadingPhotoView:NO];
-                    //DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
+                    DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
                     
                     if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
                         [Flurry logEvent:@"Photo_Upload"];
@@ -1920,10 +1878,12 @@ int toggler;
                         
                         self.noPhotosView.hidden = YES;
                         self.photoCollectionView.hidden = NO;
-                        if (!self.photos) {
+                        if (!self.photos){
                             
-                            self.photos = [NSMutableArray arrayWithObject:photoInfo];
-                        }else [self.photos insertObject:photoInfo atIndex:0];
+                          self.photos = [NSMutableArray arrayWithObject:photoInfo];
+                        }else{
+                           [self.photos insertObject:photoInfo atIndex:0];
+                        }
                         
                         [self upDateCollectionViewWithCapturedPhoto:photoInfo];
                         
@@ -1977,9 +1937,11 @@ int toggler;
             
         }
         
-        NSDictionary *params = @{@"spotId": self.spotID,
+        NSDictionary *params = @{
+                                 @"spotId": self.spotID,
                                  @"spotName" : self.spotName,
-                                 @"memberIds" : [memberIds description]};
+                                 @"memberIds" : [memberIds description]
+                              };
         
         //DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
         
@@ -2059,7 +2021,10 @@ int toggler;
         [Flurry logEvent:@"Account_Confirmed_Facebook"];
         [self.facebookLoginIndicator stopAnimating];
         [self performSelector:@selector(dismissCreateAccountPopUp)];
-       
+        if ([pendingActions count] > 0) {
+            int pAction = [[pendingActions lastObject] intValue];
+            [self executePendingAction:pAction];
+        }
     }];
 }
 
@@ -2087,14 +2052,15 @@ int toggler;
     NSString *streamCreator = self.spotInfo[@"userName"];
     
     if ([streamCreator isEqualToString:[AppHelper userName]]) { // If user created this album no problem
-        [self showPhotoOptions];
-        
+        //[self showPhotoOptions];
+        [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
     }else{ // If user is not creator,check whether he/she can add photos
         
         BOOL userCanAddPhoto = ([self.spotInfo[@"addPrivacy"] isEqualToString:@"ANYONE"]) ? YES: NO;
         
         if (userCanAddPhoto){
-            [self showPhotoOptions];
+            //[self showPhotoOptions];
+            [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
         }else{
             [AppHelper showAlert:@"Add Photo"
                          message:@"You are not allowed to add photos to this stream"
@@ -2120,34 +2086,10 @@ int toggler;
         }];
         
     }else{
-        
-    // Remix Photo
-    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-    NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    self.photoInView = self.photos[indexpath.row];
-    
-     if (cell.remixedImageView.image){
-        if (cell.photoCardImage.alpha == 1){
-            [UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
-                cell.photoCardImage.alpha = 0;
-                cell.remixedImageView.alpha = 1;
-            } completion:^(BOOL finished) {
-               selectedPhoto = cell.remixedImageView.image;
-                selectedPhotoIndexPath = indexpath;
-                [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
-            }];
-        }else if (cell.remixedImageView.alpha == 1){
-            selectedPhoto = cell.remixedImageView.image;
-            selectedPhotoIndexPath = indexpath;
-            [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
-        }
-    }else{
-        
-        selectedPhoto = cell.photoCardImage.image;
-        selectedPhotoIndexPath = indexpath;
-        [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
-        
-    }
+        // Remix Photo
+        PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+        selectedPhotoCell = cell;
+        [self doodlePhoto:cell];
   }
 }
 
@@ -2512,25 +2454,28 @@ int toggler;
 
 - (IBAction)invitePeopleByEmail:(UIButton *)sender
 {
-    DLog(@"Email selected");
-    NSString *shareText = [NSString stringWithFormat:@"Join my photo stream \"%@\" on Suba at https://subaapp.com/download",self.spotName];
-    
-    MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
-    mailComposer.mailComposeDelegate = self;
-    [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotName]];
-    
-    
-    [mailComposer setMessageBody:shareText isHTML:NO];
-    if (selectedPhoto != nil) {
-        NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
-        [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+    if ([MFMailComposeViewController canSendMail]) {
+        NSString *shareText = [NSString stringWithFormat:@"Join my photo stream \"%@\" on Suba at https://subaapp.com/download",self.spotName];
+        
+        MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
+        
+        mailComposer.mailComposeDelegate = self;
+        [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotName]];
+        
+        
+        [mailComposer setMessageBody:shareText isHTML:NO];
+        if (selectedPhoto != nil) {
+            NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
+            [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+        }
+        
+        [Flurry logEvent:@"Share_Stream_Email_Done"];
+        
+        [self presentViewController:mailComposer animated:YES completion:nil];
+        
+    }else{
+        [AppHelper showAlert:@"Configure email" message:@"Hey there:) Do you mind configuring your Mail app to send email" buttons:@[@"OK"] delegate:nil];
     }
-    
-    [Flurry logEvent:@"Share_Stream_Email_Done"];
-    
-    [self presentViewController:mailComposer animated:YES completion:nil];
-    //[self performSegueWithIdentifier:@"PhotoToEmailInvitesSegue" sender:self.spotID];
-    
 }
 
 
@@ -2991,9 +2936,12 @@ int toggler;
                             [self.signUpSpinner stopAnimating];
                             [Flurry logEvent:@"Account_Confirmed_Manual"];
                             [AppHelper savePreferences:results];
-                            DLog(@"User preferences - %@",[AppHelper userPreferences]);
+                            //DLog(@"User preferences - %@",[AppHelper userPreferences]);
                             [self performSelector:@selector(dismissCreateAccountPopUp)];
-                            // Update user info
+                            if ([pendingActions count] > 0) {
+                                int pAction = [[pendingActions lastObject] intValue];
+                                [self executePendingAction:pAction];
+                            }
                            
                         }else{
                             [AppHelper showAlert:results[STATUS] message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
@@ -3014,33 +2962,46 @@ int toggler;
         }
         
     }
-    
 }
+
+
 
 #pragma mark - DBCameraViewControllerDelegate
 - (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
 {
-    UIImageWriteToSavedPhotosAlbum(image, self, @selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), nil);
+    UIImage *fullResolutionImage = nil;
+    
+    //fullResolutionImage = [UIImage imageWithCGImage:image.CGImage scale:1.0
+      //                                                         orientation:UIImageOrientationRight];
+    
+    fullResolutionImage = [image rotateUIImage];//[self fixrotation:image];
+    
+    
+    NSString *imageSource = metadata[@"DBCameraSource"];
+    
+    if([imageSource isEqualToString:@"Camera"]){
+        //fullResolutionImage = [self fixrotation:image];
+        UIImageWriteToSavedPhotosAlbum(image,self,@selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), nil);
+    }
     
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    
     [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
     NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
     NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
     trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
     trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
     
-    [self resizePhoto:image towidth:1136.0f toHeight:640.0f
+    [self resizePhoto:fullResolutionImage towidth:1136.0f toHeight:640.0f
             completon:^(UIImage *compressedPhoto, NSError *error) {
-                if (!error) {
-                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, 1.0);
-                    
+                if(!error){
+                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, .8);
+                    DLog(@"Size of image - %fKB",[imageData length]/1000.0f);
                     [self uploadPhoto:imageData WithName:trimmedString];
                 }else DLog(@"Image resize error :%@",error);
-                
             }];
     
     [cameraViewController restoreFullScreenMode];
+    
     [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -3049,15 +3010,23 @@ int toggler;
     [cameraViewController restoreFullScreenMode];
 }
 
+
 - (void) openCamera
 {
-    DBCameraContainerViewController *cameraContainer = [[DBCameraContainerViewController alloc] initWithDelegate:self];
-    [cameraContainer setFullScreenMode];
+    DBCameraViewController *cameraController = [DBCameraViewController initWithDelegate:self];
     
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:cameraContainer];
+    //[cameraController setForceQuadCrop:YES];
+    //[cameraController set]
+    
+    DBCameraContainerViewController *container = [[DBCameraContainerViewController alloc] initWithDelegate:self];
+    [container setCameraViewController:cameraController];
+    [container setFullScreenMode];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:container];
     [nav setNavigationBarHidden:YES];
+    
     [self presentViewController:nav animated:YES completion:nil];
 }
+
 
 - (void)imageSavedToPhotosAlbum:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
     
@@ -3080,7 +3049,7 @@ int toggler;
 
 - (void)downloadPhoto:(UIImageView *)destination withURL:(NSString *)imgURL downloadOption:(SDWebImageOptions)option
 {
-    DLog(@"number of subviews - %i",[destination.subviews count]);
+    //DLog(@"number of subviews - %i",[destination.subviews count]);
     if ([destination.subviews count] == 1) {
         // Lets remove all subviews
         [[destination subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
@@ -3107,11 +3076,210 @@ int toggler;
              }else{
                  DLog(@"error - %@",error);
             }
-             
          }];
 
     //}
     
 }
+
+
+- (void)executePendingAction:(ActionPending)pendingAction
+{
+    DLog("Pending request");
+    if (pendingAction == kActionLike) {
+        [self performSelector:@selector(likePhotoWithID:atIndexPath:) withObject:selectedPhotoId withObject:selectedPhotoIndexPath];
+    }else if(pendingAction == kActionEdit){
+        [self performSelector:@selector(doodlePhoto:) withObject:selectedPhotoCell];
+    }
+}
+
+
+- (void)doodlePhoto:(PhotoStreamCell *)cell
+{
+    NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
+    
+    self.photoInView = self.photos[indexpath.row];
+    
+    if (cell.remixedImageView.image){
+        if (cell.photoCardImage.alpha == 1){
+            [UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
+                cell.photoCardImage.alpha = 0;
+                cell.remixedImageView.alpha = 1;
+            } completion:^(BOOL finished) {
+                selectedPhoto = cell.remixedImageView.image;
+                selectedPhotoIndexPath = indexpath;
+                [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+            }];
+            
+        }else if (cell.remixedImageView.alpha == 1){
+            selectedPhoto = cell.remixedImageView.image;
+            selectedPhotoIndexPath = indexpath;
+            [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+        }
+    }else{
+        
+        selectedPhoto = cell.photoCardImage.image;
+        selectedPhotoIndexPath = indexpath;
+        [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+        
+    }
+}
+
+
+- (void)showDoodle:(PhotoStreamCell *)cell
+{
+    //[UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
+    DLog(@"cell.numberOfLikesLabel.text: %@",cell.numberOfLikesLabel.text);
+    cell.photoCardImage.alpha = 0;
+    cell.remixedImageView.alpha = 1;
+}
+
+-(void)findAndShowPhoto:(NSString *)photoToShow
+{
+    NSUInteger index = 0;
+    
+    // Go find this photo in self.photos
+    for (NSDictionary *photoInfo in self.photos){
+        DLog(@"s3name: %@\nPhoto to show: %@",photoInfo[@"s3name"],photoToShow);
+        
+        if([photoInfo[@"s3name"] isEqualToString:photoToShow]){
+           // index = [self.photos indexOfObject:photoToShow];
+            DLog(@"Index: %lu",(unsigned long)index);
+            break;
+        }
+        index++;
+    }
+    
+    // Now determine where we need o scroll to
+    //int scrollPosition = (285 * index) + 5;
+    //DLog(@"Scroll position - %d",scrollPosition);
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:(index % 12) inSection:0];
+    
+    [self.photoCollectionView scrollToItemAtIndexPath:indexPath
+                                     atScrollPosition:UICollectionViewScrollPositionLeft
+                                             animated:YES];
+    
+    if (self.shouldShowDoodle == YES){
+        DLog(@"We are flipping the photo");
+        PhotoStreamCell *cell =  (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:indexPath];
+        
+        [self performSelector:@selector(showDoodle:)
+                   withObject:cell
+                   afterDelay:1.5];
+        
+           // } completion:NULL];
+    }
+}
+
+
+
+/*- (UIImage *)fixrotation:(UIImage *)image{
+    
+    int kMaxResolution = 320; // Or whatever
+    
+    CGImageRef imgRef = image.CGImage;
+    
+    CGFloat width = CGImageGetWidth(imgRef);
+    CGFloat height = CGImageGetHeight(imgRef);
+    
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    CGRect bounds = CGRectMake(0, 0, width, height);
+    if (width > kMaxResolution || height > kMaxResolution) {
+        CGFloat ratio = width/height;
+        if (ratio > 1) {
+            bounds.size.width = kMaxResolution;
+            bounds.size.height = bounds.size.width / ratio;
+        }
+        else {
+            bounds.size.height = kMaxResolution;
+            bounds.size.width = bounds.size.height * ratio;
+        }
+    }
+    
+    CGFloat scaleRatio = bounds.size.width / width;
+    CGSize imageSize = CGSizeMake(CGImageGetWidth(imgRef), CGImageGetHeight(imgRef));
+    CGFloat boundHeight;
+    UIImageOrientation orient = image.imageOrientation;
+    switch(orient) {
+            
+        case UIImageOrientationUp: //EXIF = 1
+            transform = CGAffineTransformIdentity;
+            break;
+            
+        case UIImageOrientationUpMirrored: //EXIF = 2
+            transform = CGAffineTransformMakeTranslation(imageSize.width, 0.0);
+            transform = CGAffineTransformScale(transform, -1.0, 1.0);
+            break;
+            
+        case UIImageOrientationDown: //EXIF = 3
+            transform = CGAffineTransformMakeTranslation(imageSize.width, imageSize.height);
+            transform = CGAffineTransformRotate(transform, M_PI);
+            break;
+            
+        case UIImageOrientationDownMirrored: //EXIF = 4
+            transform = CGAffineTransformMakeTranslation(0.0, imageSize.height);
+            transform = CGAffineTransformScale(transform, 1.0, -1.0);
+            break;
+            
+        case UIImageOrientationLeftMirrored: //EXIF = 5
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(imageSize.height, imageSize.width);
+            transform = CGAffineTransformScale(transform, -1.0, 1.0);
+            transform = CGAffineTransformRotate(transform, 3.0 * M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationLeft: //EXIF = 6
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(0.0, imageSize.width);
+            transform = CGAffineTransformRotate(transform, 3.0 * M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationRightMirrored: //EXIF = 7
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeScale(-1.0, 1.0);
+            transform = CGAffineTransformRotate(transform, M_PI / 2.0);
+            break;
+            
+        case UIImageOrientationRight: //EXIF = 8
+            boundHeight = bounds.size.height;
+            bounds.size.height = bounds.size.width;
+            bounds.size.width = boundHeight;
+            transform = CGAffineTransformMakeTranslation(imageSize.height, 0.0);
+            transform = CGAffineTransformRotate(transform, M_PI / 2.0);
+            break;
+            
+        default:
+            [NSException raise:NSInternalInconsistencyException format:@"Invalid image orientation"];
+            
+    }
+    
+    UIGraphicsBeginImageContext(bounds.size);
+    
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    if (orient == UIImageOrientationRight || orient == UIImageOrientationLeft) {
+        CGContextScaleCTM(context, -scaleRatio, scaleRatio);
+        CGContextTranslateCTM(context, -height, 0);
+    }
+    else {
+        CGContextScaleCTM(context, scaleRatio, -scaleRatio);
+        CGContextTranslateCTM(context, 0, -height);
+    }
+    
+    CGContextConcatCTM(context, transform);
+    
+    CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(0, 0, width, height), imgRef);
+    UIImage *imageCopy = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();  
+    
+    return imageCopy;  
+}*/
+
 
 @end

@@ -13,6 +13,8 @@
 #import "MainStreamViewController.h"
 #import "CreateStreamViewController.h"
 #import <SDImageCache.h>
+#import <Crashlytics/Crashlytics.h>
+
 
 @implementation AppDelegate
 
@@ -168,8 +170,14 @@
 {
         // Override point for customization after application launch.
     //self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    //DLog(@"%s",GetMagickVersion(nil));
     
+    if ( ![[[NSUserDefaults standardUserDefaults] objectForKey:@"resetNotifications"] isEqualToString:@"no"] ) {
+        DLog(@"We need to reset notifications");
+        [[UIApplication sharedApplication] unregisterForRemoteNotifications];
+    }
     
+    [[NSUserDefaults standardUserDefaults] setValue:@"no" forKey:@"resetNotifications"];
     //Navbar customization
     UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f)
                                                green:(77.0f/255.0f)
@@ -227,6 +235,7 @@
                                       PROFILE_PHOTO_URL : @"-1",
                                       FACEBOOK_ID : @"-1",
                                       NUMBER_OF_ALBUMS : @"0",
+                                      @"resetNotifications" : @"no",
                                       kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES : @"0",
                                       NUMBER_OF_APP_SESSIONS : [NSNumber numberWithInteger:0]};
 
@@ -240,9 +249,8 @@
     
     
     // Setting up Flurry SDK
-    [Flurry setCrashReportingEnabled:YES];
+    //[Flurry setCrashReportingEnabled:YES];
     [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
-    
     
     
     
@@ -252,38 +260,75 @@
     
     [self monitorNetworkChanges];
     
+    
+    
+
+    
     if ([launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey]){
         
-        /*DLog(@"Class of launch options dictionary with remote notifications KEY - %@\nReal contents - %@",[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] class],[[launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey] description]);*/
+        // We are coming from a push notification
         
-        NSDictionary *dict = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
-        
-        //[AppHelper showAlert:@"Notification" message:[NSString stringWithFormat:@"%@",dict[@"spotId"]] buttons:@[@"OK"] delegate:nil];
-        
-        [self.mainTabBarController setSelectedIndex:2];
-        
-        UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
-        PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
-         
-        pVC.spotID = dict[@"spotId"];
-        self.window.rootViewController = self.mainTabBarController;
-        
-        UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
-        ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
-        
-        [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
-                                 sender:[NSString stringWithFormat:@"%@",dict[@"spotId"]]];
+        NSDictionary *userInfo = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+        if (userInfo[@"streamId"] && userInfo[@"photoURL"]) {
+            // If user liked photo, let's show the photo
+            
+            [self.mainTabBarController setSelectedIndex:2];
+            
+            UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+            PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+            
+            pVC.spotID = userInfo[@"streamId"];
+            self.window.rootViewController = self.mainTabBarController;
+            
+            UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+            ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+            
+            //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
+            
+            if (userInfo[@"doodledPhotoURL"]) {
+                [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                         sender:@{@"streamId" : pVC.spotID,
+                                                  @"photoURL" : userInfo[@"photoURL"],
+                                                  @"doodledPhotoURL" : userInfo[@"doodledPhotoURL"]
+                                                  }];
+            }else{
+                
+                [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                         sender:@{@"streamId" : pVC.spotID,
+                                                  @"photoURL" : userInfo[@"photoURL"]
+                                                  }];
+            }
+            
+        }else if (userInfo[@"streamId"]){
+            // This notification contains only the streamId
+            [self.mainTabBarController setSelectedIndex:2];
+            
+            UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+            PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+            
+            pVC.spotID = userInfo[@"streamId"];
+            self.window.rootViewController = self.mainTabBarController;
+            
+            UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+            ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+            
+            [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId" : pVC.spotID}];
+            
+            
+        }
     }
-    
 
     [[NSNotificationCenter defaultCenter] addObserverForName:kUserDidSignUpNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *note) {
         
-        //DLog(@"Register for push notification") ;
+        DLog(@"Registering for push notification") ;
+        
         [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         
     }];
    
-    if (![[AppHelper placesCoachMarkSeen] isEqualToString:@"YES"]) {
+    //[Crashlytics startWithAPIKey:@"a27bd05e578d1948fcca30313c3abd84d390d0f1"];
+    
+    /*if (![[AppHelper placesCoachMarkSeen] isEqualToString:@"YES"]) {
        [AppHelper setPlacesCoachMark:@"NO"];
     }
     
@@ -309,7 +354,7 @@
     
     if (![[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"YES"]) {
         [AppHelper setShareStreamCoachMark:@"NO"];
-    }
+    }*/
     
     //[self.window makeKeyAndVisible];
     
@@ -321,6 +366,7 @@
     // Perform check for new version of app
     //[[Harpy sharedInstance] checkVersion];
     
+    //();
     return YES;
 }
 
@@ -425,6 +471,9 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
+    
+    
+    
     [FBSettings setDefaultAppID:@"563203563717054"];
     [FBAppEvents activateApp];
     
@@ -433,14 +482,14 @@
     [FBAppCall handleDidBecomeActive];
     [application setApplicationIconBadgeNumber:0];
     
-    if (application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
+    if(application.enabledRemoteNotificationTypes != UIRemoteNotificationTypeNone) {
         
         if (([[AppHelper userID] isEqualToString:@"-1"] || [AppHelper userID] == NULL)){
             
         }else{
             
-            [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications"
-                                               parameters:@{@"userId": [AppHelper userID]}
+            [[SubaAPIClient sharedInstance] GET:@"user/notifications/fetch"
+                                                parameters:@{@"userId": [AppHelper userID]}
                                                   success:^(NSURLSessionDataTask *task, id responseObject){
             
             // Handle all notifications
@@ -448,12 +497,7 @@
                                                       
             if ([notifications isEqualToString:@"0"]) {
                 [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
-            }/*else{
-              if ([notifications integerValue] >= 5) {
-              [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"5"];
-              }*/
-            
-            else{
+            }else{
                 [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
             }
 
@@ -466,6 +510,7 @@
    }
     
     [Flurry logEvent:@"App_Started_From_Background"];
+    //DLog();
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -479,69 +524,98 @@
 
 - (void)application:(UIApplication*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
+    //DLog();
     NSString *sendThis = [[deviceToken description] stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"<>"]];
     
-    [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL parameters:@{@"token": sendThis, @"userId":[AppHelper userID] } success:^(NSURLSessionDataTask *task, id responseObject){
-        NSString  *userName = nil;
-        if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
-            userName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
-        }else{
-            userName = [AppHelper userName];
-        }
-        
+    NSString  *userName = nil;
+    if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+        userName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+    }else{
+        userName = [AppHelper userName];
+    }
+    
+
+    
+    [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL
+                              parameters:@{@"deviceToken": sendThis,
+                                           @"userId":[AppHelper userID],
+                                           @"deviceType": @"iOS"
+                                           } success:^(NSURLSessionDataTask *task, id responseObject){
+                                               
         [Flurry logEvent:@"User_Turned_On_Push_Notification" withParameters:@{@"user": userName}];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:kUserRegisterForPushNotification object:nil];
-        
+                                               DLog(@"Response: %@\nUser registered",responseObject);
         // Lets give this to analytics
-    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+    } failure:^(NSURLSessionDataTask *task, NSError *error){
         DLog(@"Error - %@",error);
+        
+        [Flurry logEvent:@"Error_Registering_For_Push_Notification" withParameters:@{@"user": userName}];
     }];
-    
 }
 
 
-
-
--(void)application:(UIApplication *) application didReceiveRemoteNotification:(NSDictionary *)userInfo {
-   
+-(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     
-     NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
+     DLog(@"Notification Info: %@",userInfo);
     
-    if ([notifications isEqualToString:@"0"]){
-        [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
-    }else{
-        if ([notifications integerValue] >= 3) {
-            [self.mainTabBarController.tabBar.items[2] setBadgeValue:@"3"];
-        }else{
-            [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
+     //NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
+    
+    if (application.applicationState == UIApplicationStateBackground
+        || application.applicationState == UIApplicationStateInactive){
+       
+        if (userInfo[@"streamId"] && userInfo[@"photoURL"]) {
+          // If user liked photo, let's show the photo
+          
+            [self.mainTabBarController setSelectedIndex:2];
+            
+            UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+            PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+            
+            pVC.spotID = userInfo[@"streamId"];
+            self.window.rootViewController = self.mainTabBarController;
+            
+            UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+            ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+            
+            //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
+            
+            if (userInfo[@"doodledPhotoURL"]) {
+                [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                         sender:@{@"streamId" : pVC.spotID,
+                                                  @"photoURL" : userInfo[@"photoURL"],
+                                                  @"doodledPhotoURL" : userInfo[@"doodledPhotoURL"]
+                                                  }];
+            }else{
+                
+            [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                     sender:@{@"streamId" : pVC.spotID,
+                                              @"photoURL" : userInfo[@"photoURL"]
+                                              }];
+            }
+            
+        }else if (userInfo[@"streamId"]){
+            // This notification contains only the streamId
+            [self.mainTabBarController setSelectedIndex:2];
+            
+            UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+            PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
+            
+            pVC.spotID = userInfo[@"streamId"];
+            self.window.rootViewController = self.mainTabBarController;
+            
+            UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+            ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+            
+            [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId" : pVC.spotID}];
+            
+
         }
         
     }
-
-    if(application.applicationState == UIApplicationStateActive){
-        
-        [AppHelper showNotificationWithMessage:userInfo[@"aps"][@"alert"] type:kSUBANOTIFICATION_SUCCESS inViewController:[self topViewController] completionBlock:nil];
-        
-    }else{
-        [self.mainTabBarController setSelectedIndex:2];
-        
-        UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
-        PhotoStreamViewController *pVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"PHOTOSTREAM_SCENE"];
-        
-        pVC.spotID = userInfo[@"spotId"];
-        self.window.rootViewController = self.mainTabBarController;
-        
-        UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
-        ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
-        
-        //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
-        
-        //DLog(@"Userinfo - %@",userInfo[@"spotId"]);
-        [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:[NSString stringWithFormat:@"%@",userInfo[@"spotId"]]];
-    }
-    
 }
+
+
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
 {
 	DLog(@"Failed to get token, error: %@", error);

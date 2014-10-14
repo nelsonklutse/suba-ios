@@ -10,6 +10,10 @@
 
 @interface AlbumMembersCell : UITableViewCell
 
-@property (weak, nonatomic) IBOutlet UIImageView *memberImageView;
+@property (weak, nonatomic) IBOutlet UIView *memberImageView;
 @property (weak, nonatomic) IBOutlet UILabel *memberUserNameLabel;
+
+- (void)makeInitialPlaceholderView:(UIView *)contextView name:(NSString *)person;
+- (UIColor *)circleColor;
+-(void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
 @end

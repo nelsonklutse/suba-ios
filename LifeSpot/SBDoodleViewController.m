@@ -248,9 +248,9 @@
 
 - (IBAction)saveImage:(id)sender{
     // Save in a Suba folder
-    UIImage *image = self.imageView.image;
+   // UIImage *image = self.imageView.image;
     //UIImageWriteToSavedPhotosAlbum(image, self, @selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), nil);
-    [self saveImageToCustomPhotoAlbum:image];
+    //[self saveImageToCustomPhotoAlbum:image];
     
 }
 

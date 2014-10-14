@@ -23,13 +23,10 @@ PODS:
   - BDKNotifyHUD (1.1.0)
   - BOSImageResizeOperation (0.1.0)
   - CSNotificationView (0.3.3)
-  - CTAssetsPickerController (1.3.3)
   - DACircularProgress (2.1.0)
   - DBCamera (2.3.1):
     - GPUImage (~> 0.1)
-  - DCModalSegue (0.0.2)
-  - DKLiveBlur (0.0.1)
-  - GPUImage (0.1.4)
+  - GPUImage (0.1.5)
   - Harpy (2.5.2)
   - IDMPhotoBrowser (1.3.5):
     - AFNetworking (~> 2.2.3)
@@ -41,7 +38,6 @@ PODS:
     - SDWebImage/Core
   - SDWebImage/Core (3.7.1)
   - SVProgressHUD (1.0)
-  - TPKeyboardAvoiding (1.2.3)
   - UIPhotoGallery (0.1.2):
     - SDWebImage (~> 3.0)
   - UzysCircularProgressPullToRefresh (1.0.4)
@@ -54,17 +50,13 @@ DEPENDENCIES:
   - BDKNotifyHUD (~> 1.1.0)
   - BOSImageResizeOperation (from `git://github.com/BucketOSoftware/BOSImageResizeOperation.git`)
   - CSNotificationView (~> 0.3.3)
-  - CTAssetsPickerController (~> 1.3.3)
   - DACircularProgress (~> 2.1.0)
   - DBCamera (~> 2.3)
-  - DCModalSegue (~> 0.0.2)
-  - DKLiveBlur (~> 0.0.1)
   - Harpy
   - IDMPhotoBrowser
   - ionicons
   - iVersion (~> 1.10.6)
   - SDWebImage (= 3.2)
-  - TPKeyboardAvoiding (~> 1.2.3)
   - UIPhotoGallery (~> 0.1.2)
   - UzysCircularProgressPullToRefresh (~> 1.0.4)
 
@@ -80,19 +72,15 @@ SPEC CHECKSUMS:
   BDKNotifyHUD: dd7c23043da457c72056fb4a0c8bae9967acff28
   BOSImageResizeOperation: 301cf26dee926abd52fc0a4664b77486b276f0f3
   CSNotificationView: 21575accc254fa6684314bc6099c8475a4b52684
-  CTAssetsPickerController: a8439e9e52a470b44ccbdb5da699b6ed79bd5774
   DACircularProgress: 4dfac2cc9efe2e352cabe32a2b243fd9768a3b6c
   DBCamera: d76b83e3f9d97417e703d6829dea1c2889936dd4
-  DCModalSegue: e2d41e32dc2785b14b9957e6026233dc6b73d91f
-  DKLiveBlur: 2ebf69a05286c0f0d2a6e71af5c70c9153597b6d
-  GPUImage: ac2bde5f4dbea02a81ced6313964cec1f2043ca9
+  GPUImage: 5114a47f5fc33eb312f3731550a3cea379416d04
   Harpy: 686f775c4793b532952f38918baf2099e58a222d
   IDMPhotoBrowser: d691bcdf470553e165f8eb982c5cd8e9a58bcdef
   ionicons: 83f9b09405311133e7c5118819150f1cbf2c3d64
   iVersion: bd6b244d3e381fd7838a9b1a94b9bcaa2c018e70
   SDWebImage: 116e88633b5b416ea0ca4b334a4ac59cf72dd38d
   SVProgressHUD: 5034c6e22b8c2ca3e09402e48d41ed0340aa1c50
-  TPKeyboardAvoiding: ca26afa683d829cb96fe69b887fc8be4178f0b9a
   UIPhotoGallery: 1dd2dbe4ea352ab42f8092ded8c1ac3d9e6be708
   UzysCircularProgressPullToRefresh: d4e98df6b412855493254ba7a2a69e3007369125
 

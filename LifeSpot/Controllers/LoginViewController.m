@@ -16,8 +16,14 @@
 @property (weak, nonatomic) IBOutlet UIButton *loginBtn;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loginSpinner;
 @property (strong, nonatomic) IBOutlet UIScrollView *loginScrollView;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *fbLoginIndicator;
+
+
+@property (weak, nonatomic) IBOutlet UIButton *facebookLoginBtn;
+- (IBAction)doFacebookLogin:(UIButton *)sender;
 
 - (void)loginUserWithEmail:(NSString *)email AndPassword:(NSString *)password;
+- (void)openFBSession;
 @end
 
 @implementation LoginViewController
@@ -31,10 +37,6 @@
     
 }
 
--(void)viewWillAppear:(BOOL)animated{
-    [super viewWillAppear:YES];
-    [self.userNameField becomeFirstResponder];
-    }
 
 - (void)didReceiveMemoryWarning
 {
@@ -156,5 +158,90 @@
 }
 */
 
+-(void)openFBSession
+{
+    [self.fbLoginIndicator startAnimating];
+    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+        
+        
+        DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
+        
+        if (error) {
+            DLog(@"Facebook Error - %@\nFriendly Error - %@",[error debugDescription],error.localizedDescription);
+        }else if (session.isOpen){
+            [AppHelper setFacebookSession:@"YES"];
+            
+            
+            
+            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
+            
+            [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+                DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                if (!error) {
+                    NSDictionary<FBGraphUser> *user = result;
+                    
+                    NSString *userEmail = [user valueForKey:@"email"];
+                    if (userEmail == NULL) {
+                        [AppHelper showAlert:@"Facebook Error"
+                                     message:@"There was an issue retrieving your facebook email address."
+                                     buttons:@[@"OK"] delegate:nil];
+                                            }else{
+                        NSString *pictureURL = [[[result valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
+                        
+                        [AppHelper setProfilePhotoURL:pictureURL];
+                        
+                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                        
+                        
+                        
+                        NSDictionary *fbSignUpDetails = @{
+                                                          @"id" :user.id,
+                                                          FIRST_NAME: user.first_name,
+                                                          LAST_NAME : user.last_name,
+                                                          EMAIL :  userEmail,
+                                                          USER_NAME : user.username,
+                                                          @"pass" : @"",
+                                                          PROFILE_PHOTO_URL : pictureURL
+                                                        };
+                        
+                        //DLog(@"FB LOGIN UP DETAILS : %@",fbSignUpDetails);
+                        
+                        [AppHelper createUserAccount:fbSignUpDetails WithType:FACEBOOK_LOGIN completion:^(id results, NSError *error) {
+                            [self.fbLoginIndicator stopAnimating];
+                            //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
+                            //self.connectingToFacebookView.alpha = 0;
+                            
+                            if (!error) {
+                                //DLog(@"Response - %@",result);
+                                if([AppHelper inviteCodeDetails]){
+                                    [self performSegueWithIdentifier:@"HomeScreenToPhotoStreamSegue" sender:[AppHelper inviteCodeDetails]];
+                                }else{
+                                    UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+                                    UIViewController *personalSpotsVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"MAINTAB_BAR"];
+                                    
+                                    [self presentViewController:personalSpotsVC animated:YES completion:nil];
+                                }
+                            }else{
+                                DLog(@"Error - %@",error);
+                                [AppHelper showAlert:@"Authentication Error"
+                                             message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
+                                             buttons:@[@"OK"]
+                                            delegate:nil];
+                                
+                            }
+                        }];
+                    }
+                }
+            }];
+        }
+        
+    }];
+  
+}
 
+
+- (IBAction)doFacebookLogin:(UIButton *)sender
+{
+   [self openFBSession];
+}
 @end

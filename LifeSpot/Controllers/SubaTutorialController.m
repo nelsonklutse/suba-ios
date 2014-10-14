@@ -93,7 +93,7 @@ static CLLocationManager *locationManager;
 
 
 #pragma mark - Facebook Login
-/*- (void)openFBSession{
+- (void)openFBSession{
     //[self.fbLoginIndicator startAnimating];
     
     
@@ -122,8 +122,8 @@ static CLLocationManager *locationManager;
                                      message:@"There was an issue retrieving your facebook email address."
                                      buttons:@[@"OK"] delegate:nil];
                         
-                        [AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
-                        self.connectingToFacebookView.alpha = 0;
+                        //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
+                        [self.activityIndicator stopAnimating];
                     }else{
                     NSString *pictureURL = [[[result valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
                     
@@ -146,8 +146,8 @@ static CLLocationManager *locationManager;
                     
                     [AppHelper createUserAccount:fbSignUpDetails WithType:FACEBOOK_LOGIN completion:^(id results, NSError *error) {
                         
-                        [AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
-                        self.connectingToFacebookView.alpha = 0;
+                        //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
+                        [self.activityIndicator stopAnimating];
                         
                         if (!error) {
                             //DLog(@"Response - %@",result);
@@ -180,10 +180,10 @@ static CLLocationManager *locationManager;
 - (IBAction)fbLoginAction:(id)sender
 {
     //DLog();
-    self.connectingToFacebookView.alpha = 1;
-    [AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:YES];
+    [self.activityIndicator startAnimating];
+    //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:YES];
     [self openFBSession];
-}*/
+}
 
 
 
@@ -206,8 +206,7 @@ static CLLocationManager *locationManager;
     
     if ([CLLocationManager locationServicesEnabled]) {
         // If location has been enabled for Suba
-        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusNotDetermined ||
-            [CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized){
+        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized){
             
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
@@ -219,23 +218,29 @@ static CLLocationManager *locationManager;
             
         }else if([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
             
-            [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+            [AppHelper showAlert:@"No access to location"
+                         message:[NSString stringWithFormat:@"%@\n%@",@"Suba could not determine your location.",@"In order to see streams created nearby, go to Settings->Privacy->Location Services and enable location for Suba"]
+                         buttons:@[@"OK"] delegate:nil];
             
+        }else if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusRestricted){
+            [AppHelper showAlert:@"No access to location"
+                         message:[NSString stringWithFormat:@"%@\n%@",@"Suba could not determine your location.",@"In order to see streams created nearby, go to Settings->Privacy->Location Services and enable location for Suba"]
+                         buttons:@[@"OK"] delegate:nil];
+
+        }else{
+            [AppHelper showAlert:@"No access to location"
+                         message:[NSString stringWithFormat:@"%@\n%@",@"Suba could not determine your location.",@"In order to see streams created nearby, go to Settings->Privacy->Location Services and enable location for Suba"]
+                         buttons:@[@"OK"] delegate:nil];
         }
-    }else{
-        [AppHelper showAlert:@"Location Off"
-                     message:@"Looks like location is off on your device."
-                     buttons:@[@"OK"] delegate:nil];
+        
     }
 }
-
 
 
 
 #pragma mark - Location Manager Delegate
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations{
     //[locationManager stopUpdatingLocation];
-    
 }
 
 
@@ -243,7 +248,9 @@ static CLLocationManager *locationManager;
 {
     if ([error code] == kCLErrorDenied) {
         //you had denied
-        /*[AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];*/
+        [AppHelper showAlert:@"Location Error"
+                     message:[NSString stringWithFormat:@"%@\n%@",@"Suba could not retrieve your current location.",@"In order to see streams created nearby, go to Settings->Privacy->Location Services and enable location for Suba" ]
+                     buttons:@[@"OK"] delegate:nil];
     }
     
 }

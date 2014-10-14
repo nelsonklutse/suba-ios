@@ -32,6 +32,7 @@
 #define NUMBER_OF_APP_SESSIONS @"sessions_started"
 #define USER_HAS_INVITED @"user_has_invited"
 #define SHOW_FIRST_TIME_VIEW @"firstTimeView"
+#define GUEST_USER_ID @"guestUserId"
 
 #define CREATE_ACCOUNT_TO_REMIX_PHOTOS @"You'll need a free Suba account to doodle on photos. Create one now? It will take seconds."
 
@@ -85,7 +86,7 @@
 #define DECREMENT @"0"
 #define INCREMENT @"1"
 #define PUSH_PROVIDER_BASE_URL @"http://push-prod.subaapp.com/"
-#define REGISTER_DEVICE_TOKEN_URL @"reporttoken"
+#define REGISTER_DEVICE_TOKEN_URL @"user/pushnotification/register"
 #define ARC4RANDOM_MAX  0x100000000
 #define sANYONE @"ANYONE"
 #define sONLY_MEMBERS @"ONLY_MEMBERS"

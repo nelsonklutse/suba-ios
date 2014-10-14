@@ -9,6 +9,7 @@
 #import "ActivityViewController.h"
 #import "LSPushProviderAPIClient.h"
 #import "PhotoStreamViewController.h"
+#import "NotificationCell.h"
 
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
@@ -92,14 +93,14 @@
     
     [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:YES];
     
-    [[LSPushProviderAPIClient sharedInstance] GET:@"fetchnotifications"
+    [[SubaAPIClient sharedInstance] GET:@"user/notifications/fetch"
                                        parameters:@{@"userId": [AppHelper userID]}
                                           success:^(NSURLSessionDataTask *task, id responseObject){
                 
                 [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:NO];
                 
-                NSArray *attachments = [responseObject objectForKey:@"notifs"];
-                                              self.notifications = attachments;
+                NSArray *attachments = [responseObject objectForKey:@"notifications"];
+                self.notifications = attachments;
                 if ([attachments count] > 0) {
                     DLog(@"Notifications - %@",attachments);
                                                   
@@ -129,7 +130,7 @@
 #pragma mark - TableView Datasource
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 60;
+    return 80;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
@@ -138,13 +139,13 @@
 }
 
 
+
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *cellIdentifier = nil;   //@"ACTIVITY_CELL";
+    static NSString *cellIdentifier = nil;
+    NotificationCell *cell = nil;
     
-    UITableViewCell *cell = nil;
-    
-    if ([self.notifications[indexPath.row][@"readStatus"] isEqualToString:@"unread"]){
+    if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]){
        cellIdentifier = @"ACTIVITY_CELL_COLORED";
     }else{
         cellIdentifier = @"ACTIVITY_CELL";
@@ -152,26 +153,43 @@
     
     cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     
-    cell.textLabel.text = self.notifications[indexPath.row][@"payload"];
+    cell.senderImageView.clipsToBounds = YES;
+    cell.senderImageView.layer.cornerRadius = 25;
+    cell.senderImageView.layer.borderWidth = 1;
+    cell.senderImageView.layer.borderColor = [UIColor lightGrayColor].CGColor;
     
+    cell.notificationMessage.text = self.notifications[indexPath.row][@"message"];
+    [cell.notificationMessage sizeToFit];
+    
+    DLog(@"Notification Message: %@",cell.notificationMessage.text);
+    
+    if (self.notifications[indexPath.row][@"objectOfInterest"]){
+        NSString *senderPhoto = self.notifications[indexPath.row][@"objectOfInterest"];
+        NSURL *senderPhotoURL = [NSURL URLWithString:senderPhoto];
+        
+        [cell.senderImageView setImageWithURL:senderPhotoURL
+                       placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+    }
+
     return cell;
 }
-
 
 
 #pragma mark - TableView Delegate methods
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    UITableViewCell *selectedCell = [tableView cellForRowAtIndexPath:indexPath];
+    NotificationCell *selectedCell = (NotificationCell *)[tableView cellForRowAtIndexPath:indexPath];
     selectedCell.backgroundView.backgroundColor = [UIColor whiteColor];
     selectedCell.backgroundColor = [UIColor whiteColor];
     
-    NSString *spotID = self.notifications[indexPath.row][@"spotId"];
+    NSString *streamID = self.notifications[indexPath.row][@"streamId"];
     
-    if ([self.notifications[indexPath.row][@"readStatus"] isEqualToString:@"unread"]) {
+    if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]) {
         
-        [[LSPushProviderAPIClient sharedInstance] POST:@"updatenotification" parameters:@{@"userId": [AppHelper userID], @"notificationId" : self.notifications[indexPath.row][@"id"]} success:^(NSURLSessionDataTask *task, id responseObject){
-            DLog(@"Response - %@",responseObject);
+        [[SubaAPIClient sharedInstance] POST:@"user/notification/update"
+                                  parameters:@{@"userId": [AppHelper userID], @"notificationId" : self.notifications[indexPath.row][@"id"]}
+                                     success:^(NSURLSessionDataTask *task, id responseObject){
+              
             NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
             
             [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];
@@ -182,23 +200,34 @@
 
     }
     
-    [self performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:spotID];
-
+    [self performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId":streamID}];
+ 
 }
 
 
 #pragma mark - Segue Methods
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender 
 {
-    if ([segue.identifier isEqualToString:@"ACTIVITY_PHOTO_STREAM"]) {
+    if ([segue.identifier isEqualToString:@"ACTIVITY_PHOTO_STREAM"]){
         PhotoStreamViewController *pvc = segue.destinationViewController;
-        pvc.spotID = sender;
+        
+        if(sender[@"photoURL"] && !sender[@"doodledPhotoURL"]){
+            pvc.photoToShow = sender[@"photoURL"];
+            pvc.shouldShowPhoto = YES;
+            
+        }else if(sender[@"doodledPhotoURL"]){
+            pvc.photoToShow = sender[@"photoURL"];
+            pvc.shouldShowDoodle = YES;
+        }
+        
+        pvc.spotID = sender[@"streamId"];
     }
 }
 
 
 - (IBAction)turnOnNotifications:(id)sender
 {
+    //DLog(@"Turning on notifications by firing kUserDidSignUpNotification");
     [[NSNotificationCenter defaultCenter] postNotificationName:kUserDidSignUpNotification object:nil];
 }
 

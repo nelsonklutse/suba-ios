@@ -100,6 +100,7 @@
 @end
 
 @implementation UserProfileViewController
+int counter;
 
 -(IBAction)unwindToUserProfile:(UIStoryboardSegue *)segue
 {
@@ -154,7 +155,7 @@
 
 - (void)showNormalCollectionView
 {
-    DLog();
+    //DLog();
     self.normalUserStreamCollectionView.alpha = 1;
     self.noStreamCollectionView.alpha = 0;
     self.createAccountCollectionView.alpha = 0;
@@ -395,19 +396,20 @@
     [self.loginSpinner startAnimating];
     
     [AppHelper loginUserWithEmailOrUserName:self.userEmail
-                                AndPassword:self.userPassword
+                                Password:self.userPassword
+                                AndGuestId:[AppHelper userID]
                             completionBlock:^(id results, NSError *error) {
                                 
                                 [self.loginSpinner stopAnimating];
                                 
                                 if (!error) {
                                     if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                                        //DLog(@"")
+                                        [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                                         [AppHelper savePreferences:results];
                                         self.userProfileInfo = nil;
                                         self.userProfileInfo = [AppHelper userPreferences];
                                         [AppHelper setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
-                                        DLog(@"user preferences - %@",self.userProfileInfo);
+                                        //DLog(@"user preferences - %@",self.userProfileInfo);
                                         [self performSelector:@selector(dismissCreateAccountPopUp)];
                                         // Update user info
                                         [self fetchUserStreams:[AppHelper userID]];
@@ -421,7 +423,7 @@
                                     
                                     [AppHelper showAlert:@"Login Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
                                 }
-                            }];
+            }];
 }
 
 - (void)viewDidLoad
@@ -512,7 +514,7 @@
         [self fetchUserStreams:userId];
         [self fetchUserInfo:userId];
     }else{
-        DLog(@"fetching streams of user with ID - %@",userId);
+        //DLog(@"fetching streams of user with ID - %@",userId);
         [self fetchUserStreams:[AppHelper userID]];
         [self fetchUserInfo:[AppHelper userID]];
     }
@@ -581,23 +583,33 @@
                              indicator:self.loadingUserStreamsIndicator flag:NO];
         
         //DLog(@"Results - %@",results);
-        NSArray *spots = (NSArray *)results[@"spots"];
+        
         if (error) {
             DLog(@"Error - %@",error);
         }else{
-            //If the user has created spots
-            
-            if ([spots count] > 0){
-                DLog(@"Number of streams user is a member of - %i",[spots count]);
-                NSArray *createdSpots = spots;
-                NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
-                NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-                NSArray *sortedSpots = [createdSpots sortedArrayUsingDescriptors:sortDescriptors];
-                self.userSpots = [NSMutableArray arrayWithArray:sortedSpots];
-                
-                [self figureOutWhichCollectionViewToShow];
-                
+            if ([results[STATUS] isEqualToString:ALRIGHT]) {
+                NSArray *userStreams = results[@"spots"];
+                if ([userStreams count] > 0){
+                    
+                    //DLog(@"Number of streams user is a member of - %lu",(unsigned long)[userStreams count]);
+                    
+                    //NSArray *createdSpots = userStreams;
+                    
+                    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timeCreated" ascending:NO];
+                    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+                    NSArray *sortedSpots = [userStreams sortedArrayUsingDescriptors:sortDescriptors];
+                    if (self.userSpots){
+                        //DLog(@"We already have some streams loaded previously");
+                        [self.userSpots removeAllObjects];
+                    }
+                    self.userSpots = [NSMutableArray arrayWithArray:sortedSpots];
+                    
+                    [self figureOutWhichCollectionViewToShow];
+                    
+                }
+
             }
+            
         }
     }];
     
@@ -669,6 +681,7 @@
 #pragma mark - UICollectionViewDatasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
+    DLog(@"how many spots to display - %i",[self.userSpots count]);
     return [self.userSpots count];
 }
 
@@ -677,7 +690,7 @@
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    
+    counter++;
     static NSString *cellIdentifier = @"USER_STREAMS_CELL";
     
     UserProfileCell *userStreamsCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
@@ -976,7 +989,7 @@
         [userStreamsCell.photoGalleryView addSubview:noPhotosImageView];
     }
     
-    
+    DLog(@"counter - %i",counter);
     return userStreamsCell;
 }
 

@@ -499,7 +499,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, InviteType inv
         smsComposer.messageComposeDelegate = self;
         smsComposer.recipients = recipients ;
         
-        smsComposer.body = [NSString stringWithFormat:@"I've been using this awesome app to create and share photo memories\nDownload now @ http://bit.ly/suba_m so we can share one together"];
+        smsComposer.body = [NSString stringWithFormat:@"I’m using Suba app to collect everyone’s photos at events. Get it here: http://subaapp.com/download"];
         smsComposer.navigationBar.translucent = NO;
         
         [self presentViewController:smsComposer animated:NO completion:nil];
