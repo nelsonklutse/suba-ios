@@ -1,9 +1,9 @@
-//
+ //
 //  PersonalSpotCell.m
 //  LifeSpot
 //
 //  Created by Kwame Nelson on 1/10/14.
-//  Copyright (c) 2014 Eric Hackman. All rights reserved.
+//  Copyright (c) 2014 Intruptiv Technologies. All rights reserved.
 //
 
 #import "PersonalSpotCell.h"
@@ -13,6 +13,7 @@
 @interface PersonalSpotCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 
 @property (strong,nonatomic) NSArray *gImages;
+@property (strong,nonatomic) NSArray *allPhotos;
 @property (strong,nonatomic) NSMutableDictionary *spotInfo;
 @property NSInteger galleryIndex;
 @end
@@ -43,81 +44,6 @@
 }
 */
 
-
-
-
-/*- (TFScroller *)mScroller
-{
- 
-    if (!_mScroller){
-        //DLog(@"Scroller is NIL");
-        _mScroller = [[TFScroller alloc]
-                      initWithFrame:CGRectMake(0, 0, self.photoGalleryView.frame.size.width,self.photoGalleryView.frame.size.height)];
-        
-        //DLog(@"super class - %@,\nSuper height 1- %f\n",[super class],self.photoGalleryView.bounds.size.height);
-        _mScroller.mDelegate = self;
-        [_mScroller scrollViewInitialisation];
-        
-    }
-    
-    return _mScroller;
-}*/
-
-
-/*
- // Only override drawRect: if you perform custom drawing.
- // An empty implementation adversely affects performance during animation.
- - (void)drawRect:(CGRect)rect
- {
- // Drawing code
- }
- */
-
-
-
-/*
-#pragma mark - TFScroller Delegate
-#pragma mark -
-#pragma mark TFSCROLLER DELEGATE FUNCTIONS
--(void)tfscroller:(TFScroller*)tfscroller didSelectImageAtIndex:(NSInteger)pIndex
-{
-	
-}
-
--(NSString*)tfScroller:(TFScroller*)tfscroller viewForIndex:(NSInteger)pInteger
-{
-    MagazineTeaserView *imageView =  [tfscroller.mImageViewsArray objectAtIndex:pInteger];
-    
-    __block UIImage *image = nil;
-    DLog(@"Image is - %@ before assignment",image);
-   	//pInteger = pInteger%3;
-	UIImage *image = [UIImage imageNamed:[NSString stringWithFormat:@"%@.png",[self gImages][pInteger]]];
-    //DLog(@"Image named - %@",[NSString stringWithFormat:@"%@.jpg",[self gImages][pInteger]]);
-	return image;
-    
-    DLog(@"Image URL being sent for index %i",pInteger);
-    NSString *imageURL = self.gImages[pInteger][@"s3name"];
-    
-    return imageURL;
-}
-
-
--(NSUInteger)numberOfPagesInScroller:(TFScroller*)tfscroller
-{
-    //DLog(@"Tnere should be %i photos in this cell's gallery",[self.gImages count]);
-	return 3;
-}
--(CGFloat)widthForPagesInScroller:(TFScroller*)tfscroller
-{
-    //DLog();
-	return 220;
-}
--(CGFloat)gapForPagesInScroller:(TFScroller*)tfscroller
-{
-    //DLog();
-	return 10;
-}
-*/
 
 #pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
@@ -177,15 +103,16 @@
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     self.galleryIndex = index;
     
-    NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
-    NSRange rangeSecondArray = NSMakeRange(0, index);
-    NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
-    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
+    //NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+    //NSRange rangeSecondArray = NSMakeRange(0, index);
+    //NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
+    //NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
         
-    self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
-    [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
+    //self.allPhotos = [firstArray arrayByAddingObjectsFromArray:secondArray];
     
-    DLog(@"personal cell spotinfo = %@",self.spotInfo);
+    [self.spotInfo setValue:self.allPhotos forKey:@"photoURLs"];
+    
+    //DLog(@"personal cell spotinfo = %@",self.spotInfo);
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoGalleryTappedAtIndexNotification
@@ -197,14 +124,19 @@
 #pragma mark - Class Helpers
 - (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
 {
-    //DLog(@"SpotInfo is: %@",spotInfo);
+    DLog(@"SpotInfo is: %@",spotInfo);
     self.spotInfo = [NSMutableDictionary dictionaryWithDictionary:spotInfo];
     NSArray *allphotos = spotInfo[@"photoURLs"];
+    
     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-    NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
+    self.allPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
     
-    self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
+    //NSUInteger imagePos = RAND_FROM_TO(0, [sortedPhotos count] - 1);
+    
+    //DLog(@"Image positon - %lu",(unsigned long)imagePos);
+    
+    self.gImages = [NSMutableArray arrayWithObject:self.allPhotos[0]];
     
     self.galleryIndex = indexPath.row;
     
@@ -250,7 +182,7 @@
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     CGRect frame = CGRectZero;
     NSString *initials = [[self initialStringForPersonString:person] uppercaseString];
-    int numberOfCharacters = initials.length;
+    NSUInteger numberOfCharacters = initials.length;
     
     if (numberOfCharacters == 1){
         
@@ -277,16 +209,17 @@
     return [UIColor colorWithHue:arc4random() % 256 / 256.0 saturation:0.5 brightness:0.8 alpha:1.0];
 }
 
+
 - (NSString *)initialStringForPersonString:(NSString *)personString {
     NSString *initials = nil;
 
     @try {
         if (![personString isKindOfClass:[NSNull class]]) {
             
-            NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
+            NSArray *comps = [personString componentsSeparatedByString:k_SEPARATOR_CHARACTER];
             NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
             
-            for (NSString *component in mutableComps) {
+            for (NSString *component in mutableComps){
                 if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]
                     || [component isEqualToString:kEMPTY_STRING_WITHOUT_SPACE]){
                     

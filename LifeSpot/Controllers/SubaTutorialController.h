@@ -7,8 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <GooglePlus/GooglePlus.h>
 
-@interface SubaTutorialController : UIViewController
+
+@interface SubaTutorialController : UIViewController<GPPSignInDelegate>
+
+
 
 //- (IBAction)unwindBackToCreateAccount:(UIStoryboardSegue *)segue;
+- (void)showSignUpOptions;
 @end

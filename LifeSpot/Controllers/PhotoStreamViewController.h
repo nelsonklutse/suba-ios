@@ -27,12 +27,14 @@ typedef enum{
 @interface PhotoStreamViewController : UIViewController
 
 @property (strong,nonatomic) NSMutableArray *photos;
+@property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,nonatomic) NSString *spotName;
 @property (strong,nonatomic) NSString *spotID;
 @property (strong,nonatomic) NSString *photoToShow;
 @property BOOL isLaunchingFromNotification;
 @property BOOL shouldShowPhoto;
-@property BOOL shouldShowDoodle; 
+@property BOOL shouldShowDoodle;
+@property (strong,nonatomic) NSString *isUserMemberOfStream;
 @property NSInteger numberOfPhotos;
 
 

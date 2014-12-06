@@ -1,1 +1,0 @@
-../../BOSImageResizeOperation/BOSImageResizeOperation/BOSImageResizeOperation.h

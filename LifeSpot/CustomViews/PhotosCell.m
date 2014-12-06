@@ -14,7 +14,7 @@
 
 @property (strong,nonatomic) NSArray *gImages;
 @property (strong,nonatomic) NSMutableDictionary *spotInfo;
-@property int galleryIndex;
+@property NSUInteger galleryIndex;
 
 @end
 
@@ -88,9 +88,6 @@
     return page;
 }
 
-
-
-
 #pragma UIPhotoGalleryDelegate methods
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     
@@ -102,11 +99,8 @@
     NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
     
     self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
-    DLog(@"All images count - %i\nFirst Range - %@\nSecond Range - %@",[self.gImages count],NSStringFromRange(rangeForFirstArray),NSStringFromRange(rangeSecondArray));
     
     [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
-    
-    
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoCellTappedAtIndexNotification

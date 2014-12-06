@@ -12,4 +12,7 @@
 
 @property (strong,nonatomic) NSString *userId;
 @property BOOL shouldAutoInvite;
+
+-(void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data completion:(GeneralCompletion)completionBlock;
+
 @end

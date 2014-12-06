@@ -20,7 +20,8 @@ typedef enum {
     kJoin
 } AddStreamType;
 
-@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>{
+@interface CreateSpotViewController ()<UITextFieldDelegate,CLLocationManagerDelegate,UIAlertViewDelegate>
+{
     NSString *currentCity;
     NSString *currentCountry;
     NSArray *subaLocations;
@@ -29,13 +30,13 @@ typedef enum {
 @property (copy,nonatomic) NSString *streamName;
 @property (copy,nonatomic) NSString *streamCode;
 @property (copy,nonatomic) NSString *venueForCurrentLocation;
-@property (strong,nonatomic) NSArray *otherVenues;
+@property (strong,nonatomic) NSMutableArray *otherVenues;
 @property (retain,nonatomic) Location *userLocation;
 @property (strong,nonatomic) Location *chosenVenueLocation;
 @property (strong,nonatomic) NSDictionary *createdSpotDetails;
-@property (weak, nonatomic) IBOutlet UIScrollView *createStreamView;
 
-@property (retain, nonatomic) IBOutlet UIView *joinStreamView;
+@property (weak,nonatomic) IBOutlet UIScrollView *createStreamView;
+@property (retain,nonatomic) IBOutlet UIView *joinStreamView;
 @property (weak, nonatomic) IBOutlet UITextField *streamCodeField;
 @property (weak, nonatomic) IBOutlet UIButton *joinStreamButton;
 @property (weak, nonatomic) IBOutlet UISegmentedControl *addStreamSegmentedControl;
@@ -47,6 +48,7 @@ typedef enum {
 @property (weak, nonatomic) IBOutlet UIButton *currentLocationButton;
 @property (weak, nonatomic) IBOutlet UIButton *createSpotButton;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *creatingSpotIndicator;
+
 @property (weak, nonatomic) IBOutlet UITextField *joinSpotId;
 
 
@@ -99,7 +101,12 @@ static CLPlacemark *placemark;
             }];
         }
     
+        if (IS_OS_7_OR_BEFORE) {
+        DLog(@"IOS 7");
         [locationManager startUpdatingLocation];
+    }else if(IS_OS_8_OR_LATER){
+        [locationManager requestWhenInUseAuthorization];
+    }
     
     
     [Flurry logEvent:@"Create_Stream_Button_Tapped"];
@@ -281,7 +288,12 @@ static CLPlacemark *placemark;
             
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
-            [locationManager startUpdatingLocation];
+            if (IS_OS_7_OR_BEFORE) {
+                DLog(@"IOS 7");
+                [locationManager startUpdatingLocation];
+       }else if(IS_OS_8_OR_LATER){
+               [locationManager requestWhenInUseAuthorization];
+      }
             
         //}
     }
@@ -342,7 +354,7 @@ static CLPlacemark *placemark;
             CLLocationCoordinate2D twoDCordinate = CLLocationCoordinate2DMake([self.userLocation.latitude doubleValue],[self.userLocation.longitude doubleValue]);
             
             // Go to Foursquare for location
-            //[self foursquareVenueMatchingCurrentLocation:self.userLocation];
+            [self foursquareVenueMatchingCurrentLocation:self.userLocation];
             
             [self.streamLocationMapView setCenterCoordinate:twoDCordinate animated:YES];
             [self updateMapView:self.streamLocationMapView WithLocation:self.userLocation];
@@ -355,19 +367,22 @@ static CLPlacemark *placemark;
     }
 }
 
+
 -(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
+    DLog();
     if ([error code] == kCLErrorDenied) {
         //you had denied
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n",@"Suba does not have access to your location."] buttons:@[@"OK"] delegate:nil];
     }
     
 }
 
+
 -(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
+    DLog();
     if (status == kCLAuthorizationStatusDenied){
-        
         [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }
 }
@@ -412,14 +427,22 @@ static CLPlacemark *placemark;
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     [textField resignFirstResponder];
+    DLog();
     
-    if (textField.text.length > 0) {
-        if (textField == self.streamCodeField) {
+    if (textField == self.streamCodeField) {
+        if (textField.text.length > 0) {
             self.streamCode = textField.text;
             [self joinStream:self.streamCode];
         }
+    }else if (textField == self.spotNameField){
+        if (([textField.text isEqualToString:@""]) | (textField.text.length == 0)) {
+            self.createSpotButton.enabled = NO;
+        }else {
+            if ([self.currentLocationButton.titleLabel.text isEqualToString:@"Choose Location"]) {
+                self.createSpotButton.enabled = NO;
+            }else self.createSpotButton.enabled = YES;
+        }
     }
-    
     
     return YES;
 }
@@ -427,7 +450,9 @@ static CLPlacemark *placemark;
 -(BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string{
     
     if (textField == self.spotNameField && ![textField.text isEqualToString:@""]) {
-        self.createSpotButton.enabled = YES;
+        if ([self.currentLocationButton.titleLabel.text isEqualToString:@"Choose Location"]) {
+            self.createSpotButton.enabled = NO;
+        }else self.createSpotButton.enabled = YES;
     }else if (textField == self.streamCodeField && ![textField.text isEqualToString:@""]){
         self.joinStreamButton.enabled = YES;
     }
@@ -442,6 +467,7 @@ static CLPlacemark *placemark;
         FoursquareLocationsViewController *nearbyVenuesVC = segue.destinationViewController;
         nearbyVenuesVC.currentLocation = self.userLocation;
         nearbyVenuesVC.locations = self.otherVenues;
+        DLog(@"Locations being sent: %@",self.otherVenues);
         nearbyVenuesVC.subaLocations = subaLocations;
         
     }
@@ -470,6 +496,12 @@ static CLPlacemark *placemark;
     self.chosenVenueLocation = (foursquareVC.venueChosen == nil) ? self.chosenVenueLocation : foursquareVC.venueChosen;
     [self updateMapView:self.streamLocationMapView WithLocation:self.chosenVenueLocation];
     //DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
+    
+    if (self.spotNameField.text.length > 0) {
+        self.createSpotButton.enabled = YES;
+    }else{
+        self.createSpotButton.enabled = NO;
+    }
 }
 
 - (IBAction)addStreamSegmentChanged:(UISegmentedControl *)sender

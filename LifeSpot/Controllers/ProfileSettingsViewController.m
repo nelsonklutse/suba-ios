@@ -10,10 +10,9 @@
 #import "User.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
-#import "DBCameraViewController.h"
-#import "DBCameraContainerViewController.h"
+#import <AviarySDK/AviarySDK.h>
 
-@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,DBCameraViewControllerDelegate>
+@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,AFPhotoEditorControllerDelegate>
 
 @property (strong,nonatomic) UIImage *profilePhoto;
 @property (strong,nonatomic) NSString *userName;
@@ -207,6 +206,11 @@
             }else{
                 NSDictionary *userInfo = results;
                 DLog(@"User updated info from server - %@",userInfo);
+                
+                if (results[@"profilePhotoURL"]) {
+                    [AppHelper setProfilePhotoURL:results[@"profilePhotoURL"]];
+                }
+                
                 // Unwind segue to User settings
                 [AppHelper showNotificationWithMessage:@"Profile info saved" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
                 [AppHelper savePreferences:userInfo];
@@ -225,8 +229,8 @@
 
 
 - (IBAction)changeProfilePhotoTapped:(id)sender{
-    [self openCamera];
-    //[self showPhotoOptions];
+    //[self openCamera];
+    [self showPhotoOptions];
 }
 
 
@@ -237,7 +241,7 @@
 
 -(void)showPhotoOptions
 {
-    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:@"Choose Photo" delegate:self cancelButtonTitle:@"Not Now" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Choose From Gallery", nil];
+    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:@"Choose Photo" delegate:self cancelButtonTitle:@"Not Now" destructiveButtonTitle:nil otherButtonTitles:@"Take New Photo",@"Choose Existing Photo", nil];
     
     [action showInView:self.view];
 }
@@ -249,18 +253,39 @@
 }
 
 #pragma mark - Assets Picker Delegate
-- (void) openCamera
-{
-    DBCameraContainerViewController *cameraContainer = [[DBCameraContainerViewController alloc] initWithDelegate:self];
+- (void)openNativeCamera:(UIImagePickerControllerSourceType)sourceType
+    {
+        UIImagePickerController *nativepickerController = [[UIImagePickerController alloc] init];
+        nativepickerController.delegate = self;
+        nativepickerController.sourceType = sourceType;
+        
+        NSArray *sourceTypes = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
+        
+        if ([sourceTypes containsObject:@"public.image"]) {
+            if (sourceType == UIImagePickerControllerSourceTypeCamera) {
+                DLog(@"Camera source types: %@",sourceTypes);
+                nativepickerController.allowsEditing = YES;
+                //nativepickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeOn;
+            }else{
+                
+                /*nativepickerController.navigationController.navigationBar.tintColor = kSUBA_APP_COLOR;
+                 nativepickerController.navigationController.navigationBar.translucent = YES;
+                 [nativepickerController.navigationController.navigationItem setTitle:@"Choose Photo"];*/
+                
+                [nativepickerController setNavigationBarHidden:NO];
+                nativepickerController.navigationBar.barTintColor = kSUBA_APP_COLOR;
+                [nativepickerController.navigationBar setTintColor:[UIColor whiteColor]];
+                [nativepickerController.navigationBar setTranslucent:NO];
+                [nativepickerController.navigationItem setTitle:@"Choose Photo"];
+            }
+        }
+        
+        [self presentViewController:nativepickerController animated:YES completion:nil];
     
-    [cameraContainer setFullScreenMode];
-    
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:cameraContainer];
-    [nav setNavigationBarHidden:YES];
-    [self presentViewController:nav animated:YES completion:nil];
+
 }
 
-- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
+/*- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
 {
     UIImage *fullResolutionImage = [UIImage imageWithCGImage:image.CGImage
                                                        scale:1.0f
@@ -294,7 +319,7 @@
 - (void)dismissCamera:(id)cameraViewController {
     [self dismissViewControllerAnimated:YES completion:nil];
     [cameraViewController restoreFullScreenMode];
-}
+}*/
 
 
 #pragma mark - UIActionSheet Delegate Methods
@@ -302,13 +327,11 @@
 {
     if (buttonIndex == kTakePhotoWithCamera) {
         // Call the Camera here
-        //[self pickPhoto:kTakePhotoWithCamera];
-        [self performSelector:@selector(pickPhoto:) withObject:@(kTakePhotoWithCamera) afterDelay:0.5];
+        [self openNativeCamera:UIImagePickerControllerSourceTypeCamera];
+        
     }else if (buttonIndex == kChooseFromGallery){
         // Choose from the Gallery
-        //[self pickPhoto:kChooseFromGallery];
-        
-        [self performSelector:@selector(pickPhoto:) withObject:@(kChooseFromGallery) afterDelay:0.5];
+        [self openNativeCamera:UIImagePickerControllerSourceTypePhotoLibrary];
     }
     //NSLog(@"Button Clicked is %li",(long)buttonIndex);
     [actionSheet dismissWithClickedButtonIndex:buttonIndex animated:YES];
@@ -372,37 +395,28 @@
 #pragma mark - UIIMagePickerController Delegate methods
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    //DLog(@"media info - %@",info);
+    
+    // Resetting the status bar here
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
+    
+    [Flurry logEvent:@"Photo_Taken"];
     UIImage *image = info[UIImagePickerControllerOriginalImage];
-    self.profilePictureView.image = image;
+    NSData *img = UIImageJPEGRepresentation(image, 1.0);
     
-    //NSDictionary *imageMetaData = info[UIImagePickerControllerMediaMetadata];
-    //NSDictionary *imageInfo = [imageMetaData valueForKey:@"{TIFF}"];
-    //NSString *photoTimestamp = imageInfo[@"DateTime"];
-    
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    //dateFormatter se
-    
-    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
-    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
-    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
-    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
-    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
-
-    
-    NSString *picName = [NSString stringWithFormat:@"%@_%@.jpg",[AppHelper userName],trimmedString];
-    
-    NSData *imageData = UIImageJPEGRepresentation(image, 1);
-    [self.userUpdatedInfo addEntriesFromDictionary:@{@"imageData": imageData}];
-    [self.userUpdatedInfo addEntriesFromDictionary:@{@"picName": picName}];
-    
-    //NSLog(@"Image Data Added to the userUpdatedInfo Dictionary");
-    self.userChangesDoneBarButtonItem.enabled = YES;
-    [picker dismissViewControllerAnimated:NO completion:^{
-        self.userChangesDoneBarButtonItem.enabled = YES;
+    DLog(@"Size of image - %fKB",[img length]/1024.0f);
+    [picker dismissViewControllerAnimated:YES completion:^{
+        DLog(@"Lets display aviary");
+        [self displayEditorForImage:image];
     }];
 }
 
+
+-(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
+{
+    // Resetting the status bar here
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
 
 
 -(void)userInfo
@@ -454,8 +468,63 @@
 }
 
 
+#pragma mark - AFPhotoEditorDelegate
+- (void)photoEditor:(AFPhotoEditorController *)editor finishedWithImage:(UIImage *)image
+{
+    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+    
+    // Handle the result image here
+    [editor dismissViewControllerAnimated:YES completion:^{
+        // Upload the image after we have dismissed the editor
+        
+        self.profilePictureView.image = image;
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+        NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+        trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+        trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+        
+        
+        NSString *picName = [NSString stringWithFormat:@"%@_%@.jpg",[AppHelper userName],trimmedString];
+        
+        NSData *imageData = UIImageJPEGRepresentation(image, .8);
+        [self.userUpdatedInfo addEntriesFromDictionary:@{@"imageData": imageData}];
+        [self.userUpdatedInfo addEntriesFromDictionary:@{@"picName": picName}];
+        
+        //NSLog(@"Image Data Added to the userUpdatedInfo Dictionary");
+        self.userChangesDoneBarButtonItem.enabled = YES;
+        self.userChangesDoneBarButtonItem.enabled = YES;
+    }];
+}
+
+- (void)photoEditorCanceled:(AFPhotoEditorController *)editor
+{
+    // Handle cancellation here
+    [editor dismissViewControllerAnimated:YES completion:nil];
+}
 
 
-
+- (void)displayEditorForImage:(UIImage *)imageToEdit
+{
+    //DLog(@"Displaying aviary 1");
+    
+    // Define Aviary API Key and Secret
+    //static dispatch_once_t onceToken;
+    
+    //dispatch_once(&onceToken, ^{
+    [AFPhotoEditorController setAPIKey:kAviaryAPIKey secret:kAviarySecret];
+    AFPhotoEditorController *editorController = [[AFPhotoEditorController alloc] initWithImage:imageToEdit];
+    [editorController setDelegate:self];
+    
+    // Customize the tools that appear
+    // Set the tools to Contrast, Brightness, Enhance, and Crop (to be displayed in that order).
+    [AFPhotoEditorCustomization setToolOrder:@[kAFEnhance,kAFEffects,kAFCrop,kAFOrientation]];
+    
+    //DLog(@"Displaying aviary 2");
+    [self presentViewController:editorController animated:YES completion:nil];
+    
+    // });
+}
 
 @end

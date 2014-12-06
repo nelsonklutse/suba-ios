@@ -32,8 +32,9 @@ typedef enum {
 @property (weak, nonatomic) IBOutlet UIButton *createStreamButton;
 @property (weak, nonatomic) IBOutlet UIButton *chooseLocationButton;
 
+@property (copy,nonatomic) NSString *streamCode;
 @property (strong,nonatomic) NSDictionary *createdStreamDetails;
-@property (strong,nonatomic) NSArray *allVenues;
+@property (strong,nonatomic) NSMutableArray *allVenues;
 @property (strong,nonatomic) CLLocation *currentLocation;
 @property (strong,nonatomic) NSString *venueForCurrentLocation;
 @property (strong,nonatomic) Location *chosenVenueLocation;
@@ -45,21 +46,23 @@ typedef enum {
 @property (weak, nonatomic) IBOutlet UIScrollView *createStreamView;
 @property (weak, nonatomic) IBOutlet MKMapView *streamLocationMapView;
 @property (weak, nonatomic) IBOutlet UITextField *streamCodeField;
-@property (copy,nonatomic) NSString *streamCode;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *joiningStreamIndicator;
 
 - (IBAction)createStreamWithInfo:(id)sender;
 - (IBAction)pickLocation:(id)sender;
 - (IBAction)addLocationLater:(id)sender;
 - (IBAction)grantLocationPermission:(id)sender;
+
 - (void)venueForCurrentLocation:(Location *)location;
 - (void)updateMapView:(MKMapView *)mapView WithLocation:(CLLocation *)location;
+
 - (IBAction)dismissVC:(id)sender;
 - (IBAction)addStreamSegmentChanged:(UISegmentedControl *)sender;
 
 - (IBAction)joinStreamAction:(id)sender;
 - (IBAction)unwindToCreateStreamFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToCreateStreamFromDone:(UIStoryboardSegue *)segue;
+
 @end
 
 @implementation CreateStreamViewController
@@ -79,6 +82,13 @@ static CLLocationManager *locationManager;
     [self.chooseLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
     self.chosenVenueLocation = (foursquareVC.venueChosen == nil) ? self.chosenVenueLocation : foursquareVC.venueChosen;
     DLog(@"Foursquare venue chosen - %@",foursquareVC.venueChosen);
+    if (self.streamNameField.text.length > 0) {
+        self.createStreamButton.enabled = YES;
+    }else{
+        self.createStreamButton.enabled = NO;
+    }
+    
+
 }
 
 
@@ -307,7 +317,6 @@ static CLLocationManager *locationManager;
             
             [self.chooseLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
             
-            self.createStreamButton.enabled = YES;
         }
     }];
 }
@@ -407,13 +416,23 @@ static CLLocationManager *locationManager;
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
     [textField resignFirstResponder];
+    DLog();
     
-    if (textField.text.length > 0) {
         if (textField == self.streamCodeField) {
-            self.streamCode = textField.text;
-            [self joinStream:self.streamCode];
+            if (textField.text.length > 0) {
+              self.streamCode = textField.text;
+              [self joinStream:self.streamCode];
+          }
+        }else if (textField == self.streamNameField){
+            if (([textField.text isEqualToString:@""]) | (textField.text.length > 0)) {
+                self.createStreamButton.enabled = NO;
+            }else {
+                if ([self.chooseLocationButton.titleLabel.text isEqualToString:@"Choose Location"]) {
+                   self.createStreamButton.enabled = NO;
+                }else self.createStreamButton.enabled = YES;
+            }
         }
-    }
+    
     
     return YES;
 }

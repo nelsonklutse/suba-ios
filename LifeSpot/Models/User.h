@@ -68,8 +68,10 @@ typedef void (^GeneralCompletion) (id results,NSError *error);
 
 + (void)allUsers:(GeneralCompletion)completion;
 + (void)reportPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
-+ (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
+- (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
+//+ (void)commentsForPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion;
 + (void)enterInviteCodeToJoinStream:(NSDictionary *)params completion:(GeneralCompletion)completion;
 + (void)createGuestAccount:(GeneralCompletion)completion;
++ (void)resetPassword:(NSString *)email completion:(GeneralCompletion)completionHandler;
 
 @end

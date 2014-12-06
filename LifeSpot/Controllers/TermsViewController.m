@@ -37,6 +37,7 @@
     [self.viewWeb loadRequest:request progress:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
         
         self.pageLoadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
+        DLog(@"URL progress - %f",self.pageLoadProgressView.progress);
         if (self.pageLoadProgressView.progress == 1) {
             self.pageLoadProgressView.hidden = YES;
         }
@@ -68,6 +69,12 @@
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
 {
     [AppHelper showNotificationWithMessage:@"There was a problem loading content" type:kSUBANOTIFICATION_ERROR inViewController:self completionBlock:nil];
+}
+- (IBAction)dismissVc:(id)sender{
+    //[sender dismissViewControllerAnimated:YES completion:nil];
+    [self.presentingViewController  dismissViewControllerAnimated:YES completion:nil];
+    
+    //DLog();
 }
 
 @end

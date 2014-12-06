@@ -12,21 +12,31 @@
 #import "SignUpViewController.h"
 #import "PhotoStreamViewController.h"
 #import "User.h"
+#import "InviteView.h"
+#import <GoogleOpenSource/GoogleOpenSource.h>
 
-@interface SubaTutorialController ()<CLLocationManagerDelegate>
+@interface SubaTutorialController ()<CLLocationManagerDelegate,UIActionSheetDelegate>
+{
+    GPPSignIn *googleSignIn;
+}
+
 @property (weak, nonatomic) IBOutlet UIView *connectingView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
 @property (weak, nonatomic) IBOutlet UIButton *inviteCodeButton;
+@property (weak, nonatomic) IBOutlet UIButton *facebookButton;
+
+@property (retain, nonatomic) IBOutlet UIButton *signInWithGoogleButton;
 
 
 - (IBAction)unWindToHomeScreen:(UIStoryboardSegue *)segue;
 
 - (IBAction)seeNearbyStreams:(UIButton *)sender;
+- (IBAction)loginWithGoogle:(UIButton *)sender;
 
 //- (void)openFBSession;
 - (void)checkLocation;
-//- (IBAction)fbLoginAction:(id)sender;
-
+- (void)prepareGoogleSignIn;
+//- (void)handleInviteToStream:(NSNotification *)notification;
 @end
 
 @implementation SubaTutorialController
@@ -35,6 +45,8 @@ static CLLocationManager *locationManager;
 -(void)viewDidLoad{
     [super viewDidLoad];
    self.navigationController.navigationBarHidden = YES;
+    
+    
 }
 
 
@@ -49,22 +61,20 @@ static CLLocationManager *locationManager;
 
 
 
--(IBAction)unWindToHomeScreen:(UIStoryboardSegue *)segue
-{
-    /*if ([segue.sourceViewController class] == [PhotoStreamViewController class]){
-        DLog(@"We came from a photo stream");
-        self.inviteCodeButton.hidden = YES;
-        self.navigationController.navigationBarHidden = YES;
-    }else{
-        self.inviteCodeButton.hidden = NO;
-        self.navigationController.navigationBarHidden = YES;
-    }*/
-}
+-(IBAction)unWindToHomeScreen:(UIStoryboardSegue *)segue{}
 
 - (IBAction)seeNearbyStreams:(UIButton *)sender
 {
     [Flurry logEvent:@"See_Nearby_Streams"];
     [self checkLocation];
+}
+
+- (IBAction)loginWithGoogle:(UIButton *)sender
+{
+    sender.enabled = NO;
+    [self.activityIndicator startAnimating];
+    [self prepareGoogleSignIn];
+
 }
 
 
@@ -88,6 +98,12 @@ static CLLocationManager *locationManager;
             enVC.inviteCode = (NSString *)sender[@"streamId"];
             [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACTIVE_SPOT_CODE];
         }
+    }else if ([segue.identifier isEqualToString:@"LogInScreen"]){
+        if ([self.view viewWithTag:300]) {
+            // There's a pop showing
+            UIView *popUpView = [self.view viewWithTag:300];
+            [popUpView removeFromSuperview];
+        }
     }
 }
 
@@ -97,7 +113,7 @@ static CLLocationManager *locationManager;
     //[self.fbLoginIndicator startAnimating];
     
     
-    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+    [FBSession openActiveSessionWithReadPermissions:@[@"public_profile",@"email"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
         
         
         DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
@@ -109,7 +125,7 @@ static CLLocationManager *locationManager;
             //[self.fbLoginIndicator stopAnimating];
             
             
-            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
+            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,email,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
                 DLog(@"FB Auth Result - %@\nError - %@",result,error);
@@ -129,16 +145,16 @@ static CLLocationManager *locationManager;
                     
                     [AppHelper setProfilePhotoURL:pictureURL];
                     
-                    DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                    DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nPicture - %@\n",user.objectID,user.first_name,user.last_name,[user valueForKey:@"email"],pictureURL);
                     
                     
                     
                     NSDictionary *fbSignUpDetails = @{
-                                                      @"id" :user.id,
+                                                      @"id" :user.objectID,
                                                       FIRST_NAME: user.first_name,
                                                       LAST_NAME : user.last_name,
                                                       EMAIL :  userEmail,
-                                                      USER_NAME : user.username,
+                                                      USER_NAME : userEmail,
                                                       @"pass" : @"",
                                                       PROFILE_PHOTO_URL : pictureURL
                                                       };
@@ -148,6 +164,7 @@ static CLLocationManager *locationManager;
                         
                         //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
                         [self.activityIndicator stopAnimating];
+                        self.facebookButton.enabled = YES;
                         
                         if (!error) {
                             //DLog(@"Response - %@",result);
@@ -162,7 +179,7 @@ static CLLocationManager *locationManager;
                         }else{
                             DLog(@"Error - %@",error);
                             [AppHelper showAlert:@"Authentication Error"
-                                         message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
+                                         message:@"There was a problem authenticating you on our servers. Please wait a minute and try again"
                                          buttons:@[@"OK"]
                                         delegate:nil];
                             
@@ -177,11 +194,10 @@ static CLLocationManager *locationManager;
     
 }
 
-- (IBAction)fbLoginAction:(id)sender
+- (IBAction)fbLoginAction:(UIButton *)sender
 {
-    //DLog();
+    sender.enabled = NO;
     [self.activityIndicator startAnimating];
-    //[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:YES];
     [self openFBSession];
 }
 
@@ -199,6 +215,7 @@ static CLLocationManager *locationManager;
 
 
 
+
 #pragma mark - helper methods
 -(void)checkLocation
 {
@@ -210,7 +227,12 @@ static CLLocationManager *locationManager;
             
             locationManager = [[CLLocationManager alloc] init];
             locationManager.delegate = self;
-            [locationManager startUpdatingLocation];
+            if (IS_OS_7_OR_BEFORE) {
+                DLog(@"IOS 7");
+                [locationManager startUpdatingLocation];
+            }else if(IS_OS_8_OR_LATER){
+                [locationManager requestWhenInUseAuthorization];
+            }
             
             // Go to the mainTabBar
             //UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
@@ -294,6 +316,161 @@ static CLLocationManager *locationManager;
         }
     }
 }
+
+-(void)showSignUpOptions
+{
+    UIActionSheet *signUpOptions = [[UIActionSheet alloc] initWithTitle:@"Create an account" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Connect with Facebook",@"Use email instead", nil];
+    
+    [signUpOptions showInView:self.view];
+}
+
+
+#pragma mark - sign up options action sheet
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    
+    
+    if (buttonIndex == 0){
+        // User selected facebook
+        [self.activityIndicator startAnimating];
+        if ([self.view viewWithTag:300]) {
+            // There's a pop showing
+            UIView *popUpView = [self.view viewWithTag:300];
+            [popUpView removeFromSuperview];
+        }
+        [self openFBSession];
+    }else if (buttonIndex == 1){
+       // User wants to do manual sign up
+        if ([self.view viewWithTag:300]) {
+            // There's a pop showing
+            UIView *popUpView = [self.view viewWithTag:300];
+            [popUpView removeFromSuperview];
+        }
+        [self performSegueWithIdentifier:@"SignUpScreen" sender:nil];
+    }
+    
+    
+}
+
+
+#pragma mark - Google Plus sign in
+-(void)prepareGoogleSignIn
+{
+    googleSignIn = [GPPSignIn sharedInstance];
+    //googleSign.shouldFetchGooglePlusUser = YES;
+    googleSignIn.shouldFetchGoogleUserEmail = YES;
+    
+    googleSignIn.clientID = kSUBA_GOOGLEPLUS_CLIENT_ID;
+    
+    //googleSign.scopes = @[ kGTLAuthScopePlusLogin ];  // "https://www.googleapis.com/auth/plus.login" scope
+    googleSignIn.scopes = @[ @"profile" ];            // "profile" scope
+    
+    // Optional: declare signIn.actions, see "app activities"
+    googleSignIn.delegate = self;
+    
+    DLog(@"Authenticating user");
+    [googleSignIn authenticate];
+}
+
+
+- (void)fetchGoogleUserInfo:(GTMOAuth2Authentication *)auth
+{
+    GTLServicePlus* plusService = [[GTLServicePlus alloc] init];
+    plusService.retryEnabled = YES;
+    
+    [plusService setAuthorizer:auth];
+    GTLQueryPlus *query = [GTLQueryPlus queryForPeopleGetWithUserId:@"me"];
+
+    [plusService executeQuery:query completionHandler:^(GTLServiceTicket *ticket, GTLPlusPerson *person, NSError *error) {
+        [self.activityIndicator stopAnimating];
+        self.signInWithGoogleButton.enabled = NO;
+        if (error) {
+            [AppHelper showAlert:@"Google Login" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"OK"] delegate:nil];
+        }else{
+            // We have the user info
+            
+            NSString *googleUserEmail = googleSignIn.authentication.userEmail;
+            NSString *googleUserId = person.identifier;
+            NSString *googleUserFirstName = person.name.givenName;
+            NSString *googleUserLastName = person.name.familyName;
+            GTLPlusPersonImage *googleUserImage = person.image;
+            
+            //NSURL *imgURL = [NSURL URLWithString:googleUserImage.url];
+            
+            
+            
+            NSString *largeImgURL = [googleUserImage.url
+                                  stringByReplacingOccurrencesOfString:@"sz=50" withString:@"sz=100"];
+            
+            [AppHelper setProfilePhotoURL:largeImgURL];
+           //DLog(@"IMG parameters: %@\nNew image: %@",imgURL.pathComponents,largeImg);
+            
+            NSString *userName = person.displayName;
+            
+            NSDictionary *googleSignUpDetails = @{
+                                                  @"id" :googleUserId,
+                                                  FIRST_NAME: googleUserFirstName,
+                                                  LAST_NAME : googleUserLastName,
+                                                  EMAIL :  googleUserEmail,
+                                                  USER_NAME : userName,
+                                                  @"pass" : @"",
+                                                  PROFILE_PHOTO_URL : largeImgURL
+                                            };
+            
+            
+            [AppHelper createUserAccount:googleSignUpDetails
+                                WithType:GOOGLE_LOGIN completion:^(id results, NSError *error){
+                                    
+                self.signInWithGoogleButton.enabled = YES;
+                [self.activityIndicator stopAnimating];
+                
+                if (!error) {
+                    //DLog(@"Response - %@",result);
+                    if([AppHelper inviteCodeDetails]){
+                        [self performSegueWithIdentifier:@"HomeScreenToPhotoStreamSegue" sender:[AppHelper inviteCodeDetails]];
+                    }else{
+                        UIStoryboard *mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle:[NSBundle mainBundle]];
+                        UIViewController *personalSpotsVC = [mainStoryboard instantiateViewControllerWithIdentifier:@"MAINTAB_BAR"];
+                        
+                        [self presentViewController:personalSpotsVC animated:YES completion:nil];
+                    }
+                }else{
+                    DLog(@"Error - %@",error);
+                    [AppHelper showAlert:@"Authentication Error"
+                                 message:@"There was a problem authenticating you on our servers. Please wait a minute and try again"
+                                 buttons:@[@"OK"]
+                                delegate:nil];
+                    
+                }
+
+            }];
+            
+        }
+    }];
+
+}
+
+
+- (void)finishedWithAuth: (GTMOAuth2Authentication *)auth
+                   error: (NSError *) error {
+    
+    DLog(@"Received error %@ and auth object %@",error, [auth.parameters debugDescription]);
+    
+    if (!error) {
+        [self fetchGoogleUserInfo:auth];
+    }else{
+        [AppHelper showAlert:@"Google Login Error" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"Try Again"] delegate:nil];
+    }
+}
+
+
+
+
+-(void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+
 
 
 

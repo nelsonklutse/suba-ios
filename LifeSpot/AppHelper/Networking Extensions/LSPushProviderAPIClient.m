@@ -28,7 +28,7 @@ static NSString * const  LSPushProviderBASEURL  = @"http://push-prod.subaapp.com
     return __sharedInstance;
 }
 
-+(instancetype)LSPushProviderAPIBaseURL
++(NSURL *)LSPushProviderAPIBaseURL
 {
     return [NSURL URLWithString:LSPushProviderBASEURL]; 
 }

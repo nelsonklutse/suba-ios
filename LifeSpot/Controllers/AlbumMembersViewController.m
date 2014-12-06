@@ -13,6 +13,8 @@
 #import "EmailInvitesViewController.h"
 #import "Spot.h"
 #import "User.h"
+#import "Branch.h"
+#import "WhatsAppKit.h"
 
 typedef enum {
     kInvite = 0,
@@ -23,7 +25,9 @@ typedef enum {
 #define SpotInfoKey @"SpotInfoKey"
 #define SpotIdKey @"SpotIdKey"
 
-@interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,MFMailComposeViewControllerDelegate>
+@interface AlbumMembersViewController ()<UITableViewDataSource,UITableViewDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,MFMailComposeViewControllerDelegate>{
+    NSString *branchURL;
+}
 
 @property (strong,nonatomic) NSArray *members;
 //@property (strong,nonatomic) NSDictionary *spotInfo;
@@ -34,7 +38,7 @@ typedef enum {
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingMembersIndicator;
 @property (weak, nonatomic) IBOutlet UIButton *inviteByEmailButton;
 @property (weak, nonatomic) IBOutlet UIButton *inviteBySMSButton;
-@property (weak, nonatomic) IBOutlet UIButton *inviteByUsernameButton;
+@property (weak, nonatomic) IBOutlet UIButton *inviteByWhatsappButton;
 @property (weak, nonatomic) IBOutlet UITextField *emailTextField;
 @property (weak, nonatomic) IBOutlet UIView *invitesView;
 @property (weak, nonatomic) IBOutlet UIButton *otherInviteOptionsButton;
@@ -46,7 +50,7 @@ typedef enum {
 
 - (IBAction)switchTabs:(UISegmentedControl *)sender;
 - (IBAction)inviteBySMSButtonTapped:(UIButton *)sender;
-- (IBAction)inviteByUsernameButtonTapped:(UIButton *)sender;
+- (IBAction)inviteByWhatsappButtonTapped:(UIButton *)sender;
 - (IBAction)inviteByEmailButtonTapped:(UIButton *)sender;
 - (IBAction)unWindToMembersFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToMembersFromAdd:(UIStoryboardSegue *)segue;
@@ -75,7 +79,7 @@ typedef enum {
         self.otherInviteOptionsButton.alpha = 0;
         self.emailTextField.alpha = 0;
         self.inviteBySMSButton.alpha = 1;
-        self.inviteByUsernameButton.alpha = 1;
+        self.inviteByWhatsappButton.alpha = 1;
         
         CGFloat newFrameY = self.inviteBySMSButton.frame.origin.y - (self.inviteByEmailButton.frame.size.height + 20);
         CGRect newFrame = CGRectMake(self.inviteByEmailButton.frame.origin.x, newFrameY, self.inviteByEmailButton.frame.size.width, self.inviteByEmailButton.frame.size.height);
@@ -96,6 +100,8 @@ typedef enum {
     if (self.spotID){
         [self loadAlbumMembers:self.spotID];
     }
+    
+    
     self.invitesView.alpha = 1;
     self.memberTableView.alpha = 0;
     self.otherInviteOptionsButton.alpha = 0;
@@ -116,6 +122,12 @@ typedef enum {
 
     UIBarButtonItem *cancel = self.navigationItem.leftBarButtonItem;
     [cancel setImage:[UIImage imageNamed:@"newX"]];
+    
+    // Prepare branch
+    if (self.spotInfo) {
+        [self prepareBranchURL];
+    }
+
 
 }
 
@@ -127,9 +139,59 @@ typedef enum {
 
 
 #pragma mark - Helpers
-- (IBAction)inviteByUsernameButtonTapped:(UIButton *)sender
+- (IBAction)inviteByWhatsappButtonTapped:(UIButton *)sender
 {
-    [self performSegueWithIdentifier:@"InviteSubaUsersSegue" sender:nil];
+    if ([WhatsAppKit isWhatsAppInstalled]){
+        
+        if(branchURL){
+            // We already have the URL
+            DLog(@"Branch URL already installed");
+            NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],branchURL,self.spotInfo[@"spotCode"]];
+            
+            DLog(@"Yes whatsapp is installed so we show the whatsapp");
+            [WhatsAppKit launchWhatsAppWithMessage:message];
+        }else{
+            
+            NSString *senderName = nil;
+            Branch *branch = [Branch getInstance:@"55726832636395855"];
+            if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                
+            }else{
+                
+                senderName = [AppHelper userName];
+            }
+            
+            DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+            
+            if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                [AppHelper setProfilePhotoURL:@"-1"];
+            }
+            NSDictionary *dict = @{
+                                   @"streamId":self.spotInfo[@"spotId"],
+                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                   @"streamName":self.spotInfo[@"spotName"],
+                                   @"sender": senderName,
+                                   @"streamCode" : self.spotInfo[@"spotCode"],
+                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
+            
+            
+            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+            
+            [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"whatsapp_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                branchURL = url;
+                DLog(@"URL from Branch: %@",url);
+                NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                
+                DLog(@"Yes whatsapp is installed so we show the whatsapp");
+                [WhatsAppKit launchWhatsAppWithMessage:message];
+                
+            }];
+        }
+    }else{
+        [AppHelper showAlert:@"Invite via Whatsapp" message:@"Whatsapp is not installed on your device" buttons:@[@"OK"] delegate:nil];
+    }
+
 }
 
 -(void)loadAlbumMembers:(NSString *)spotId
@@ -203,61 +265,77 @@ typedef enum {
 
 - (IBAction)inviteByEmailButtonTapped:(UIButton *)sender
 {
-    DLog(@"Spot Info - %@",self.spotInfo); 
-    NSString *shareText = [NSString stringWithFormat:@"Join my photo stream \"%@\" on Suba at https://subaapp.com/download",self.spotInfo[@"spotName"]];
-    
-    MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
-    mailComposer.mailComposeDelegate = self;
-    [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotInfo[@"spotName"]]];
-    
-    
-    [mailComposer setMessageBody:shareText isHTML:NO];
-    /*if (selectedPhoto != nil) {
-        NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
-        [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
-    }*/
-    
-    [Flurry logEvent:@"Share_Stream_Email_Done"];
-    
-    [self presentViewController:mailComposer animated:YES completion:nil];
-    
-    //[self performSegueWithIdentifier:@"EmailInvitesSegue" sender:self.spotID];
-    
-    /*if (self.emailTextField.alpha == 1) {
-        // Send emails
-        [self.emailTextField resignFirstResponder];
-        NSString *emailInvites = self.emailTextField.text;
-        NSDictionary *params = @{@"userId" : [User currentlyActiveUser].userID,@"emails":emailInvites};
+    if ([MFMailComposeViewController canSendMail]) {
+        MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
+        mailComposer.mailComposeDelegate = self;
         
-        [[User currentlyActiveUser] inviteUsersToStreamViaEmail:params completion:^(id results, NSError *error) {
-            if (!error) {
-                if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                    // Email invites sent
-                }
+        [mailComposer.navigationBar setTranslucent:NO];
+        
+        [mailComposer.navigationItem setTitle:@"Send Email"];
+        
+        [mailComposer setSubject:[NSString stringWithFormat:@"See and add photos to the  \"%@\" photo stream",self.spotInfo[@"spotName"]]];
+        
+        if (branchURL) {
+            //We already have the branch URL
+            NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the \"%@\" photo stream</p><ul><li>Step 1: Download Suba: %@</li><li>Step 2: Go to Join Stream (in the app, it’s via the + sign at the top right)</li><li>Step 3: Enter invite code: %@</li></ul>",self.spotInfo[@"spotName"],branchURL,self.spotInfo[@"spotCode"]];
+            
+            
+            [mailComposer setMessageBody:shareText isHTML:YES];
+            [Flurry logEvent:@"Share_Stream_Email_Done"];
+            
+            if (!self.presentedViewController) {
+                [self presentViewController:mailComposer animated:YES completion:nil];
             }
-        }];
+            
+        }else{
+            
+            NSString *senderName = nil;
+            Branch *branch = [Branch getInstance:@"55726832636395855"];
+            if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                
+            }else if([AppHelper firstName].length > 0 && ([AppHelper lastName] == NULL | [[AppHelper lastName] class]== [NSNull class] | [AppHelper lastName].length == 0)){
+                
+                senderName = [AppHelper firstName];
+            }
+            if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                [AppHelper setProfilePhotoURL:@"-1"];
+            }
+            NSDictionary *dict = @{
+                                   @"streamId":self.spotID,
+                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                   @"streamName":self.spotInfo[@"spotName"],
+                                   @"sender": senderName,
+                                   @"streamCode" : self.spotInfo[@"spotCode"],
+                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
+            
+            
+            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+            
+            [branch getShortURLWithParams:streamDetails
+                                  andTags:nil
+                               andChannel:@"email"
+                               andFeature:BRANCH_FEATURE_TAG_SHARE
+                                 andStage:nil
+                              andCallback:^(NSString *url){
+                                  branchURL = url;
+                                  DLog(@"URL from Branch: %@",url);
+                                  
+                                  NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the \"%@\" photo stream</p><ul><li>Step 1: Download Suba: %@</li><li>Step 2: Go to Join Stream (in the app, it’s via the + sign at the top right)</li><li>Step 3: Enter invite code: %@</li></ul>",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                                  
+                                  
+                                  [mailComposer setMessageBody:shareText isHTML:YES];
+                                  [Flurry logEvent:@"Share_Stream_Email_Done"];
+                                  if (!self.presentedViewController) {
+                                    [self presentViewController:mailComposer animated:YES completion:nil];
+                                  }
+                                  
+                                  
+                              }];
+        }
+    }else{
+        [AppHelper showAlert:@"Configure email" message:@"Hey there:) Do you mind configuring your Mail app to send email" buttons:@[@"OK"] delegate:nil];
     }
-    else{
-        
-    [UIView animateWithDuration:.8 animations:^{
-        CGRect smsButtonFrame = self.inviteBySMSButton.frame;
-        CGRect userNameButtonFrame = self.inviteByUsernameButton.frame;
-        self.inviteByUsernameButton.alpha = 0;
-        self.inviteBySMSButton.alpha = 0;
-        
-        // Move the frame of the email button to where the username invite was
-        self.emailTextField.alpha = 1;
-        self.otherInviteOptionsButton.alpha = 1;
-        self.otherInviteOptionsButton.frame = userNameButtonFrame;
-        
-        [self.inviteByEmailButton setTitle:@"Invite" forState:UIControlStateDisabled];
-        
-        self.inviteByEmailButton.frame = smsButtonFrame;
-        [self.inviteByEmailButton setUserInteractionEnabled:NO];
-        
-        
-    }];
-  }*/
 }
 
 
@@ -301,7 +379,7 @@ typedef enum {
             if (self.members[indexPath.item][@"firstName"] && self.members[indexPath.item][@"lastName"]){
                 NSString *firstName = self.members[indexPath.item][@"firstName"];
                 NSString *lastName = self.members[indexPath.item][@"lastName"];
-                NSString *personString = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+                NSString *personString = [NSString stringWithFormat:@"%@<>%@",firstName,lastName];
                 memberCell.memberUserNameLabel.text = personString;
                 [memberCell makeInitialPlaceholderView:memberCell.memberImageView name:personString];
                 
@@ -350,42 +428,89 @@ typedef enum {
 #pragma mark - Send SMS
 -(void)sendSMSToRecipients:(NSMutableArray *)recipients
 {
-    if ([MFMessageComposeViewController canSendText]){
-        
-        MFMessageComposeViewController *smsComposer = [[MFMessageComposeViewController alloc] init];
-        
-        smsComposer.messageComposeDelegate = self;
-        smsComposer.recipients = recipients ;
-        if ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"]) {
-           smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. This is where everyone is sharing their pics from this event! Download Suba here: http://appstore.com/suba",self.spotInfo[@"spotName"]];
+    @try {
+        NSString *senderName = nil;
+        if ([MFMessageComposeViewController canSendText]){
+            
+            MFMessageComposeViewController *smsComposer = [[MFMessageComposeViewController alloc] init];
+            
+            smsComposer.messageComposeDelegate = self;
+            smsComposer.recipients = recipients;
+            
+            if (branchURL) {
+                // We already have the branch URL set up
+                DLog(@"Branch URL is already set up");
+                smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],branchURL,self.spotInfo[@"spotCode"]];
+                [smsComposer.navigationBar setTranslucent:NO];
+                
+                if (!self.presentedViewController){
+                    [self presentViewController:smsComposer animated:YES completion:nil];
+                }
+                
+            }else{
+                
+                Branch *branch = [Branch getInstance:@"55726832636395855"];
+                if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                    senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                    
+                }else{
+                    
+                    senderName = [AppHelper userName];
+                }
+                
+                
+                DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+                
+                if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                    [AppHelper setProfilePhotoURL:@"-1"];
+                }
+                NSDictionary *dict = @{
+                                       @"streamId":self.spotInfo[@"spotId"],
+                                       @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                       @"streamName":self.spotInfo[@"spotName"],
+                                       @"sender": senderName,
+                                       @"streamCode" : self.spotInfo[@"spotCode"],
+                                       @"senderPhoto" : [AppHelper profilePhotoURL]};
+                
+                
+                NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                
+                
+                
+                
+                [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"text_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                    branchURL = url;
+                    DLog(@"URL from Branch: %@",url);
+                    smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                    [smsComposer.navigationBar setTranslucent:NO];
+                    
+                    if (!self.presentedViewController){
+                        [self presentViewController:smsComposer animated:YES completion:nil];
+                    }
+                }];
+                
+            }
+            
         }else{
-            smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. Download Suba here: http://subaapp.com/download and enter the invite code \"%@\" ",self.spotInfo[@"spotName"],self.spotInfo[@"spotCode"]];
+            UIAlertView *alert = [[UIAlertView alloc]
+                                  initWithTitle:@"Text Message Failure"
+                                  message:
+                                  @"Your device doesn't support in-app sms"
+                                  delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            [alert show];
         }
         
+    }
+    @catch (NSException *exception) {
+        DLog(@"exception name: %@\nexception reason: %@\nException info: %@",exception.name,exception.reason,[exception.userInfo debugDescription]);
         
-        smsComposer.navigationBar.translucent = NO;
-        UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f)
-                                                   green:(77.0f/255.0f)
-                                                    blue:(20.0f/255.0f)
-                                                   alpha:1];
-        
-        smsComposer.navigationBar.barTintColor = navbarTintColor;
-        smsComposer.navigationBar.tintColor = navbarTintColor;
-        smsComposer.navigationItem.title = @"Send Message";
-        NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0], NSFontAttributeName,nil];
-        [smsComposer.navigationBar setTitleTextAttributes:textTitleOptions];
-        
-        [self presentViewController:smsComposer animated:NO completion:nil];
-        
-    }else{
         UIAlertView *alert = [[UIAlertView alloc]
-                              initWithTitle:@"Text Message Failure"
+                              initWithTitle:@"Oops:)"
                               message:
-                              @"Your device doesn't support in-app sms"
-                              delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                              @"Something went wrong.Please try again."
+                              delegate:nil cancelButtonTitle:@"Try again" otherButtonTitles:nil];
         [alert show];
     }
-    
 }
 
 - (IBAction)switchTabs:(UISegmentedControl *)sender
@@ -474,7 +599,7 @@ typedef enum {
             }
             
             [self.inviteByEmailButton setTitle:
-            [NSString stringWithFormat:@"Invite %i people",numberOfEmailInvites] forState:UIControlStateNormal];
+            [NSString stringWithFormat:@"Invite %li people",(long)numberOfEmailInvites] forState:UIControlStateNormal];
             
             //[self.inviteByEmailButton sizeToFit];
             [self.inviteByEmailButton setUserInteractionEnabled:YES];
@@ -566,6 +691,51 @@ typedef enum {
     DLog(@"Self.spotID -%@\nself.members - %@\nself.spotInfo - %@",self.spotID,self.members,self.spotInfo);
 
 }
+
+
+
+-(void)prepareBranchURL
+{
+    //NSString __block *branchurl = @"";
+    NSString *senderName = nil;
+    
+    Branch *branch = [Branch getInstance:@"55726832636395855"];
+    if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+        senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+        
+    }else{
+        
+        senderName = [AppHelper userName];
+    }
+    
+    
+    DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+    
+    if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+        [AppHelper setProfilePhotoURL:@"-1"];
+    }
+    NSDictionary *dict = @{
+                           @"streamId":self.spotInfo[@"spotId"],
+                           @"photos" : self.spotInfo[@"photos"],
+                           @"streamName":self.spotInfo[@"spotName"],
+                           @"sender": senderName,
+                           @"streamCode" : self.spotInfo[@"spotCode"],
+                           @"senderPhoto" : [AppHelper profilePhotoURL]};
+    
+    
+    NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+    
+    [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"whatsapp_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+        
+        DLog(@"URL from Branch: %@",url);
+        branchURL = url;
+        
+    }];
+    
+    //return branchURL;
+    
+}
+
 
 
 @end

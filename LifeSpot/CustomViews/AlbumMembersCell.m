@@ -34,7 +34,7 @@
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     CGRect frame = CGRectZero;
     NSString *initials = [[self initialStringForPersonString:person] uppercaseString];
-    int numberOfCharacters = initials.length;
+    NSUInteger numberOfCharacters = initials.length;
     
     if (numberOfCharacters == 1){
         
@@ -63,26 +63,36 @@
 
 - (NSString *)initialStringForPersonString:(NSString *)personString {
     NSString *initials = nil;
-    NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
-    NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
-    
-    for (NSString *component in mutableComps) {
-        if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]) {
-            [mutableComps removeObject:component];
+    @try {
+        if (![personString isKindOfClass:[NSNull class]]) {
+            
+            NSArray *comps = [personString componentsSeparatedByString:k_SEPARATOR_CHARACTER];
+            NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
+            
+            for (NSString *component in mutableComps) {
+                if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]
+                    || [component isEqualToString:kEMPTY_STRING_WITHOUT_SPACE]){
+                    
+                    [mutableComps removeObject:component];
+                }
+            }
+            
+            if ([mutableComps count] >= 2) {
+                NSString *firstName = mutableComps[0];
+                NSString *lastName = mutableComps[1];
+                
+                initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+            } else if ([mutableComps count] == 1) {
+                NSString *name = mutableComps[0];
+                initials =  [name substringToIndex:1];
+            }
         }
-    }
-    
-    if ([mutableComps count] >= 2) {
-        NSString *firstName = mutableComps[0];
-        NSString *lastName = mutableComps[1];
         
-        initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
-    } else if ([mutableComps count]) {
-        NSString *name = mutableComps[0];
-        initials =  [name substringToIndex:1];
-    }
+    }@catch (NSException *exception) {}
+    @finally {}
     
     return initials;
+
 }
 
 

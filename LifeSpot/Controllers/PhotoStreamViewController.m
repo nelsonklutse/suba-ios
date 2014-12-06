@@ -22,21 +22,21 @@
 #import "BDKNotifyHUD.h"
 #import <SDWebImage/UIImageView+WebCache.h>
 #import "EmailInvitesViewController.h"
-#import "BOSImageResizeOperation.h"
 #import <QuartzCore/QuartzCore.h>
 #import "PhotoStreamFooterView.h"
+#import "PhotoStreamHeaderView.h"
 #import "InvitesViewController.h"
 #import "SBDoodleViewController.h"
 #import <IonIcons.h>
 #import <ionicons-codes.h>
-#import "DBCameraViewController.h"
-#import "DBCameraContainerViewController.h"
 #import "TermsViewController.h"
 #import <Social/Social.h>
 #import <DACircularProgressView.h>
 #import <IDMPhotoBrowser.h>
-#import <DBCameraLibraryViewController.h>
-#import <UIImage+Crop.h>
+#import <AviarySDK/AviarySDK.h>
+#import "Branch.h"
+#import "WhatsAppKit.h"
+#import "CommentsViewController.h" 
 
 typedef enum{
     kActionLike = 0,
@@ -45,13 +45,14 @@ typedef enum{
 
 typedef void (^PhotoResizedCompletion) (UIImage *compressedPhoto,NSError *error);
 typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error);
+typedef void (^SBFlipDoodleCompletionHandler) (BOOL didFlipDoodle);
 
 #define SpotInfoKey @"SpotInfoKey"
 #define SpotNameKey @"SpotNameKey"
 #define SpotIdKey @"SpotIdKey"
 #define SpotPhotosKey @"SpotPhotosKey"
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,DBCameraViewControllerDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate>
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate,AFPhotoEditorControllerDelegate>
 
 {
     UIImage *selectedPhoto;
@@ -60,11 +61,16 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
     PhotoStreamCell *selectedPhotoCell;
     NSArray *pendingActions;
     UILabel *titleView;
+    NSData *imageToUpload;
+    NSString *nameOfImageToUpload;
+    BOOL didImageFinishUploading;
+    BOOL isDoodling;
+    NSString *branchURLforInviteToStream;
+    NSString *branchURLforShareStream;
 }
 
 
 @property (strong,nonatomic) NSDictionary *photoInView;
-@property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,atomic) ALAssetsLibrary *library;
 @property (strong,nonatomic) UIImage *albumSharePhoto;
 @property (weak, nonatomic) IBOutlet UIView *createAccountOptionsView;
@@ -100,7 +106,7 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 
 @property (weak, nonatomic) IBOutlet UIScrollView *createAccountView;
 @property (weak, nonatomic) IBOutlet UIImageView *coachMarkImageView;
-@property (weak, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
+@property (retain, nonatomic) IBOutlet UIProgressView *imageUploadProgressView;
 @property (weak, nonatomic) IBOutlet UICollectionView *photoCollectionView;
 @property (weak, nonatomic) IBOutlet UIButton *gotItButton;
 
@@ -118,6 +124,8 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (IBAction)unWindToPhotoStream:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToPhotoStreamWithWithInfo:(UIStoryboardSegue *)segue;
 
+- (IBAction)sortPhotosButtonTapped:(UIButton *)sender;
+
 - (IBAction)addFirstPhotoButtonTapped:(UIButton *)sender;
 - (IBAction)remixPhotoDone:(UIStoryboardSegue *)segue;
 - (IBAction)showTermsOfService:(UIButton *)sender;
@@ -133,19 +141,18 @@ typedef void (^StandardPhotoCompletion) (CGImageRef standardPhoto,NSError *error
 - (IBAction)dismissCreateSubaAccountScreen:(id)sender;
 - (IBAction)moveToProfile:(UIButton *)sender;
 - (IBAction)doFacebookLogin:(id)sender;
+- (IBAction)showCommentsAction:(UIButton *)sender;
 
 - (IBAction)showMembers:(id)sender;
 - (IBAction)dismissCoachMark:(UIButton *)sender;
 
-//- (void)scrollToCorrect:(UIScrollView*)scrollView;
+- (void)showHiddenMoreOptions;
+- (void)prepareBranchURLforInvitingFriendsToStream;
+- (void)prepareBranchURLforSharingStream;
 - (void)sendSMSToRecipients:(NSMutableArray *)recipients;
 - (NSString *)getRandomPINString:(NSInteger)length;
 - (void)preparePhotoBrowser:(NSMutableArray *)photos;
 - (void)createStandardImage:(CGImageRef)image completon:(StandardPhotoCompletion)completion;
-- (void)resizePhoto:(UIImage*) image
-            towidth:(float) width
-           toHeight:(float) height
-          completon:(PhotoResizedCompletion)completion;
 - (void)deletePhotoAtIndexFromStream:(NSInteger)index;
 - (void)uploadPhotos:(NSArray *)images;
 - (void)upDateCollectionViewWithCapturedPhotos:(NSArray *)photoInfo;
@@ -235,7 +242,8 @@ int toggler;
     titleView.shadowColor = [UIColor clearColor];
     
     //DLog(@"Setting up titleView with stream name - %@",self.spotName);
-    titleView.text = (self.spotName) ? self.spotName : @"Stream";
+    //titleView.text = (self.spotName) ? self.spotName : @"Stream";
+    titleView.text = @""; 
     //[titleView sizeToFit];
     titleView.adjustsFontSizeToFitWidth = YES;
     
@@ -268,15 +276,13 @@ int toggler;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    [self setUpRightBarButtonItems];
     
-    UIImage *image = [IonIcons imageWithIcon:icon_ios7_camera_outline
-                                   iconColor:[UIColor darkGrayColor] iconSize:250.0f
-                                   imageSize:CGSizeMake(220.0f, 250.0f)];
+    isDoodling = NO;
     
-    [self.addFirstPhotoCameraButton setBackgroundImage:image forState:UIControlStateNormal];
+    // Load Aviary stuff so user doesn't have to wait longer to see the editor
+    [AFOpenGLManager beginOpenGLLoad];
     
-    UIImage *iconCamera = [IonIcons imageWithIcon:icon_ios7_camera_outline size:44 color:[UIColor whiteColor]];
-    [self.iconCameraButton setImage:iconCamera];
     
     CGRect hiddenMenuFrame = CGRectMake(0, 0, 320, 0);
     self.hiddenTopMenuView.alpha = 0;
@@ -284,43 +290,21 @@ int toggler;
     self.createAccountView.alpha = 0;
     self.firstTimeNotificationScreen.alpha = 0;
     
-    self.navigationController.navigationBar.topItem.title = @"";
+    self.navigationController.navigationBar.topItem.title = (self.spotName)?:@"";
     
-    if ([[AppHelper shareStreamCoachMarkSeen] isEqualToString:@"NO"]){
-      if([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
-            self.coachMarkImageView.image = [UIImage imageNamed:@"share-stream_iphone4"];
-            CGRect btnFrame = CGRectMake(self.gotItButton.frame.origin.x, self.gotItButton.frame.origin.y-100, self.gotItButton.frame.size.width, self.gotItButton.frame.size.height);
-                
-                self.gotItButton.frame = btnFrame;
-            }
-        
-    if([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_5_SCREEN]){  //CODE IF iPHONE 5
-         self.coachMarkImageView.image = [UIImage imageNamed:@"share-stream_new"];
-            
-        }
-
-        self.coachMarkImageView.alpha = 1;
-        [self.view viewWithTag:10000].alpha = 1;
-        [AppHelper setShareStreamCoachMark:@"YES"];
-    }
-    
-    // Disable the camera button till we have all our info ready
-    self.cameraButton.enabled = NO;
-    
-	// Do any additional setup after loading the view.
+    // Do any additional setup after loading the view.
     self.noPhotosView.hidden = YES;
-    
-    [self setUpTitleView];
-    
+    //[self setUpTitleView];
     self.library = [[ALAssetsLibrary alloc] init];
     
+    // Photostream is launching from an Activity Screen
     if(!self.photos && !self.spotName && self.numberOfPhotos == 0 && self.spotID){
-        
-      // We are coming from an activity screen
-    DLog(@"Stream id - %@ coz we're coming from the activity screen",self.spotID);
-    [self loadSpotImages:self.spotID];
+        // We are coming from an activity screen
+        DLog(@"Stream id - %@ coz we're coming from the activity screen",self.spotID);
+        [self loadSpotImages:self.spotID];
+    }
     
- }
+    
     
     if(!self.photos && self.numberOfPhotos > 0 && self.spotID) {
         // We are coming from a place where spotName is not set so lets load spot info
@@ -330,25 +314,41 @@ int toggler;
                 //self.navigationController.navigationBarHidden = YES;
                 self.firstTimeNotificationScreen.alpha = 1;
             }];
-            
         }
-        DLog(@"Stream id - %@",self.spotID);
+        
         [self loadSpotImages:self.spotID];
     }
+    
     
      if(self.numberOfPhotos == 0 && self.spotName && self.spotID){
         self.noPhotosView.hidden = NO;
         self.photoCollectionView.hidden = YES;
-    }
-
-    
-     if(self.spotID){
         
-       [self loadSpotInfo:self.spotID];
-       //[self loadSpotImages:self.spotID];
+        UIAlertView *addfirstPhotAlert =  [[UIAlertView alloc] initWithTitle:@"Add first photo" message:@"Add first photo so your friends can find this stream in \"Nearby Streams\"" delegate:self cancelButtonTitle:@"Later" otherButtonTitles:@"Add first photo",nil];
+         addfirstPhotAlert.tag = 201;
+         [addfirstPhotAlert show];
+                                           
     }
     
-    DLog();
+    if (![self.isUserMemberOfStream isEqualToString:@"YES"]) { // If the user is not a member of this stream
+        DLog(@"User is not a member of this stream so we are joining");
+            [[User currentlyActiveUser] joinSpot:self.spotID completion:^(id results, NSError *error) {
+                if (!error){
+                    // Ask main stream to reload
+                    DLog(@"Stream Info: %@",results);
+                    [[NSNotificationCenter defaultCenter]
+                     postNotificationName:kUpdateStreamNotification object:@{@"streamId" : results[@"spotId"]}];
+                }else{
+                    DLog(@"Error - %@",error);
+                }
+            }];
+
+        }
+
+
+    if(self.spotID && !self.spotInfo){
+       [self loadSpotInfo:self.spotID];
+    }else DLog(@"Spot Info already loaded here: %@",self.spotInfo);
     
 }
 
@@ -357,6 +357,7 @@ int toggler;
 {
     [super viewWillDisappear:animated];
     self.createAccountView.alpha = 0;
+    //isDoodling = NO;
 }
 
 
@@ -366,7 +367,16 @@ int toggler;
     self.navigationController.navigationBar.topItem.title = @"";
     [AppHelper increasePhotoStreamEntries];
     
-    DLog();
+    // Prepare branch
+    if (self.spotInfo) {
+        [self prepareBranchURLforInvitingFriendsToStream];
+    }
+}
+
+
+-(IBAction)sortPhotosButtonTapped:(UIButton *)sender
+{
+    DLog(@"Sorting photos soon");
 }
 
 
@@ -571,27 +581,23 @@ int toggler;
 #pragma mark - UICollectionView Datasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    //DLog(@"Photos - %lu",(unsigned long)[self.photos count]);
     return [self.photos count];
 }
 
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    //DLog(@"Doing this again");
-    
-    
-    
+    PhotoStreamCell *photoCardCell = nil;
     static NSString *cellIdentifier = @"PhotoStreamCell";
     
-    PhotoStreamCell *photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-    
     if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
-        CGRect footerFrame  = CGRectMake(0, 367, 285, 67);
-        photoCardCell.photoCardFooterView.frame = footerFrame;
-    }else if([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_5_SCREEN]){
-        CGRect footerFrame  = CGRectMake(0, 410, 285, 67);
-        photoCardCell.photoCardFooterView.frame = footerFrame;
+        // Use ipHone 4 screen cell
+        photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+        //CGRect footerFrame  = CGRectMake(0, 367, 285, 67);
+        //photoCardCell.photoCardFooterView.frame = footerFrame;
+    }else{
+        // Bigger phone
+        photoCardCell = [collectionView dequeueReusableCellWithReuseIdentifier:@"iPHONEBIGPhotoStreamCell" forIndexPath:indexPath];
     }
     
     // Set up the Gesture Recognizers
@@ -615,10 +621,8 @@ int toggler;
     
     photoCardCell.pictureTakerView.layer.borderWidth = 1;
     photoCardCell.pictureTakerView.layer.borderColor = [UIColor lightGrayColor].CGColor;
-    photoCardCell.pictureTakerView.layer.cornerRadius = 12.5;
+    photoCardCell.pictureTakerView.layer.cornerRadius = 10;
     photoCardCell.pictureTakerView.clipsToBounds = YES;
-    
-    //photoCardCell.remixedImageView.alpha = 0;
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
         NSString *photoLiked = self.photos[indexPath.item][@"userLikedPhoto"];
@@ -629,31 +633,35 @@ int toggler;
         }
     });
     
-      /*[AppHelper showLoadingDataView:photoCardCell.loadingPictureView
-                         indicator:photoCardCell.loadingPictureIndicator
-                              flag:YES];*/
-    
     [photoCardCell makeInitialPlaceholderView:photoCardCell.pictureTakerView name:pictureTakerName];
-    DLog(@"PicTakername - %@",pictureTakerName);
+    //DLog(@"PicTakername - %@",pictureTakerName);
     
     NSString *photoURLstring = self.photos[indexPath.item][@"s3name"];
     NSString *photoRemixURLString = self.photos[indexPath.item][@"s3RemixName"];
-    
-    //DLog(@"Photos - %@",self.photos[indexPath.item]);
+   
     if(self.photos[indexPath.row][@"pictureTakerPhoto"]){
+        
         NSString *pictureTakerPhotoURL = self.photos[indexPath.row][@"pictureTakerPhoto"];
         [photoCardCell fillView:photoCardCell.pictureTakerView WithImage:pictureTakerPhotoURL];
     }
     
     photoCardCell.pictureTakerName.text = pictureTakerName;
-    if ([self.photos[indexPath.row][@"likes"] integerValue] == 1) {
-       photoCardCell.numberOfLikesLabel.text = [NSString stringWithFormat:@"%@ Like",self.photos[indexPath.item][@"likes"]];
-    }else if ([self.photos[indexPath.row][@"likes"] integerValue] > 1){
-      photoCardCell.numberOfLikesLabel.text = [NSString stringWithFormat:@"%@ Likes",self.photos[indexPath.item][@"likes"]];
+    
+    // Fill the number of likes
+    if ([self.photos[indexPath.row][@"likes"] integerValue] >= 1) {
+       photoCardCell.numberOfLikesLabel.text = self.photos[indexPath.item][@"likes"];
+        
     }else{
         photoCardCell.numberOfLikesLabel.text = kEMPTY_STRING_WITHOUT_SPACE;
     }
     
+    // Fill the number of comments
+    if ([self.photos[indexPath.row][@"comments"] integerValue] >= 1) {
+        photoCardCell.numberOfCommentsLabel.text = self.photos[indexPath.item][@"comments"];
+        
+    }else{
+        photoCardCell.numberOfCommentsLabel.text = kEMPTY_STRING_WITHOUT_SPACE;
+    }
     
     // Add the gesture recognizer to original photo cell
     [photoCardCell.photoCardImage setUserInteractionEnabled:YES];
@@ -673,29 +681,30 @@ int toggler;
     
     if (photoRemixURLString){
         
-        //DLog(@"Remix URL - %@",photoRemixURLString);
-        //NSURL *photoRemixURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoRemixURLString]];
-        [self downloadPhoto:photoCardCell.remixedImageView withURL:photoRemixURLString downloadOption:SDWebImageRefreshCached];
+       
+        [self downloadPhoto:photoCardCell.remixedImageView
+                    withURL:photoRemixURLString
+             downloadOption:SDWebImageRefreshCached];
         
      }else{
         photoCardCell.remixedImageView.image = nil;
     }
     
     if ([self.photos[indexPath.item][@"remixers"] integerValue] <= 0){
-        //DLog(@"There are no remixers for this photo");
         photoCardCell.remixedImageView.alpha = 0;
         photoCardCell.photoCardImage.alpha = 1;
-        photoCardCell.toggleDoodleButton.enabled = NO;
-        photoCardCell.toggleDoodleButton.hidden = YES;
-        photoCardCell.seeDoodleBtn.hidden = YES;
+        //photoCardCell.viewDoodleContainer;
+        photoCardCell.viewDoodleContainer.hidden = YES;
+        //photoCardCell.showCommentsActionButton.hidden = YES;
         photoCardCell.numberOfRemixersLabel.hidden = YES;
     }else{
         //DLog(@"There are remixers for this photo");
         NSInteger remixers = [self.photos[indexPath.item][@"remixers"] integerValue];
         
-        photoCardCell.toggleDoodleButton.enabled = YES;
-        photoCardCell.toggleDoodleButton.hidden = NO;
-        photoCardCell.seeDoodleBtn.hidden = NO;
+        //photoCardCell.viewDoodleContainer.enabled = YES;
+        photoCardCell.viewDoodleContainer.hidden = NO;
+        
+        //photoCardCell.showCommentsActionButton.hidden = NO;
         photoCardCell.remixedImageView.alpha = 1;
         photoCardCell.numberOfRemixersLabel.hidden = NO;
         if (remixers == 1){
@@ -717,24 +726,71 @@ int toggler;
 {
     UICollectionReusableView *reusableview = nil;
     
-    if (kind == UICollectionElementKindSectionFooter) {
-        PhotoStreamFooterView *footerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"PhotoStreamFooter" forIndexPath:indexPath];
+    if (kind == UICollectionElementKindSectionHeader){
+       
+       PhotoStreamHeaderView *headerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"PhotoStreamHeader" forIndexPath:indexPath];
         
-        /*if (self.spotInfo) {
-            NSArray *members = self.spotInfo[@"members"];
-            if ([members count] - 1 == 1) {
-                footerView.quietHereLabel.text = @"It's a little quiet in here...";
-            }else if([members count] - 1 > 1){
-                footerView.quietHereLabel.text = @"Invite people to add more photos!";
+        //[headerView.headerViewContainer showRealTimeBlurWithBlurStyle:XHBlurStyleTranslucent];
+        
+        [headerView.addPhotoButton addTarget:self action:@selector(cameraButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        
+        [headerView.inviteFriendsButton addTarget:self action:@selector(requestForPhotos:) forControlEvents:UIControlEventTouchUpInside];
+        
+        [headerView.sortStreamButton addTarget:self action:@selector(sortPhotosButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        
+        if (self.spotInfo) {
+            DLog(@"Stream Info: %@",self.spotInfo);
+            
+            int numberOfPhotos = [self.spotInfo[@"photos"] intValue];
+            
+            headerView.streamNameLabel.text = self.spotInfo[@"spotName"];
+            headerView.streamLocationLabel.text = self.spotInfo[@"venue"];
+            headerView.numberOfPhotosLabel.text = self.spotInfo[@"photos"];
+            
+            if (numberOfPhotos == 1) {
+                headerView.photosLabel.text = @"PHOTO";
+            }else {
+                headerView.photosLabel.text = @"PHOTOS";
             }
-        }*/
+            
+            if (self.spotInfo[@"members"]){
+                if ([self.spotInfo[@"members"] isKindOfClass:[NSArray class]]) {
+                    NSArray *members = self.spotInfo[@"members"];
+                    DLog(@"Stream members are %i",[members count]);
+                    if ([members count] == 1) {
+                        headerView.membersLabel.text = @"MEMBER";
+                    }else if ([members count] > 1){
+                        headerView.membersLabel.text = @"MEMBERS";
+                    }
+                    
+                    headerView.numberOfMembers.text = [NSString stringWithFormat:@"%i",[members count]];
+                }else if ([self.spotInfo[@"members"] isKindOfClass:[NSString class]]){
+                    int numOfMembers = [self.spotInfo[@"members"] intValue];
+                    if (numOfMembers == 1) {
+                        headerView.membersLabel.text = @"MEMBER";
+                    }else{
+                        headerView.membersLabel.text = @"MEMBERS";
+                    }
+                    headerView.numberOfMembers.text = self.spotInfo[@"members"];
+                }
+                
+                
+                
+            }
+            
+            
+        }
+        
+        reusableview = headerView;
+        
+    }else if (kind == UICollectionElementKindSectionFooter) {
+        PhotoStreamFooterView *footerView = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"PhotoStreamFooter" forIndexPath:indexPath];
         
         footerView.emailTextField.alpha = 0;
         footerView.emailTextField.delegate = self;
         footerView.otherInviteOptionsButton.alpha = 0;
         reusableview = footerView;
     }
-    
     return reusableview;
 }
 
@@ -743,40 +799,19 @@ int toggler;
 #pragma mark - UICollectionView Delegate
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    //PhotoStreamCell *photoCardCell = (PhotoStreamCell *)[collectionView cellForItemAtIndexPath:indexPath];
-    //DLog(@"selected image index - %li",(long)indexPath.item);
-
-    selectedPhotoIndexPath = indexPath;
-    
-    
+   selectedPhotoIndexPath = indexPath;
 }
 
 
 #pragma mark - Methods
 -(IBAction)showMembers:(id)sender
 {
-    /*if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
-        [UIView animateWithDuration:.5 animations:^{
-            self.createAccountView.alpha = 1;
-            self.noActionLabel.text = CREATE_ACCOUNT_TO_SEE_MEMBERS;
-            //self.navigationController.navigationBarHidden = YES;
-        }];
-    }else{*/
-       [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
-   // }
+    [self performSegueWithIdentifier:@"AlbumMembersSegue" sender:self.spotID];
 }
 
 
 - (IBAction)sharePhoto:(UIButton *)sender{
     
-    /*if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
-        [UIView animateWithDuration:.5 animations:^{
-            self.createAccountView.alpha = 1;
-            self.noActionLabel.text = CREATE_ACCOUNT_TO_SHARE_PHOTOS;
-            //self.navigationController.navigationBarHidden = YES;
-        }];
-    }else{*/
-        
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
     if (cell.photoCardImage.image != nil) {
         [self share:kPhoto Sender:sender];
@@ -786,7 +821,6 @@ int toggler;
                      buttons:@[@"OK, I'll wait"]
                     delegate:nil];
       }
-   //}
 }
 
 
@@ -824,7 +858,6 @@ int toggler;
             });
         }
     }];
-
 }
 
 
@@ -841,7 +874,7 @@ int toggler;
     [[User currentlyActiveUser] likePhoto:params completion:^(id results, NSError *error){
         
         if ([results[STATUS] isEqualToString:ALRIGHT]){
-            //DLog(@"Number of likes - %@",results[@"likes"]);
+            
             [self resamplePhotoInfo:selectedPhotoInfo
                                flag:@"NO"
                       numberOfLikes:results[@"likes"]
@@ -853,8 +886,6 @@ int toggler;
             if ([results[@"likes"] intValue] == 0) {
                 photoCardCell.numberOfLikesLabel.hidden = YES;
             }else photoCardCell.numberOfLikesLabel.text = results[@"likes"];
-            
-            //[self updatePhotosNumberOfLikes:self.photos photoId:picId update:results[@"likes"]];
             
             [AppHelper showLikeImage:self.likeImage imageNamed:@"unlike-button"];
             
@@ -872,21 +903,17 @@ int toggler;
 
 - (IBAction)likePhoto:(id)sender
 {
-    //DLog(@"User status = %@",[AppHelper userStatus]);
+   
     if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
         [UIView animateWithDuration:.5 animations:^{
             self.createAccountView.alpha = 1;
             self.noActionLabel.text = CREATE_ACCOUNT_TO_LIKE_PHOTOS;
-            //self.navigationController.navigationBarHidden = YES;
         }];
     }else{
         
         UIButton *likeButtonAction = (UIButton *)sender;
         
         PhotoStreamCell *cell = (PhotoStreamCell *)likeButtonAction.superview.superview.superview;
-        //UIButton *likeButton = cell.likePhotoButton;
-        
-        
         NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
         selectedPhotoIndexPath = indexPath;
         
@@ -989,61 +1016,23 @@ int toggler;
 }
 
 
-- (void)resizePhoto:(UIImage*) image towidth:(float) width toHeight:(float) height completon:(PhotoResizedCompletion)completion
+/*- (void)resizePhoto:(UIImage*) image towidth:(float) width toHeight:(float) height completon:(PhotoResizedCompletion)completion
 {
-    /*dispatch_queue_t resizePhotoQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-    dispatch_async(resizePhotoQueue, ^{
-        
-        BOSImageResizeOperation* op = [[BOSImageResizeOperation alloc] initWithImage:image];
-        [op resizeToFitWithinSize:CGSizeMake(width, height)];
-        [op start];
-        dispatch_async(dispatch_get_main_queue(),^{
-            completion(image,nil);
-        });
-    });*/
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+       dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
          BOSImageResizeOperation* op = [[BOSImageResizeOperation alloc] initWithImage:image];
-        [op start];
+          [op start];
         
         UIImage* smallerImage = op.result;
         dispatch_async(dispatch_get_main_queue(),^{
             completion(smallerImage,nil);
         });
     });
-}
+}*/
 
 
 - (IBAction)cameraButtonTapped:(id)sender
 {
-    if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]){
-        [UIView animateWithDuration:.5 animations:^{
-            self.createAccountView.alpha = 1;
-            self.noActionLabel.text = CREATE_ACCOUNT_TO_TAKE_PHOTOS;
-            //self.navigationController.navigationBarHidden = YES;
-        }];
-        
-    }else{
-        
-        NSString *streamCreator = self.spotInfo[@"userName"];
-        
-        if ([streamCreator isEqualToString:[AppHelper userName]]) { // If user created this album no problem
-            //[self showPhotoOptions];
-            [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
-        }else{ // If user is not creator,check whether he/she can add photos
-            
-            BOOL userCanAddPhoto = ([self.spotInfo[@"addPrivacy"] isEqualToString:@"ANYONE"]) ? YES: NO;
-            
-            if (userCanAddPhoto){
-               // [self showPhotoOptions];
-                [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
-            }else{
-                [AppHelper showAlert:@"Add Photo"
-                             message:@"You are not allowed to add photos to this stream"
-                             buttons:@[@"OK"] delegate:nil];
-            }
-        }
-    }
+    [self showPhotoOptions];
 }
 
 
@@ -1068,8 +1057,6 @@ int toggler;
     self.photoInView = self.photos[indexpath.row];
     selectedPhoto = cell.photoCardImage.image;
     
-    
-    //NSString *pictureTaker = self.photos[indexpath.item][@"pictureTaker"];
     @try {
         NSString *pictureTakerId = self.photos[indexpath.item][@"pictureTakerId"];
         
@@ -1105,8 +1092,8 @@ int toggler;
 
 -(void)showPhotoOptions
 {
-    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:@"Add photos to this stream" delegate:self cancelButtonTitle:@"Not Now" destructiveButtonTitle:nil otherButtonTitles:@"Take Photo",@"Choose From Gallery", nil];
-    
+    UIActionSheet *action = [[UIActionSheet alloc] initWithTitle:@"Add photos to this stream" delegate:self cancelButtonTitle:@"Not Now" destructiveButtonTitle:nil otherButtonTitles:@"Take New Photo",@"Choose Existing  Photo", nil];
+    action.tag = 403;
     [action showInView:self.view];
 }
 
@@ -1158,7 +1145,14 @@ int toggler;
     
     activityVC.excludedActivityTypes = @[UIActivityTypePrint,UIActivityTypeCopyToPasteboard,UIActivityTypeAssignToContact,UIActivityTypeSaveToCameraRoll,UIActivityTypeAddToReadingList,UIActivityTypeAirDrop];
     
-    //[activityVC setCompletionHandler:(UIActivityViewControllerCompletionHandler)completionHandler]
+    activityVC.completionHandler = ^(NSString *activityType, BOOL completed){
+        if (completed) {
+            DLog(@"Completed with type: %@",activityType);
+        }else{
+            DLog(@"Dismissed");
+        }
+    };
+    
     [self presentViewController:activityVC animated:YES completion:nil];
   
 }
@@ -1166,7 +1160,7 @@ int toggler;
 
 -(void)savePhotoToCustomAlbum:(UIImage *)photo
 {
-    [self.library saveImage:photo toAlbum:@"Suba Photos" completion:^(NSURL *assetURL, NSError *error) {
+    [self.library saveImage:photo toAlbum:@"Suba" completion:^(NSURL *assetURL, NSError *error) {
         [AppHelper showNotificationWithMessage:@"Image saved in camera roll" type:kSUBANOTIFICATION_SUCCESS inViewController:self completionBlock:nil];
         
         [User updateUserStat:@"PHOTO_SAVED" completion:^(id results, NSError *error) {
@@ -1249,7 +1243,10 @@ int toggler;
     if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]){
         
         if ([sender intValue] == kTakeCamera) {
-            [self openCamera];
+            //[self openDBCamera];
+            [self openNativeCamera:UIImagePickerControllerSourceTypeCamera];
+        }else if ([sender intValue] == kGallery){
+            [self openNativeCamera:UIImagePickerControllerSourceTypePhotoLibrary];
         }
        
     }else{
@@ -1285,119 +1282,321 @@ int toggler;
 #pragma mark - UIAlertView Delegate
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    if(alertView.tag == 20000){
-        if (buttonIndex == 1){
-            // Upload Photo again
-            //self uploadPhoto:<#(NSData *)#> WithName:<#(NSString *)#>
+    if (alertView.tag == 400){
+        if (buttonIndex == 1) {
+            // Retry image upload now
+            DLog(@"Retrying image upload");
+            if (imageToUpload && nameOfImageToUpload) {
+                [self uploadPhoto:imageToUpload WithName:nameOfImageToUpload];
+            }
+            
         }
-    }else{
+    }else if (alertView.tag == 401){
+     // Reload stream images
+        if (buttonIndex == 1){
+            
+            DLog(@"Reloading stream");
+            [self loadSpotImages:self.spotID];
+        }
+    }else if(alertView.tag == 3000){
         if (buttonIndex == 1) {
             NSInteger index = [self.photos indexOfObject:self.photoInView];
             [self deletePhotoAtIndexFromStream:index];
         }
+    }else if (alertView.tag == 201){
+        if (buttonIndex == 1) {
+           [self showPhotoOptions];
+        }
     }
-    
 }
 
 
 #pragma mark - UIActionSheet Delegate Methods
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+    // Get branch link to share this stream
+    
+    
     if (actionSheet.tag == 7000){
-         NSString *randomString = [self getRandomPINString:5];
-        NSString *shareText = [NSString stringWithFormat:@"Check out all the photos in my shared photo stream \"%@\" with Suba for iOS at http://www.subaapp.com/albums?%@",self.spotName,[NSString stringWithFormat:@"%@%@",self.spotID,randomString]];
+        // Share the stream
+         //NSString *randomString = [self getRandomPINString:5];
+        //NSString *shareText = nil;
+        
         if (buttonIndex == 0) {
-            //DLog(@"Facebook");
-            
-            if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeFacebook]) {
-                // code to send message to Facebook
-                //NSString *const SLServiceTypeFacebook;
+            //We're sharing on facebook
+            if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeFacebook]){
                 SLComposeViewController *composeVC = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeFacebook];
             
                 [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
                 
-                //[composeVC addURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://www.subaapp.com/albums?%@%@",self.spotID,randomString]]];
                 
-                [composeVC setInitialText:shareText];
-                
-                [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
-                    switch (result) {
-                        case SLComposeViewControllerResultCancelled:
-                            DLog(@"Share stream cancelled");
-                            [Flurry logEvent:@"Share_Stream_Facebook_Cancelled"];
-                            break;
-                        case SLComposeViewControllerResultDone:
-                            [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
-                                DLog(@"Response  - %@",results);
-                            }];
-                            DLog(@"Stream Shared on Facebook");
-                            [Flurry logEvent:@"Share_Stream_Facebook_Done"];
-                            
-                            break;
-                        default:
-                            break;
+                if (branchURLforShareStream) {
+                    NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream on Suba at %@",self.spotName,branchURLforShareStream];
+                    [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
+                    [composeVC setInitialText:shareText];
+                    
+                    [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
+                        switch (result) {
+                            case SLComposeViewControllerResultCancelled:
+                                DLog(@"Share stream cancelled");
+                                [Flurry logEvent:@"Share_Stream_Facebook_Cancelled"];
+                                break;
+                            case SLComposeViewControllerResultDone:
+                                [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                                    DLog(@"Response  - %@",results);
+                                }];
+                                DLog(@"Stream Shared on Facebook");
+                                [Flurry logEvent:@"Share_Stream_Facebook_Done"];
+                                
+                                break;
+                            default:
+                                break;
+                        }
+                        
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                    }];
+                    
+                    [self presentViewController:composeVC animated:YES completion:nil];
+                    
+                    
+                }else{
+                    NSString *senderName = nil;
+                    Branch *branch = [Branch getInstance:@"55726832636395855"];
+                    if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                        senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                        
+                    }else{
+                        
+                        senderName = [AppHelper userName];
                     }
                     
-                    [self dismissViewControllerAnimated:YES completion:nil];
-                }];
+                    
+                    if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                        [AppHelper setProfilePhotoURL:@"-1"];
+                    }
+                    
+                    NSDictionary *dict = @{
+                                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                           @"streamId":self.spotInfo[@"spotId"],
+                                           @"photos" : self.spotInfo[@"photos"],
+                                           @"streamName":self.spotInfo[@"spotName"],
+                                           @"sender": senderName,
+                                           @"streamCode" : self.spotInfo[@"spotCode"],
+                                           @"senderPhoto" : [AppHelper profilePhotoURL]};
+                    
+                    
+                    NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                    
+                    [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"share_stream" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                        
+                        DLog(@"URL from Branch: %@",url);
+                        branchURLforShareStream = url;
+                        NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream on Suba at %@",self.spotName,branchURLforShareStream];
+                        [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
+                        [composeVC setInitialText:shareText];
+                        
+                        [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
+                            switch (result) {
+                                case SLComposeViewControllerResultCancelled:
+                                    DLog(@"Share stream cancelled");
+                                    [Flurry logEvent:@"Share_Stream_Facebook_Cancelled"];
+                                    break;
+                                case SLComposeViewControllerResultDone:
+                                    [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                                        DLog(@"Response  - %@",results);
+                                    }];
+                                    DLog(@"Stream Shared on Facebook");
+                                    [Flurry logEvent:@"Share_Stream_Facebook_Done"];
+                                    
+                                    break;
+                                default:
+                                    break;
+                            }
+                            
+                            [self dismissViewControllerAnimated:YES completion:nil];
+                        }];
+                        
+                        [self presentViewController:composeVC animated:YES completion:nil];
+                        
+                        
+                    }];
+                    
+                }
+
                 
-                [self presentViewController:composeVC animated:YES completion:nil];
-            }
+                
+                
+        }
             
         }else if (buttonIndex == 1){
-            //DLog(@"Twitter seleced");
             if ([SLComposeViewController isAvailableForServiceType:SLServiceTypeTwitter]) {
                 SLComposeViewController *composeVC = [SLComposeViewController composeViewControllerForServiceType:SLServiceTypeFacebook];
                 
-                [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
-                
-                [composeVC setInitialText:shareText];
-                
-                [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
-                    switch (result) {
-                        case SLComposeViewControllerResultCancelled:
-                            [Flurry logEvent:@"Share_Stream_Twitter_Cancelled"];
-                            DLog(@"Message cancelled.");
-                            break;
-                        case SLComposeViewControllerResultDone:
-                            DLog(@"Message sent.");
-                            [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
-                                DLog(@"Response  - %@",results);
-                            }];
-                            [Flurry logEvent:@"Share_Stream_Twitter_Done"];
-                            break;
-                        default:
-                            break;
+                if (branchURLforShareStream) {
+                    NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream via @SubaPhotoApp %@",self.spotName,branchURLforShareStream];
+                    
+                    [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
+                    [composeVC setInitialText:shareText];
+                    
+                    [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
+                        switch (result) {
+                            case SLComposeViewControllerResultCancelled:
+                                [Flurry logEvent:@"Share_Stream_Twitter_Cancelled"];
+                                DLog(@"Message cancelled.");
+                                break;
+                            case SLComposeViewControllerResultDone:
+                                DLog(@"Message sent.");
+                                [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                                    DLog(@"Response  - %@",results);
+                                }];
+                                [Flurry logEvent:@"Share_Stream_Twitter_Done"];
+                                break;
+                            default:
+                                break;
+                        }
+                        
+                        [self dismissViewControllerAnimated:YES completion:nil];
+                    }];
+                    
+                    [self presentViewController:composeVC animated:YES completion:nil];
+
+                    
+                }else{
+                    
+                    NSString *senderName = nil;
+                    Branch *branch = [Branch getInstance:@"55726832636395855"];
+                    if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                        senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                        
+                    }else{
+                        
+                        senderName = [AppHelper userName];
                     }
                     
-                    [self dismissViewControllerAnimated:YES completion:nil];
-                }];
-                
-                [self presentViewController:composeVC animated:YES completion:nil];
-                
+                    if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                        [AppHelper setProfilePhotoURL:@"-1"];
+                    }
+                    
+                    NSDictionary *dict = @{
+                                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                           @"streamId":self.spotInfo[@"spotId"],
+                                           @"photos" : self.spotInfo[@"photos"],
+                                           @"streamName":self.spotInfo[@"spotName"],
+                                           @"sender": senderName,
+                                           @"streamCode" : self.spotInfo[@"spotCode"],
+                                           @"senderPhoto" : [AppHelper profilePhotoURL]};
+                    
+                    
+                    NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                    
+                    [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"share_stream" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                        
+                        DLog(@"URL from Branch: %@",url);
+                        branchURLforShareStream = url;
+                        NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream via @SubaPhotoApp %@",self.spotName,branchURLforShareStream];
+                        
+                        [composeVC addImage:(selectedPhoto ? selectedPhoto : nil)];
+                        
+                        [composeVC setInitialText:shareText];
+                        
+                        [composeVC setCompletionHandler:^(SLComposeViewControllerResult result) {
+                            switch (result) {
+                                case SLComposeViewControllerResultCancelled:
+                                    [Flurry logEvent:@"Share_Stream_Twitter_Cancelled"];
+                                    DLog(@"Message cancelled.");
+                                    break;
+                                case SLComposeViewControllerResultDone:
+                                    DLog(@"Message sent.");
+                                    [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                                        DLog(@"Response  - %@",results);
+                                    }];
+                                    [Flurry logEvent:@"Share_Stream_Twitter_Done"];
+                                    break;
+                                default:
+                                    break;
+                            }
+                            
+                            [self dismissViewControllerAnimated:YES completion:nil];
+                        }];
+                        
+                        [self presentViewController:composeVC animated:YES completion:nil];
+                    }];
+                    
+                }
             }
         }else if (buttonIndex == 2){
-            DLog(@"Email selected");
-           
             MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
             mailComposer.mailComposeDelegate = self;
-            [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotName]];
+            [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\" on Suba",self.spotName]];
             
-            
-            [mailComposer setMessageBody:shareText isHTML:NO];
-            if (selectedPhoto != nil) {
-                NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
-                [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+            if (branchURLforShareStream) {
+                NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream via @SubaPhotoApp %@",self.spotName,branchURLforShareStream];
+                
+                [mailComposer setMessageBody:shareText isHTML:NO];
+                if (selectedPhoto != nil) {
+                    NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
+                    [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+                }
+                
+                [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                    DLog(@"Response  - %@",results);
+                }];
+                
+                [Flurry logEvent:@"Share_Stream_Email_Done"];
+                
+                [self presentViewController:mailComposer animated:YES completion:nil];
+                
+            }else{
+                
+                NSString *senderName = nil;
+                Branch *branch = [Branch getInstance:@"55726832636395855"];
+                if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                    senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                    
+                }else{
+                    
+                    senderName = [AppHelper userName];
+                }
+                
+                if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                    [AppHelper setProfilePhotoURL:@"-1"];
+                }
+                
+                NSDictionary *dict = @{
+                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"streamId":self.spotInfo[@"spotId"],
+                                       @"photos" : self.spotInfo[@"photos"],
+                                       @"streamName":self.spotInfo[@"spotName"],
+                                       @"sender": senderName,
+                                       @"streamCode" : self.spotInfo[@"spotCode"],
+                                       @"senderPhoto" : [AppHelper profilePhotoURL]};
+                
+                
+                NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                
+                [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"share_stream" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                    
+                    DLog(@"URL from Branch: %@",url);
+                    branchURLforShareStream = url;
+                    NSString *shareText = [NSString stringWithFormat:@"All the photos in my %@ group photo stream via @SubaPhotoApp %@",self.spotName,branchURLforShareStream];
+                    
+                    [mailComposer setMessageBody:shareText isHTML:NO];
+                    if (selectedPhoto != nil) {
+                        NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
+                        [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+                    }
+                    
+                    [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
+                        DLog(@"Response  - %@",results);
+                    }];
+                    
+                    [Flurry logEvent:@"Share_Stream_Email_Done"];
+                    
+                    [self presentViewController:mailComposer animated:YES completion:nil];
+                }];
             }
-            
-            [User updateUserStat:@"STREAM_SHARED" completion:^(id results, NSError *error) {
-                DLog(@"Response  - %@",results);
-            }];
-            
-            [Flurry logEvent:@"Share_Stream_Email_Done"];
-            
-            [self presentViewController:mailComposer animated:YES completion:nil];
         }
+        
         /*else if (buttonIndex == 3){
             MFMessageComposeViewController *messageComposer = [[MFMessageComposeViewController alloc] init];
             messageComposer.delegate = self;
@@ -1443,24 +1642,16 @@ int toggler;
             
             
             UIAlertView *deleteAlert = [[UIAlertView alloc] initWithTitle:@"Delete Photo" message:@"Are you sure you want to delete this photo?" delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"YES", nil];
-            
+            deleteAlert.tag = 3000;
             [deleteAlert show];
         }
         
     }else if (actionSheet.tag == 1000){
         if(buttonIndex == 0){
-            if([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]){
-                [UIView animateWithDuration:.5 animations:^{
-                    self.createAccountView.alpha = 1;
-                    self.noActionLabel.text = CREATE_ACCOUNT_TO_SAVE_PHOTOS;
-                    //self.navigationController.navigationBarHidden = YES;
-                }];
-            }else{
                 //User wants to save photo
-                [self savePhoto:selectedPhoto];
-            }
+            [self savePhoto:selectedPhoto];
         }
-           
+        
     }else if(actionSheet.tag == 2000){
         
         
@@ -1483,7 +1674,7 @@ int toggler;
             
             [self reportPhoto:params];
       
-    }else{
+    }else if(actionSheet.tag == 403){
     
     if (buttonIndex == kTakeCamera){
         // Call the Camera here
@@ -1537,57 +1728,42 @@ int toggler;
 #pragma mark - UIImagePickerController Delegate
 -(void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
-    [Flurry logEvent:@"Photo_Taken"];
+    // Resetting the status bar here
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
     
+    [Flurry logEvent:@"Photo_Taken"];
     UIImage *image = info[UIImagePickerControllerOriginalImage];
     
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    DLog(@"UIImagePickerInfo: %@",[info debugDescription]);
+    if (info[UIImagePickerControllerMediaMetadata]) {
+        NSMutableDictionary *imageMetaData = info[UIImagePickerControllerMediaMetadata];
+        DLog(@"UIImagePickerControllerMediaMetadata: %@",info[UIImagePickerControllerMediaMetadata]);
+        [self.library writeImageToSavedPhotosAlbum:image.CGImage metadata:imageMetaData completionBlock:^(NSURL *assetURL, NSError *error) {
+            if (!error) {
+                DLog(@"Image saved in - %@",assetURL.description);
+            }else{
+                DLog(@"Error - %@",error);
+            }
+            
+        }];
+    }
     
-    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
-    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
-    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
-    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
-    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+    NSData *img = UIImageJPEGRepresentation(image, 1.0);
     
-    // 640 X 852
-    
-    [self resizePhoto:image towidth:1136.0f toHeight:640.0f
-            completon:^(UIImage *compressedPhoto, NSError *error) {
-                if (!error) {
-                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, .8);
-                    
-                    [self uploadPhoto:imageData WithName:trimmedString];
-                }else DLog(@"Image resize error :%@",error);
-        
+    DLog(@"Size of image - %fKB",[img length]/1024.0f);
+    [picker dismissViewControllerAnimated:YES completion:^{
+        DLog(@"Lets display aviary");
+        [self displayEditorForImage:image];
     }];
-    
-    /*[self createStandardImage:image.CGImage
-                    completon:^(CGImageRef standardPhoto, NSError *error) {
-                        
-        UIImage *fullResolutionImage = [UIImage imageWithCGImage:standardPhoto
-                                                           scale:1.0
-                                                     orientation:(UIImageOrientation)ALAssetOrientationRight];
-                                        
-        NSData *imageData = UIImageJPEGRepresentation(fullResolutionImage, 1.0);
-        [self uploadPhoto:imageData WithName:trimmedString];
-    }];*/
-    
-    /*[self resizeImage:image towidth:640.0f toHeight:640.0f
-           completon:^(UIImage *compressedPhoto, NSError *error) {
-                
-                UIImage *newImage = compressedPhoto;
-               NSData *imageData = UIImageJPEGRepresentation(newImage, 1.0);
-               
-               [self uploadPhoto:imageData WithName:trimmedString];
-        }];*/
-    
-    [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 
 -(void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
 {
+    // Resetting the status bar here
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
     [picker.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+    
 }
 
 
@@ -1595,12 +1771,7 @@ int toggler;
 -(void)uploadPhotos:(NSArray *)assets
 {
     @try {
-        
-        
-        
         NSMutableArray *imagesData = [NSMutableArray arrayWithCapacity:2];
-        // NSMutableArray *mutableOperations = [NSMutableArray array];
-        
         NSString *userId = [User currentlyActiveUser].userID;
         NSString *spotId = self.spotID;
         
@@ -1609,7 +1780,7 @@ int toggler;
         
         NSURL *baseURL = (NSURL *)[SubaAPIClient subaAPIBaseURL];
         
-        NSString *urlPath = [[NSURL URLWithString:@"spot/pictures/add" relativeToURL:baseURL] absoluteString];
+        NSString *urlPath = [[NSURL URLWithString:kUPLOAD_PHOTOS_PATH relativeToURL:baseURL] absoluteString];
         __block NSMutableURLRequest *request = nil;
         
         for (ALAsset *asset in assets){
@@ -1628,78 +1799,63 @@ int toggler;
             
             [imagesData addObject:@{@"imageData": fullResolutionImage, @"imageName" : name}];
             
-            //DLog(@"Filling images data with name - %@",name);
         }
         
-        request = [manager.requestSerializer multipartFormRequestWithMethod:@"POST" URLString:urlPath parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-            
-            for (NSDictionary *imageInfo in imagesData){
-                //DLog(@"Images being resized");
+        
+        /*Upload photo. New way*/
+        NSProgress *progress = nil;
+        request = [manager.requestSerializer
+                   multipartFormRequestWithMethod:kHTTP_METHOD_POST
+                   URLString:urlPath
+                   parameters:params
+                   constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+                       for (NSDictionary *imageInfo in imagesData){
+                           //DLog(@"Images being resized");
+                           
+                           //[self resizePhoto:imageInfo[@"imageData"] towidth:640.0f toHeight:852.0f
+                           //      completon:^(UIImage *compressedPhoto, NSError *error){
+                           //DLog(@"Does it even get here - %@",imageInfo[@"imageName"]);
+                           NSData *imageData = UIImageJPEGRepresentation(imageInfo[@"imageData"], .8);
+                           [formData appendPartWithFileData:imageData name:imageInfo[@"imageName"] fileName:[NSString stringWithFormat:@"%@.jpg",imageInfo[@"imageName"]] mimeType:@"image/jpeg"];
+                           //}];
+                       }
+
+        } error:nil];
+        
+        NSURLSessionUploadTask *uploadTask = [manager uploadTaskWithStreamedRequest:request progress:&progress completionHandler:^(NSURLResponse *response, id responseObject, NSError *error){
+            if (error) {
+                // Handle error here. Your photo failed to upload. Will you like to upload again
+            }else{
                 
-                //[self resizePhoto:imageInfo[@"imageData"] towidth:640.0f toHeight:852.0f
-                //      completon:^(UIImage *compressedPhoto, NSError *error){
-                //DLog(@"Does it even get here - %@",imageInfo[@"imageName"]);
-                NSData *imageData = UIImageJPEGRepresentation(imageInfo[@"imageData"], .8);
-                [formData appendPartWithFileData:imageData name:imageInfo[@"imageName"] fileName:[NSString stringWithFormat:@"%@.jpg",imageInfo[@"imageName"]] mimeType:@"image/jpeg"];
-                //}];
-            }
-            //DLog(@"DONE");
-        }];
-        
-        AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
-        __weak AFURLConnectionOperation *woperation = operation;
-        
-        self.imageUploadProgressView.hidden = NO;
-        
-        [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite){
-            self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
-            
-            if (self.imageUploadProgressView.progress == 1.0){
-                self.imageUploadProgressView.hidden = YES; // or remove from superview
-            }
-        }];
-        
-        
-        [operation setCompletionBlock:^{
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSError *error = nil;
-                
-                //[self uploadingPhotoView:YES];
-                // Check for when we are getting a nil data parameter back
-                NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
-                //[self uploadingPhotoView:NO];
-                if (error) {
+                // Photos were uploaded successfully
+                DLog(@"Image upload response");
+                NSDictionary *photoInfo =  responseObject;
+                if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
+                    [Flurry logEvent:@"Photo_Upload"];
                     
-                    DLog(@"Error serializing %@", error);
-                    [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
-                }else{
+                    [[NSNotificationCenter defaultCenter]
+                     postNotificationName:kUserReloadStreamNotification object:nil];
                     
-                    if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
-                        [Flurry logEvent:@"Photo_Upload"];
+                    self.noPhotosView.hidden = YES;
+                    self.photoCollectionView.hidden = NO;
+                    if (!self.photos) {
                         
-                        [[NSNotificationCenter defaultCenter]
-                         postNotificationName:kUserReloadStreamNotification object:nil];
-                        
-                        self.noPhotosView.hidden = YES;
-                        self.photoCollectionView.hidden = NO;
-                        if (!self.photos) {
-                            
-                            self.photos = [NSMutableArray arrayWithArray:photoInfo[@"photos"]];
-                        }else{
-                            //[self.photos insertObject:photoInfo atIndex:0];
-                            [self.photos insertObjects:photoInfo[@"photos"] atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [photoInfo[@"photos"] count])]];
-                            DLog(@"Photos Uploaded - %@",photoInfo); 
-                        }
-                        
-                        [self upDateCollectionViewWithCapturedPhotos:photoInfo[@"photos"]];
-                        
+                        self.photos = [NSMutableArray arrayWithArray:photoInfo[@"photos"]];
+                    }else{
+                        //[self.photos insertObject:photoInfo atIndex:0];
+                        [self.photos insertObjects:photoInfo[@"photos"] atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [photoInfo[@"photos"] count])]];
+                        DLog(@"Photos Uploaded - %@",photoInfo);
                     }
+                    
+                    [self upDateCollectionViewWithCapturedPhotos:photoInfo[@"photos"]];
+                    
                 }
-            });
+            }
         }];
         
-        [operation start];
+        
+        [uploadTask resume];
+        
         
     }@catch (NSException *exception) {
         [self uploadingPhotoView:NO];
@@ -1735,69 +1891,96 @@ int toggler;
                                         URLString:urlPath
                                         parameters:params
                                         constructingBodyWithBlock:^(id<AFMultipartFormData> formData){
-                                            
-                                            
-                                            
                                             [formData appendPartWithFileData:imageData name:@"picture" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
-                                        }];
+                                            
+                                        } error:nil];
         
-        
-        AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
-        __weak AFURLConnectionOperation *woperation = operation;
-        
+         [manager.requestSerializer setValue:@"com.suba.subaapp-ios" forHTTPHeaderField:@"x-suba-api-token"];
+         AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
         self.imageUploadProgressView.hidden = NO;
         
-        [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-            //DLog(@"Upload progress value -  %f",(float) totalBytesWritten / totalBytesExpectedToWrite);
-            self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
-            if (self.imageUploadProgressView.progress == 1.0){
-                self.imageUploadProgressView.hidden = YES; // or remove from superview
+        [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite){
+            
+            // Anything can happen here so lets just catch the exception
+            
+            @try{
                 
-            }
-        }];
-        
-        [operation setCompletionBlock:^{
-           
-            dispatch_async(dispatch_get_main_queue(), ^{
+                self.imageUploadProgressView.progress = (float)totalBytesWritten/totalBytesExpectedToWrite;
                 
-                NSError *error = woperation.error;
-                NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
-                 //[self uploadingPhotoView:NO];
-                if (error) {
-                     //[self uploadingPhotoView:NO];
-                    DLog(@"Error serializing %@", error);
-                    [AppHelper showAlert:@"Upload Failure"
-                                 message:error.localizedDescription
-                                 buttons:@[@"OK"] delegate:nil];
-                }else{
-                     //[self uploadingPhotoView:NO];
+                if(self.imageUploadProgressView.progress == 1.0f){
                     
-                    [[NSNotificationCenter defaultCenter]
-                     postNotificationName:kUserReloadStreamNotification object:nil];
-                    //DLog(@"Old self.photos - %@",self.photos);
+                    didImageFinishUploading = YES;
                     
-                    for (NSDictionary *photo in self.photos){
-                        //DLog(@"self.photo ID - %@\ndoodled photo ID - %@",photo[@"id"],photoInfo[@"id"]);
-                        if([photoInfo[@"id"] integerValue] ==  [photo[@"id"] integerValue]){
-                            // Lets replace this NSDictionary coz this object is the photo that was doodles
-                            NSUInteger indexOfOriginalPhoto = [self.photos indexOfObject:photo];
-                            [self.photos replaceObjectAtIndex:indexOfOriginalPhoto withObject:photoInfo];
-                            
-                            //DLog(@"Photo Info - %@\nNew self.photos- %@",photoInfo,self.photos);
-                            break;
-                        }
-                    }
-                    DLog(@"Photo Info - %@",photoInfo);
-                    [Flurry logEvent:@"Photo_Doodled"];
-                    [self.photoCollectionView reloadData];
-                    
+                    self.imageUploadProgressView.hidden = YES; // or remove from superview
                     
                 }
-            });
+                
+            }@catch(NSException *exception){}
+            
         }];
         
         
-        [operation start];
+       [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation, id responseObject) {
+           //[self uploadingPhotoView:NO];
+           NSError *error = nil;
+           NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingAllowFragments error:&error];
+           
+           [[NSNotificationCenter defaultCenter]
+            postNotificationName:kUserReloadStreamNotification object:nil];
+           //DLog(@"Old self.photos - %@",self.photos);
+           PhotoStreamCell *cell = nil;
+           for (NSDictionary *photo in self.photos){
+               if([photoInfo[@"id"] integerValue] ==  [photo[@"id"] integerValue]){
+                   // Lets replace this NSDictionary coz this object is the photo that was doodled
+                   NSUInteger indexOfOriginalPhoto = [self.photos indexOfObject:photo];
+                   NSIndexPath *indexPath = [NSIndexPath indexPathForItem:indexOfOriginalPhoto inSection:0];
+                   cell = (PhotoStreamCell *)[self.photoCollectionView cellForItemAtIndexPath:indexPath];
+                   
+                   [self.photos replaceObjectAtIndex:indexOfOriginalPhoto withObject:photoInfo];
+                   break;
+               }
+           }
+           
+           //DLog(@"Photo Info - %@",photoInfo);
+           [Flurry logEvent:@"Photo_Doodled"];
+           if (cell != nil) {
+               DLog(@"Flipping to show doodle:");
+               //cell.showCommentsActionButton.hidden = NO;
+               
+               [self showDoodleVersionOfPhotoInCell:cell completion:^(BOOL didFlipDoodle) {
+                   //[self.photoCollectionView reloadItemsAtIndexPaths:@[[self.photoCollectionView indexPathForCell:cell]]];
+                   //cell.commentsIcon.enabled = YES;
+                   //cell.commentsIcon.hidden = NO;
+                   //cell.showCommentsActionButton.hidden = NO;
+                   cell.remixedImageView.alpha = 1;
+                   cell.numberOfRemixersLabel.hidden = NO;
+                   
+                   NSIndexPath *indexPath = [self.photoCollectionView indexPathForCell:cell];
+                  NSInteger remixers = [self.photos[indexPath.item][@"remixers"] integerValue];
+                   if (remixers == 1){
+                       cell.numberOfRemixersLabel.text = [NSString stringWithFormat:@"%li Doodler",(long)remixers];
+                   }else{
+                       cell.numberOfRemixersLabel.text = [NSString stringWithFormat:@"%li Doodlers",(long)remixers];
+                   }
+
+               }];
+               
+           }else{
+               DLog(@"Lust reload the data==");
+               [self.photoCollectionView reloadData];
+           }
+           if (isDoodling) {
+               isDoodling = NO;
+           }
+       } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+           DLog(@"Error serializing %@", error);
+           [AppHelper showAlert:@"Upload Failure"
+                        message:error.localizedDescription
+                        buttons:@[@"OK"] delegate:nil];
+
+       }];
+        
+         [[NSOperationQueue mainQueue] addOperation:operation];
         
     }
     @catch (NSException *exception) {
@@ -1818,155 +2001,117 @@ int toggler;
 -(void)uploadPhoto:(NSData *)imageData WithName:(NSString *)name
 {
     @try{
-        
         NSString *userId = [User currentlyActiveUser].userID;
         NSString *spotId = self.spotID;
-        
         NSDictionary *params = @{@"userId": userId,@"spotId": spotId};
         AFHTTPSessionManager *manager = [SubaAPIClient sharedInstance];
-        
         NSURL *baseURL = (NSURL *)[SubaAPIClient subaAPIBaseURL];
+        NSString *urlPath = [[NSURL URLWithString:kUPLOAD_PHOTO_PATH relativeToURL:baseURL] absoluteString];
         
-        NSString *urlPath = [[NSURL URLWithString:@"spot/picture/add" relativeToURL:baseURL] absoluteString];
-        
-        NSMutableURLRequest *request = [manager.requestSerializer
-                                        multipartFormRequestWithMethod:@"POST"
-                                        URLString:urlPath
-                                        parameters:params
-                                        constructingBodyWithBlock:^(id<AFMultipartFormData> formData){
-                                            
-                                            [formData appendPartWithFileData:imageData name:@"picture" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
-                                        }];
+        NSMutableURLRequest *request = [manager.requestSerializer multipartFormRequestWithMethod:kHTTP_METHOD_POST URLString:urlPath parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
+            [formData appendPartWithFileData:imageData name:@"picture" fileName:[NSString stringWithFormat:@"%@.jpg",name] mimeType:@"image/jpeg"];
+        } error:nil];
         
         [manager.requestSerializer setValue:@"com.suba.subaapp-ios" forHTTPHeaderField:@"x-suba-api-token"];
-        
-        AFURLConnectionOperation *operation = [[AFURLConnectionOperation alloc] initWithRequest:request];
-        __weak AFURLConnectionOperation *woperation = operation;
-        
+        AFHTTPRequestOperation *operation = [[AFHTTPRequestOperation alloc] initWithRequest:request];
         self.imageUploadProgressView.hidden = NO;
         
-        [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite) {
-            //DLog(@"Upload progress value -  %f",(float) totalBytesWritten / totalBytesExpectedToWrite);
-            self.imageUploadProgressView.progress = (float) totalBytesWritten / totalBytesExpectedToWrite;
-            if (self.imageUploadProgressView.progress == 1.0){
-                self.imageUploadProgressView.hidden = YES; // or remove from superview
+        [operation setUploadProgressBlock:^(NSUInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite){
+            // Anything can happen here so lets just catch the exception
+            @try{
+                self.imageUploadProgressView.progress = (float)totalBytesWritten/totalBytesExpectedToWrite;
+                if(self.imageUploadProgressView.progress == 1.0f){
+                    didImageFinishUploading = YES;
+                    self.imageUploadProgressView.hidden = YES; // or remove from superview
+                }
+            }@catch(NSException *exception){}
+        }];
+        
+        
+        
+        [operation setCompletionBlockWithSuccess:^(AFHTTPRequestOperation *operation,id responseObject){
+            NSError *error = nil;
+             if (responseObject != nil){
+                 imageToUpload = nil;
+                 nameOfImageToUpload = nil;
+                 
+                 NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingAllowFragments error:&error];
+                     DLog(@"Photo info: %@\nSerialized response: %@",photoInfo,operation.response.allHeaderFields[@"x-suba-status-code"]);
+                 
+                 
+                     [Flurry logEvent:@"Photo_Upload"];
+                     [[NSNotificationCenter defaultCenter]
+                      postNotificationName:kUserReloadStreamNotification object:nil];
+                     
+                     self.noPhotosView.hidden = YES;
+                     self.photoCollectionView.hidden = NO;
+                     if (!self.photos){
+                         self.photos = [NSMutableArray arrayWithObject:photoInfo];
+                     }else{
+                         [self.photos insertObject:photoInfo atIndex:0];
+                     }
+                 
+                     [self upDateCollectionViewWithCapturedPhoto:photoInfo];
+                }
+
+         
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error){
+            
+            DLog(@"Operation.response: %@",operation.response.allHeaderFields[@"x-suba-status-code"]);
+            
+            NSString *subaStatusCode = operation.response.allHeaderFields[@"x-suba-status-code"];
+            if ([subaStatusCode isEqualToString:kFAILED_UPLOAD]){
+                // Image was not uploaded so retry upload
+                UIAlertView *failedUploadAlertView = [[UIAlertView alloc] initWithTitle:@"Retry Upload" message:@"There was a problem uploading your photo. Check your internet connection and upload again" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Retry", nil];
+                
+                failedUploadAlertView.tag = 400;
+                [failedUploadAlertView show];
+                
+            }else if ([subaStatusCode isEqualToString:kRELOAD_STREAM_IMAGES]){
+                // Image was uploaded so reload stream
+                UIAlertView *failedUploadAlertView = [[UIAlertView alloc] initWithTitle:@"Reload Stream" message:@"Your image was uploaded but we could not update your stream.Hit reload stream to update the stream with the new photo." delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Reload Stream", nil];
+                failedUploadAlertView.tag = 401;
+                [failedUploadAlertView show];
             }
         }];
-        
-        //if (self.imageUploadProgressView.hidden == YES) {
-        [operation setCompletionBlock:^{
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSError *error = woperation.error;
-                //[self uploadingPhotoView:YES];
-                
-                NSDictionary *photoInfo = [NSJSONSerialization JSONObjectWithData:woperation.responseData options:NSJSONReadingAllowFragments error:&error];
-                //[self uploadingPhotoView:NO];
-                if (error) {
-                    //[self uploadingPhotoView:NO];
-                    DLog(@"Error serializing %@", error);
-                    [AppHelper showAlert:@"Upload Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
-                }else{
-                    //[self uploadingPhotoView:NO];
-                    DLog(@"Photo upload response - %@",[photoInfo valueForKey:@"status"]);
-                    
-                    if ([photoInfo[STATUS] isEqualToString:ALRIGHT]) {
-                        [Flurry logEvent:@"Photo_Upload"];
-                        
-                        [[NSNotificationCenter defaultCenter]
-                         postNotificationName:kUserReloadStreamNotification object:nil];
-                        
-                        self.noPhotosView.hidden = YES;
-                        self.photoCollectionView.hidden = NO;
-                        if (!self.photos){
-                            
-                          self.photos = [NSMutableArray arrayWithObject:photoInfo];
-                        }else{
-                           [self.photos insertObject:photoInfo atIndex:0];
-                        }
-                        
-                        [self upDateCollectionViewWithCapturedPhoto:photoInfo];
-                        
-                    }
-                }
-            });
-        }];
-        
-        /*}else{
-         UIAlertView *uploadFailureAlert = [[UIAlertView alloc] initWithTitle:@"Upload Error"
-         message:@"Your photo could not finish uploading.Try again?" delegate:self cancelButtonTitle:@"NO" otherButtonTitles:@"YES", nil];
-         uploadFailureAlert.tag = 20000;
-         [uploadFailureAlert show];
-         }*/
-        
-        [operation start];
- 
+    
+        [[NSOperationQueue mainQueue] addOperation:operation];
     }
-    @catch (NSException *exception) {
-        // What to do when we have an error
-        [self uploadingPhotoView:NO];
-        [AppHelper showAlert:@"Network Error" message:@"We encountered a problem uploading your photo" buttons:@[@"Try Again"] delegate:nil];
+    
+    @catch (NSException *exception){
+        
+        [AppHelper showAlert:@"Network Error"
+                     message:@"We encountered a problem uploading your photo"
+                     buttons:@[@"Try Again"]
+                    delegate:nil];
         
         [Flurry logError:@"Photo Upload Error" message:[exception name] exception:exception];
     }
-    @finally {
-        [self uploadingPhotoView:NO];
-    }
 }
 
--(void)upDateCollectionViewWithCapturedPhoto:(NSDictionary *)photoInfo{
-    @try {
-        [self.photoCollectionView performBatchUpdates:^{
-            [self.photoCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:0 inSection:0] ]];
-        } completion:^(BOOL finished){
-            
-            [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
-            
-            [self showGivePushNotificationScreen];
-        }];
-        
-        // Tell push provider to send
-        
-        NSArray *members = self.spotInfo[@"members"];
-        
-        NSMutableArray *memberIds = [NSMutableArray arrayWithCapacity:1];
-        for (NSDictionary *member in members){
-            if (![member[@"userName"] isEqualToString:[AppHelper userName]]) {
-                [memberIds addObject:member[@"id"]];
-            }
-            
-        }
-        
-        NSDictionary *params = @{
-                                 @"spotId": self.spotID,
-                                 @"spotName" : self.spotName,
-                                 @"memberIds" : [memberIds description]
-                              };
-        
-        //DLog(@"MEMBERSIDS  - %@\nPicture taker ID - %@",[memberIds description],[AppHelper userID]);
-        
-        [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
-                                            parameters:params
-                             constructingBodyWithBlock:nil
-                                               success:^(NSURLSessionDataTask *task, id responseObject) {
-                                                   DLog(@"From push provider - %@",responseObject);
-                                               } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                                                   DLog(@"Error - %@",error);
-                                               }];
 
-    }
-    @catch (NSException *exception) {
-        // What to do when we have an exception
-    }
-    @finally {
-        
-    }
+-(void)upDateCollectionViewWithCapturedPhoto:(NSDictionary *)photoInfo{
     
+        [self.photoCollectionView performBatchUpdates:^{
+            @try {
+            [self.photoCollectionView
+             insertItemsAtIndexPaths:@[
+                                       [NSIndexPath indexPathForItem:0 inSection:0]]];
+            }@catch (NSException *exception) {
+                // What to do when we have an exception
+            }
+        } completion:^(BOOL finished){
+            @try{
+            [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
+            }@catch (NSException *exception) {
+                // What to do when we have an exception
+            }
+        }];
 }
 
 
 -(void)upDateCollectionViewWithCapturedPhotos:(NSArray *)photoInfo{
-    @try {
+    
         [self uploadingPhotoView:NO];
         NSMutableArray *indexPaths = [NSMutableArray arrayWithCapacity:2];
         for (int x = 0; x < [photoInfo count]; x++) {
@@ -1974,42 +2119,18 @@ int toggler;
         }
         
         [self.photoCollectionView performBatchUpdates:^{
+            @try {
             [self.photoCollectionView insertItemsAtIndexPaths:indexPaths];
+                 }@catch (NSException *exception) {[self uploadingPhotoView:NO];}
         } completion:^(BOOL finished) {
+            @try{
             [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
             
-            [self showGivePushNotificationScreen];
+             }@catch (NSException *exception) {[self uploadingPhotoView:NO];}
         }];
         
-        // Tell push provider to send
-        
-        NSArray *members = self.spotInfo[@"members"];
-        
-        NSMutableArray *memberIds = [NSMutableArray arrayWithCapacity:1];
-        for (NSDictionary *member in members){
-            if (![member[@"userName"] isEqualToString:[AppHelper userName]]) {
-                [memberIds addObject:member[@"id"]];
-            }
-            
-        }
-        
-        NSDictionary *params = @{@"spotId": self.spotID,
-                                 @"spotName" : self.spotName,
-                                 @"memberIds" : [memberIds description]};
-        
-        [[LSPushProviderAPIClient sharedInstance] POST:@"photosadded"
-                                            parameters:params
-                             constructingBodyWithBlock:nil
-                                               success:^(NSURLSessionDataTask *task, id responseObject) {
-                                                   DLog(@"From push provider - %@",responseObject);
-                                               } failure:^(NSURLSessionDataTask *task, NSError *error) {
-                                                   DLog(@"Error - %@",error);
-                                               }];
-
-    }
-    @catch (NSException *exception) {[self uploadingPhotoView:NO];}
-    @finally {[self uploadingPhotoView:NO];}
-    
+          
+       
 }
 
 - (IBAction)doFacebookLogin:(id)sender
@@ -2049,26 +2170,8 @@ int toggler;
 
 - (IBAction)addFirstPhotoButtonTapped:(UIButton *)sender
 {
-    NSString *streamCreator = self.spotInfo[@"userName"];
-    
-    if ([streamCreator isEqualToString:[AppHelper userName]]) { // If user created this album no problem
-        //[self showPhotoOptions];
-        [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
-    }else{ // If user is not creator,check whether he/she can add photos
-        
-        BOOL userCanAddPhoto = ([self.spotInfo[@"addPrivacy"] isEqualToString:@"ANYONE"]) ? YES: NO;
-        
-        if (userCanAddPhoto){
-            //[self showPhotoOptions];
-            [self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
-        }else{
-            [AppHelper showAlert:@"Add Photo"
-                         message:@"You are not allowed to add photos to this stream"
-                         buttons:@[@"OK"] delegate:nil];
-        }
-        
-    }
- 
+    [self showPhotoOptions];
+    //[self performSelector:@selector(pickImage:) withObject:@(kTakeCamera) afterDelay:0.5];
 }
 
 - (IBAction)registerForPushNotification:(id)sender
@@ -2079,18 +2182,12 @@ int toggler;
 
 - (IBAction)remixPhoto:(UIButton *)sender
 {
-    if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
-        [UIView animateWithDuration:.5 animations:^{
-            self.createAccountView.alpha = 1;
-            self.noActionLabel.text = CREATE_ACCOUNT_TO_REMIX_PHOTOS;
-        }];
-        
-    }else{
-        // Remix Photo
-        PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
-        selectedPhotoCell = cell;
-        [self doodlePhoto:cell];
-  }
+    // Remix Photo
+    isDoodling = YES;
+    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+    selectedPhotoCell = cell;
+    [self doodlePhoto:cell];
+    
 }
 
 
@@ -2102,7 +2199,6 @@ int toggler;
             albumVC.spotID = (NSString *)sender;
             albumVC.spotInfo = self.spotInfo;
             albumVC.whereToUnwind = [self.parentViewController childViewControllers][0];
-            //DLog(@"WhereToUnwind - %@",[albumVC.whereToUnwind class]);
         }
     }else if ([segue.identifier isEqualToString:@"AlbumMembersSegue"]){
         if ([segue.destinationViewController isKindOfClass:[AlbumMembersViewController class]]){
@@ -2126,6 +2222,10 @@ int toggler;
         NSString *remixURL =self.photos[selectedPhotoIndexPath.item][@"s3RemixName"];
         doodleVC.imageToRemixURL = remixURL;
         doodleVC.remixImageID = [self.photoInView[@"id"] integerValue];
+    }else if ([segue.identifier isEqualToString:@"CommentsSegue"]){
+        CommentsViewController *commentsVC = segue.destinationViewController;
+        
+        commentsVC.photoId = self.photoInView[@"id"];
     }
 }
 
@@ -2377,6 +2477,8 @@ int toggler;
     }
     
     [controller dismissViewControllerAnimated:YES completion:nil];
+    
+    [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
 }
 
 
@@ -2405,6 +2507,8 @@ int toggler;
     }
     
     [controller dismissViewControllerAnimated:YES completion:nil];
+    
+    [[UINavigationBar appearance] setBackgroundImage:[[UIImage alloc] init] forBarMetrics:UIBarMetricsDefault];
 }
 
 
@@ -2413,40 +2517,89 @@ int toggler;
 #pragma mark - Send SMS
 -(void)sendSMSToRecipients:(NSMutableArray *)recipients
 {
-    if ([MFMessageComposeViewController canSendText]){
+    @try {
+        NSString *senderName = nil;
+        if ([MFMessageComposeViewController canSendText]){
+            
+            MFMessageComposeViewController *smsComposer = [[MFMessageComposeViewController alloc] init];
+            
+            smsComposer.messageComposeDelegate = self;
+            smsComposer.recipients = recipients;
+            
+            if (branchURLforInviteToStream) {
+                // We already have the branch URL set up
+                DLog(@"Branch URL is already set up");
+                smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],branchURLforInviteToStream,self.spotInfo[@"spotCode"]];
+                [smsComposer.navigationBar setTranslucent:NO];
+                
+                if (!self.presentedViewController){
+                    [self presentViewController:smsComposer animated:YES completion:nil];
+                }
+                
+            }else{
+                
+            Branch *branch = [Branch getInstance:@"55726832636395855"];
+            if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                
+            }else{
+                
+                senderName = [AppHelper userName];
+            }
+            
+            
+            DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+            
+            if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                [AppHelper setProfilePhotoURL:@"-1"];
+            }
+            NSDictionary *dict = @{
+                                   @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                                   @"streamId":self.spotInfo[@"spotId"],
+                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                   @"streamName":self.spotInfo[@"spotName"],
+                                   @"sender": senderName,
+                                   @"streamCode" : self.spotInfo[@"spotCode"],
+                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
+            
+            
+            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+            
+            
+            
+            
+            [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"text_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                branchURLforInviteToStream = url;
+                DLog(@"URL from Branch: %@",url);
+                smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                
+                [smsComposer.navigationBar setTranslucent:NO];
+                
+                if (!self.presentedViewController){
+                    [self presentViewController:smsComposer animated:YES completion:nil];
+                }
+            }];
+            
+        }
+            
+        }else{
+            UIAlertView *alert = [[UIAlertView alloc]
+                                  initWithTitle:@"Text Message Failure"
+                                  message:
+                                  @"Your device doesn't support in-app sms"
+                                  delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            [alert show];
+        }
+
+    }
+    @catch (NSException *exception) {
+        DLog(@"exception name: %@\nexception reason: %@\nException info: %@",exception.name,exception.reason,[exception.userInfo debugDescription]);
         
-        MFMessageComposeViewController *smsComposer = [[MFMessageComposeViewController alloc] init];
-        
-        smsComposer.messageComposeDelegate = self;
-        smsComposer.recipients = recipients ;
-        
-        /*Add your photos to the group photo stream “[name of stream]” on Suba for iPhone. 
-         This is where everyone is sharing their pics from this event! Download Suba here: http://appstore.com/suba*/
-        
-        smsComposer.body = [NSString stringWithFormat:@"Add your photos to the group photo stream \"%@\" on Suba for iPhone. This is where everyone is sharing their pics from this event! Download Suba here: http://subaapp.com/download",self.spotName];
-                            
-        smsComposer.navigationBar.translucent = NO;
-        UIColor *navbarTintColor = [UIColor colorWithRed:(217.0f/255.0f)
-                                                   green:(77.0f/255.0f)
-                                                    blue:(20.0f/255.0f)
-                                                   alpha:1];
-        
-        smsComposer.navigationBar.barTintColor = navbarTintColor;
-        smsComposer.navigationBar.tintColor = navbarTintColor;
-        smsComposer.navigationItem.title = @"Send Message";
-        
-        NSDictionary *textTitleOptions = [NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], NSForegroundColorAttributeName,[UIColor whiteColor],NSForegroundColorAttributeName, [UIFont fontWithName:@"HelveticaNeue-Light" size:17.0], NSFontAttributeName,nil];
-        
-        [smsComposer.navigationBar setTitleTextAttributes:textTitleOptions];
-        
-        [self presentViewController:smsComposer animated:NO completion:nil];
-        
-    }else{
         UIAlertView *alert = [[UIAlertView alloc]
-                              initWithTitle:@"Text Message Failure"
+                              initWithTitle:@"Oops:)"
                               message:
-                              @"Your device doesn't support in-app sms"
-                              delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                              @"Something went wrong.Please try again."
+                              delegate:nil cancelButtonTitle:@"Try again" otherButtonTitles:nil];
         [alert show];
     }
 }
@@ -2455,24 +2608,74 @@ int toggler;
 - (IBAction)invitePeopleByEmail:(UIButton *)sender
 {
     if ([MFMailComposeViewController canSendMail]) {
-        NSString *shareText = [NSString stringWithFormat:@"Join my photo stream \"%@\" on Suba at https://subaapp.com/download",self.spotName];
-        
         MFMailComposeViewController *mailComposer = [[MFMailComposeViewController alloc] init];
-        
         mailComposer.mailComposeDelegate = self;
-        [mailComposer setSubject:[NSString stringWithFormat:@"Photos from \"%@\"",self.spotName]];
         
+        [mailComposer.navigationBar setTranslucent:NO];
         
-        [mailComposer setMessageBody:shareText isHTML:NO];
-        if (selectedPhoto != nil) {
-            NSData *imageData = UIImageJPEGRepresentation(selectedPhoto, 1.0);
-            [mailComposer addAttachmentData:imageData mimeType:@"image/jpeg" fileName:@"subapic"];
+        [mailComposer.navigationItem setTitle:@"Send Email"];
+        
+        [mailComposer setSubject:[NSString stringWithFormat:@"See and add photos to the  \"%@\" photo stream",self.spotInfo[@"spotName"]]];
+        
+        if (branchURLforInviteToStream) {
+            //We already have the branch URL
+            NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the \"%@\" photo stream</p><ul><li>Step 1: Download Suba: %@</li><li>Step 2: Go to Join Stream (in the app, it’s via the + sign at the top right)</li><li>Step 3: Enter invite code: %@</li></ul>",self.spotInfo[@"spotName"],branchURLforInviteToStream,self.spotInfo[@"spotCode"]];
+            
+            
+            [mailComposer setMessageBody:shareText isHTML:YES];
+            [Flurry logEvent:@"Share_Stream_Email_Done"];
+            
+            if (!self.presentedViewController){
+                [self presentViewController:mailComposer animated:YES completion:nil];
+            }
+            
+        }else{
+        
+        NSString *senderName = nil;
+        Branch *branch = [Branch getInstance:@"55726832636395855"];
+        if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+            senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+            
+        }else if([AppHelper firstName].length > 0 && ([AppHelper lastName] == NULL | [[AppHelper lastName] class]== [NSNull class] | [AppHelper lastName].length == 0)){
+            
+            senderName = [AppHelper firstName];
         }
+        if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+            [AppHelper setProfilePhotoURL:@"-1"];
+        }
+        NSDictionary *dict = @{
+                               @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                               @"streamId":self.spotID,
+                               @"photos" : self.spotInfo[@"numberOfPhotos"],
+                               @"streamName":self.spotInfo[@"spotName"],
+                               @"sender": senderName,
+                               @"streamCode" : self.spotInfo[@"spotCode"],
+                               @"senderPhoto" : [AppHelper profilePhotoURL]};
         
+        
+        NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+        
+        [branch getShortURLWithParams:streamDetails
+                              andTags:nil
+                           andChannel:@"email"
+                           andFeature:BRANCH_FEATURE_TAG_SHARE
+                             andStage:nil
+                          andCallback:^(NSString *url){
+                              branchURLforInviteToStream = url;
+        DLog(@"URL from Branch: %@",url);
+                              
+        NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the \"%@\" photo stream</p><ul><li>Step 1: Download Suba: %@</li><li>Step 2: Go to Join Stream (in the app, it’s via the + sign at the top right)</li><li>Step 3: Enter invite code: %@</li></ul>",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                              
+                              
+        [mailComposer setMessageBody:shareText isHTML:YES];
         [Flurry logEvent:@"Share_Stream_Email_Done"];
-        
-        [self presentViewController:mailComposer animated:YES completion:nil];
-        
+                              
+        if (!self.presentedViewController){
+            [self presentViewController:mailComposer animated:YES completion:nil];
+        }
+                              
+      }];
+   }
     }else{
         [AppHelper showAlert:@"Configure email" message:@"Hey there:) Do you mind configuring your Mail app to send email" buttons:@[@"OK"] delegate:nil];
     }
@@ -2485,9 +2688,58 @@ int toggler;
 }
 
 
-- (IBAction)inviteSubaUsersToJoinStream:(id)sender
+- (IBAction)inviteWhatsappContactsToStream:(id)sender
 {
-    [self performSegueWithIdentifier:@"InviteFriendsSegue" sender:nil];
+    if ([WhatsAppKit isWhatsAppInstalled]){
+        if(branchURLforInviteToStream){
+            // We already have the URL
+            DLog(@"Branch URL already installed");
+            NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],branchURLforInviteToStream,self.spotInfo[@"spotCode"]];
+            
+            DLog(@"Yes whatsapp is installed so we show the whatsapp");
+            [WhatsAppKit launchWhatsAppWithMessage:message];
+        }else{
+            NSString *senderName = nil;
+            Branch *branch = [Branch getInstance:@"55726832636395855"];
+            if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+                senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+                
+            }else{
+                senderName = [AppHelper userName];
+            }
+            
+            DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+            
+            if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+                [AppHelper setProfilePhotoURL:@"-1"];
+            }
+            
+            NSDictionary *dict = @{
+                                   @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                                   @"streamId":self.spotInfo[@"spotId"],
+                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                   @"streamName":self.spotInfo[@"spotName"],
+                                   @"sender": senderName,
+                                   @"streamCode" : self.spotInfo[@"spotCode"],
+                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
+            
+            
+            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+            
+            [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"whatsapp_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+                branchURLforInviteToStream = url;
+                DLog(@"URL from Branch: %@",url);
+                NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba.\nSTEP 1) Download Suba: %@ \nSTEP 2) Go to Join Stream \nSTEP 3) Use invite code: %@.",self.spotInfo[@"spotName"],url,self.spotInfo[@"spotCode"]];
+                
+                DLog(@"Yes whatsapp is installed so we show the whatsapp");
+                [WhatsAppKit launchWhatsAppWithMessage:message];
+
+            }];
+        }
+    }else{
+        [AppHelper showAlert:@"Invite via Whatsapp" message:@"Whatsapp is not installed on your device" buttons:@[@"OK"] delegate:nil];
+    }
+    //[self performSegueWithIdentifier:@"InviteFriendsSegue" sender:nil];
 }
 
 - (IBAction)showOtherInviteOptions:(UIButton *)sender
@@ -2499,7 +2751,7 @@ int toggler;
         sender.alpha = 0;
         footerView.emailTextField.alpha = 0;
         footerView.smsInviteButton.alpha = 1;
-        footerView.inviteByUsernameButton.alpha = 1;
+        footerView.inviteByWhatsappButton.alpha = 1;
         
         CGFloat newFrameY = footerView.smsInviteButton.frame.origin.y - (footerView.emailInviteButton.frame.size.height + 20);
         CGRect newFrame = CGRectMake(footerView.emailInviteButton.frame.origin.x, newFrameY, footerView.emailInviteButton.frame.size.width, footerView.emailInviteButton.frame.size.height);
@@ -2618,22 +2870,27 @@ int toggler;
 
 
 #pragma mark - Other Actions
+- (void)showDoodleVersionOfPhotoInCell:(PhotoStreamCell *)cell completion:(SBFlipDoodleCompletionHandler)completionHandler
+{
+    if (cell.photoCardImage.alpha == 1) {
+        [UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
+            cell.photoCardImage.alpha = 0;
+            cell.remixedImageView.alpha = 1;
+        } completion:completionHandler];
+    }else{
+        [UIView transitionWithView:cell.remixedImageView duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
+            cell.photoCardImage.alpha = 1;
+            cell.remixedImageView.alpha = 0;
+        } completion:completionHandler];
+    }
+}
+
 - (IBAction)flipPhotoToShowRemix:(id)sender
 {
     UIButton *flipButton = (UIButton *)sender;
     PhotoStreamCell *cell = (PhotoStreamCell *)flipButton.superview.superview.superview;
     
-    if (cell.photoCardImage.alpha == 1) {
-        [UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
-            cell.photoCardImage.alpha = 0;
-            cell.remixedImageView.alpha = 1;
-        } completion:NULL];
-    }else{
-        [UIView transitionWithView:cell.remixedImageView duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
-            cell.photoCardImage.alpha = 1;
-            cell.remixedImageView.alpha = 0;
-        } completion:NULL];
-    }
+    [self showDoodleVersionOfPhotoInCell:cell completion:nil];
 }
 
 
@@ -2662,6 +2919,29 @@ int toggler;
     
     toggler += 1;
 }
+
+
+- (void)showHiddenMoreOptions
+{
+   
+    // Get the container view and increase height
+    
+        if (toggler % 2 == 0) {
+            [UIView animateWithDuration:0.3 animations:^{
+                CGRect hiddenMenuFrame = CGRectMake(0, 0, 320, 150);
+                self.hiddenTopMenuView.frame = hiddenMenuFrame;
+                self.hiddenTopMenuView.alpha = 1;
+            }];
+        }else{
+            [UIView animateWithDuration:0.3 animations:^{
+                CGRect hiddenMenuFrame = CGRectMake(0, 0, 320, 0);
+                self.hiddenTopMenuView.frame = hiddenMenuFrame;
+                self.hiddenTopMenuView.alpha = 0;
+            }];
+        }
+    toggler += 1;
+}
+
 
 - (IBAction)requestForPhotos:(id)sender
 {
@@ -2699,22 +2979,13 @@ int toggler;
         
     } completion:^(BOOL finished) {
         // Actual code to share Share stream
-        /*if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
-            [UIView animateWithDuration:.5 animations:^{
-                self.createAccountView.alpha = 1;
-                self.noActionLabel.text = CREATE_ACCOUNT_TO_SHARE_STREAM;
-            }];
-        }else{*/
-        
-            // Present Action Sheet
+        // Present Action Sheet
         UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Share this stream" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Via Facebook",@"Via Twitter",@"Via Email", nil];
         
          actionSheet.tag = 7000;
         [actionSheet showInView:self.view];
-        
-            //[self share:kSpot Sender:sender];
-        //}
     }];
+    
     toggler += 1;
 }
 
@@ -2727,16 +2998,7 @@ int toggler;
         
     } completion:^(BOOL finished) {
         // Actual code to show stream settings
-        /*if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS]) {
-            [UIView animateWithDuration:.5 animations:^{
-                self.createAccountView.alpha = 1;
-                self.noActionLabel.text = CREATE_ACCOUNT_TO_STREAM_SETTINGS;
-                //self.navigationController.navigationBarHidden = YES;
-            }];
-        }
-         else{*/
             [self performSegueWithIdentifier:@"SpotSettingsSegue" sender:self.spotID];
-        //}
     }];
     toggler += 1;
 }
@@ -2965,53 +3227,62 @@ int toggler;
 }
 
 
-
-#pragma mark - DBCameraViewControllerDelegate
-- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
+- (void)openNativeCamera:(UIImagePickerControllerSourceType)sourceType
 {
-    UIImage *fullResolutionImage = nil;
+    UIImagePickerController *nativepickerController = [[UIImagePickerController alloc] init];
+    nativepickerController.delegate = self;
+    nativepickerController.sourceType = sourceType;
     
-    //fullResolutionImage = [UIImage imageWithCGImage:image.CGImage scale:1.0
-      //                                                         orientation:UIImageOrientationRight];
+    NSArray *sourceTypes = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
     
-    fullResolutionImage = [image rotateUIImage];//[self fixrotation:image];
-    
-    
-    NSString *imageSource = metadata[@"DBCameraSource"];
-    
-    if([imageSource isEqualToString:@"Camera"]){
-        //fullResolutionImage = [self fixrotation:image];
-        UIImageWriteToSavedPhotosAlbum(image,self,@selector(imageSavedToPhotosAlbum: didFinishSavingWithError: contextInfo:), nil);
+    if ([sourceTypes containsObject:@"public.image"]) {
+        if (sourceType == UIImagePickerControllerSourceTypeCamera) {
+            DLog(@"Camera source types: %@",sourceTypes);
+            nativepickerController.allowsEditing = YES;
+            //nativepickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeOn;
+        }else{
+            
+            /*nativepickerController.navigationController.navigationBar.tintColor = kSUBA_APP_COLOR;
+             nativepickerController.navigationController.navigationBar.translucent = YES;
+             [nativepickerController.navigationController.navigationItem setTitle:@"Choose Photo"];*/
+            
+            [nativepickerController setNavigationBarHidden:NO];
+            nativepickerController.navigationBar.barTintColor = kSUBA_APP_COLOR;
+            [nativepickerController.navigationBar setTintColor:[UIColor whiteColor]];
+            [nativepickerController.navigationBar setTranslucent:NO];
+            [nativepickerController.navigationItem setTitle:@"Choose Photo"];
+        }
     }
     
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
-    NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
-    NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
-    trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
-    trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+    [self presentViewController:nativepickerController animated:YES completion:nil];
+}
+
+
+
+
+/*#pragma mark - DBCameraViewControllerDelegate
+- (void) camera:(id)cameraViewController didFinishWithImage:(UIImage *)image withMetadata:(NSDictionary *)metadata
+{
     
-    [self resizePhoto:fullResolutionImage towidth:1136.0f toHeight:640.0f
-            completon:^(UIImage *compressedPhoto, NSError *error) {
-                if(!error){
-                    NSData *imageData = UIImageJPEGRepresentation(compressedPhoto, .8);
-                    DLog(@"Size of image - %fKB",[imageData length]/1000.0f);
-                    [self uploadPhoto:imageData WithName:trimmedString];
-                }else DLog(@"Image resize error :%@",error);
-            }];
+    UIImage *fullResolutionImage = [image rotateUIImage];
+    NSData *img = UIImageJPEGRepresentation(fullResolutionImage, 1.0);
     
-    [cameraViewController restoreFullScreenMode];
-    
-    [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
+    DLog(@"Size of image - %fKB",[img length]/1024.0f);
+    [cameraViewController dismissViewControllerAnimated:YES completion:^{
+        DLog(@"Lets display aviary");
+        [self displayEditorForImage:fullResolutionImage];
+    }];
 }
 
 - (void) dismissCamera:(id)cameraViewController{
-    [self dismissViewControllerAnimated:YES completion:nil];
+    //DLog();
+    [self dismissViewControllerAnimated:NO completion:nil];
     [cameraViewController restoreFullScreenMode];
 }
 
 
-- (void) openCamera
+
+- (void)openDBCamera
 {
     DBCameraViewController *cameraController = [DBCameraViewController initWithDelegate:self];
     
@@ -3019,13 +3290,91 @@ int toggler;
     //[cameraController set]
     
     DBCameraContainerViewController *container = [[DBCameraContainerViewController alloc] initWithDelegate:self];
+    [cameraController setUseCameraSegue:NO];
+    
     [container setCameraViewController:cameraController];
     [container setFullScreenMode];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:container];
     [nav setNavigationBarHidden:YES];
     
     [self presentViewController:nav animated:YES completion:nil];
+}*/
+
+
+- (void)displayEditorForImage:(UIImage *)imageToEdit
+{
+    //dispatch_once(&onceToken, ^{
+        [AFPhotoEditorController setAPIKey:kAviaryAPIKey secret:kAviarySecret];
+         AFPhotoEditorController *editorController = [[AFPhotoEditorController alloc] initWithImage:imageToEdit];
+        [editorController setDelegate:self];
+    
+    if (isDoodling) {
+        // Customize the tools that appear
+        // Set the tools to Draw (to be displayed in that order).
+        [AFPhotoEditorCustomization setToolOrder:@[kAFDraw]];
+    }else{
+        
+        // Customize the tools that appear
+        // Set the tools to Contrast, Brightness, Enhance, and Crop (to be displayed in that order).
+        [AFPhotoEditorCustomization setToolOrder:@[kAFEnhance,kAFEffects,kAFCrop,kAFOrientation]];
+    }
+        [self presentViewController:editorController animated:YES completion:nil];
 }
+
+
+#pragma mark - AFPhotoEditorDelegate
+- (void)photoEditor:(AFPhotoEditorController *)editor finishedWithImage:(UIImage *)image
+{
+    //[self.library saveImage:image toAlbum:@"Suba" completion:^(NSURL *assetURL, NSError *error){} failure:nil];
+    
+    // Handle the result image here
+    [editor dismissViewControllerAnimated:YES completion:^{
+        // Upload the image after we have dismissed the editor
+        if (isDoodling) {
+            PhotoStreamCell *cell = (PhotoStreamCell *)[self.photoCollectionView
+                                                        cellForItemAtIndexPath:[NSIndexPath indexPathForItem:selectedPhotoIndexPath.item inSection:0]];
+            
+            cell.remixedImageView.alpha = 1;
+            cell.remixedImageView.image = image;
+            NSData *data = UIImageJPEGRepresentation(image, .8);
+            DLog(@"Uploading Doodle");
+            [self uploadDoodle:data WithName:self.photos[selectedPhotoIndexPath.item][@"s3name"]];
+    }else{
+        DLog(@"Upload photo");
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@"yyyy:MM:dd HH:mm:ss.SSSSSS"];
+        NSString *timeStamp = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *trimmedString = [timeStamp stringByReplacingOccurrencesOfString:@" " withString:@""];
+        trimmedString = [trimmedString stringByReplacingOccurrencesOfString:@"-" withString:@":"];
+        trimmedString = [trimmedString stringByReplacingCharactersInRange:NSMakeRange([trimmedString length]-7, 7) withString:@""];
+        
+        //[self resizePhoto:image towidth:1136.0f toHeight:640.0f
+                //completon:^(UIImage *compressedPhoto, NSError *error) {
+                   // if(!error){
+                        imageToUpload = UIImageJPEGRepresentation(image, .8);
+                        nameOfImageToUpload = trimmedString;
+                        DLog(@"Size of image - %fKB",[imageToUpload length]/1024.0f);
+                        [self uploadPhoto:imageToUpload WithName:trimmedString];
+                    //}else DLog(@"Image resize error :%@",error);
+                //}];
+        }
+
+    }];
+
+}
+
+- (void)photoEditorCanceled:(AFPhotoEditorController *)editor
+{
+    // Handle cancellation here
+    [editor dismissViewControllerAnimated:YES completion:^{
+        if (isDoodling){
+            isDoodling = NO;
+        }
+    }];
+    
+    DLog();
+}
+
 
 
 - (void)imageSavedToPhotosAlbum:(UIImage *)image didFinishSavingWithError:(NSError *)error contextInfo:(void *)contextInfo {
@@ -3040,21 +3389,21 @@ int toggler;
 
 -(void)uploadingPhotoView:(BOOL)flag
 {
-    DLog(@"Uploading photo");
+    /*DLog(@"Uploading photo");
     self.uploadingPhoto.hidden = !flag;
     if (flag == YES) {
         [self.uploadingPhotoIndicator startAnimating];
-    }else [self.uploadingPhotoIndicator stopAnimating];
+    }else [self.uploadingPhotoIndicator stopAnimating];*/
+    
 }
 
 - (void)downloadPhoto:(UIImageView *)destination withURL:(NSString *)imgURL downloadOption:(SDWebImageOptions)option
 {
-    //DLog(@"number of subviews - %i",[destination.subviews count]);
     if ([destination.subviews count] == 1) {
         // Lets remove all subviews
         [[destination subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
     }
-    //if (destination.image == nil) {
+    
         DACircularProgressView *progressView = [[DACircularProgressView alloc]
                                                 initWithFrame:CGRectMake((destination.bounds.size.width/2) - 20, (destination.bounds.size.height/2) - 20, 40.0f, 40.0f)];
         progressView.thicknessRatio = .1f;
@@ -3074,7 +3423,18 @@ int toggler;
              if (!error) {
                  self.albumSharePhoto = (UIImage *)results;
              }else{
-                 DLog(@"error - %@",error);
+                 DLog(@"error - %@",error.userInfo);
+                 
+                 NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:imgURL]];
+                 [destination setImageWithURLRequest:request placeholderImage:[UIImage imageNamed:@"newOverlay"] success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                     
+                     [progressView removeFromSuperview];
+                     if (!error) {
+                         self.albumSharePhoto = image;
+                     }
+                 } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                     DLog(@"Error: %@",error.userInfo);
+                 }];
             }
          }];
 
@@ -3097,7 +3457,6 @@ int toggler;
 - (void)doodlePhoto:(PhotoStreamCell *)cell
 {
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    
     self.photoInView = self.photos[indexpath.row];
     
     if (cell.remixedImageView.image){
@@ -3108,19 +3467,24 @@ int toggler;
             } completion:^(BOOL finished) {
                 selectedPhoto = cell.remixedImageView.image;
                 selectedPhotoIndexPath = indexpath;
-                [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+                
+                [self displayEditorForImage:selectedPhoto];
             }];
             
         }else if (cell.remixedImageView.alpha == 1){
             selectedPhoto = cell.remixedImageView.image;
             selectedPhotoIndexPath = indexpath;
-            [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+            [self displayEditorForImage:selectedPhoto];
+            
+            //[self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
         }
     }else{
         
         selectedPhoto = cell.photoCardImage.image;
         selectedPhotoIndexPath = indexpath;
-        [self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
+        [self displayEditorForImage:selectedPhoto];
+        
+        //[self performSegueWithIdentifier:@"DoodleSegue" sender:selectedPhoto];
         
     }
 }
@@ -3128,8 +3492,6 @@ int toggler;
 
 - (void)showDoodle:(PhotoStreamCell *)cell
 {
-    //[UIView transitionWithView:cell.photoCardImage duration:0.8 options:UIViewAnimationOptionTransitionFlipFromRight animations:^{
-    DLog(@"cell.numberOfLikesLabel.text: %@",cell.numberOfLikesLabel.text);
     cell.photoCardImage.alpha = 0;
     cell.remixedImageView.alpha = 1;
 }
@@ -3171,6 +3533,17 @@ int toggler;
     }
 }
 
+
+-(IBAction)showCommentsAction:(UIButton *)sender
+{
+    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+    NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
+    self.photoInView = self.photos[indexpath.row];
+
+    DLog(@"Photo selected: %@",self.photoInView);
+    [self performSegueWithIdentifier:@"CommentsSegue" sender:nil];
+    
+}
 
 
 /*- (UIImage *)fixrotation:(UIImage *)image{
@@ -3280,6 +3653,105 @@ int toggler;
     
     return imageCopy;  
 }*/
+
+-(void)prepareBranchURLforInvitingFriendsToStream
+{
+    NSString __block *branchurl = @"";
+    NSString *senderName = nil;
+    
+        Branch *branch = [Branch getInstance:@"55726832636395855"];
+        if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+            senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+            
+        }else{
+            
+            senderName = [AppHelper userName];
+        }
+        
+        
+        DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+        
+        if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+            [AppHelper setProfilePhotoURL:@"-1"];
+        }
+    
+    
+        NSDictionary *dict = @{
+                               @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                               @"streamId":self.spotInfo[@"spotId"],
+                               @"photos" : self.spotInfo[@"photos"],
+                               @"streamName":self.spotInfo[@"spotName"],
+                               @"sender": senderName,
+                               @"streamCode" : self.spotInfo[@"spotCode"],
+                               @"senderPhoto" : [AppHelper profilePhotoURL]};
+        
+        
+        NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+    
+        [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"text_message" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+            
+            DLog(@"URL from Branch: %@",url);
+            branchURLforInviteToStream = url;
+            branchurl = url;
+        }];
+}
+
+
+-(void)prepareBranchURLforSharingStream
+{
+    NSString *senderName = nil;
+    
+    Branch *branch = [Branch getInstance:@"55726832636395855"];
+    if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
+        senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+        
+    }else{
+        
+        senderName = [AppHelper userName];
+    }
+    
+    
+    if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
+        [AppHelper setProfilePhotoURL:@"-1"];
+    }
+    
+    NSDictionary *dict = @{
+                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                           @"streamId":self.spotInfo[@"spotId"],
+                           @"photos" : self.spotInfo[@"photos"],
+                           @"streamName":self.spotInfo[@"spotName"],
+                           @"sender": senderName,
+                           @"streamCode" : self.spotInfo[@"spotCode"],
+                           @"senderPhoto" : [AppHelper profilePhotoURL]};
+    
+    
+    NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+    
+    [branch getShortURLWithParams:streamDetails andTags:nil andChannel:@"share_stream" andFeature:BRANCH_FEATURE_TAG_SHARE andStage:nil andCallback:^(NSString *url){
+        
+        DLog(@"URL from Branch: %@",url);
+        branchURLforShareStream = url; 
+        
+    }];
+}
+
+
+-(void)setUpRightBarButtonItems
+{
+    UIBarButtonItem *addPhotoButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"addphoto"] style:UIBarButtonItemStyleBordered target:self action:@selector(cameraButtonTapped:)];
+    
+    UIBarButtonItem *inviteFriendsIcon = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"inviteIcon"] style:UIBarButtonItemStyleBordered target:self action:@selector(requestForPhotos:)];
+    
+    UIBarButtonItem *moreIcon = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"moreIcon_nav"] style:UIBarButtonItemStyleBordered target:self action:@selector(showHiddenMoreOptions)]; 
+    
+    
+    [self.navigationItem setRightBarButtonItems:@[moreIcon,inviteFriendsIcon,addPhotoButton] animated:YES];
+    
+    
+}
+
+
+
 
 
 @end

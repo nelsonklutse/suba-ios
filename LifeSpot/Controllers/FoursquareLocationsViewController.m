@@ -18,15 +18,17 @@
 @property (retain,nonatomic) NSIndexPath *lastSelected;
 @property (strong,nonatomic) Location *venueChosen;
 
-@property (retain,nonatomic) NSMutableArray *filteredLocations;
+@property (strong,nonatomic) NSMutableArray *filteredLocations;
 @property (retain,nonatomic) CLLocation *userLocation;
 @property (retain,nonatomic) NSString *currentLocationSelected;
+@property (strong,nonatomic) NSMutableArray *globalMatchingLocations;
 
 @property (weak, nonatomic) IBOutlet UISearchBar *searchVenuesBar;
 @property (weak, nonatomic) IBOutlet UITableView *venuesTableView;
 @property (weak, nonatomic) IBOutlet UIView *searchingVenuesView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *searchingVenuesIndicator;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *doneButton;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingMatchingLocationsIndicator;
 
 
 //- (IBAction)locationChosen:(id)sender;
@@ -40,9 +42,11 @@
 @implementation FoursquareLocationsViewController
 static CLLocationManager *locationManager;
 
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     
     // Disable the done button until location is selected
     self.doneButton.enabled = NO;
@@ -51,17 +55,26 @@ static CLLocationManager *locationManager;
     
     
     if ([CLLocationManager locationServicesEnabled]){
-        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorized){
-            
-            locationManager = [[CLLocationManager alloc] init];
-            locationManager.delegate = self;
-            [locationManager startUpdatingLocation];
+        if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied){
             
             
-        }else{
             [AppHelper showAlert:@"Location Denied"
                          message:@"You have disabled location services for Suba. Please go to Settings->Privacy->Location and enable location for Suba"
                          buttons:@[@"OK"] delegate:nil];
+        } else{
+                       
+                       locationManager = [[CLLocationManager alloc] init];
+                       locationManager.delegate = self;
+                       
+                       if (IS_OS_7_OR_BEFORE) {
+                           DLog(@"IOS 7");
+                           [locationManager startUpdatingLocation];
+                       }else if(IS_OS_8_OR_LATER){
+                           [locationManager requestWhenInUseAuthorization];
+                       }
+                       
+                       
+
         }
 
         
@@ -78,7 +91,12 @@ static CLLocationManager *locationManager;
 -(void)viewWillAppear:(BOOL)animated{
     
     [super viewWillAppear:YES];
-    [locationManager startUpdatingLocation];
+    if (IS_OS_7_OR_BEFORE) {
+        DLog(@"IOS 7");
+        [locationManager startUpdatingLocation];
+    }else if(IS_OS_8_OR_LATER){
+        [locationManager requestWhenInUseAuthorization];
+    }
     
     self.userLocation = [locationManager location];
     if (self.userLocation != nil){
@@ -89,13 +107,21 @@ static CLLocationManager *locationManager;
         
         if (self.locations == nil){
             [self displayFourSquareLocations:self.currentLocation];
+        }else{
+            if (self.filteredLocations) {
+                [self.filteredLocations removeAllObjects];
+            }
+            NSMutableArray *foursquareLocations = self.locations;
+            self.filteredLocations = [foursquareLocations mutableCopy];
+            [self.venuesTableView reloadData];
         }
-        if (self.subaLocations == nil) {
+        
+        /*if (self.subaLocations == nil) {
             DLog(@"Suba Locations is nil with Location - %@",[self.currentLocation description]);
             [self displaySubaLocations:self.currentLocation];
         }else{
             DLog(@"Suba Locations is not nil");
-        }
+        }*/
     }
 }
 
@@ -106,7 +132,7 @@ static CLLocationManager *locationManager;
 }
 
 #pragma mark - Table view data source
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
+/*- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
     // Return the number of sections.
     return 3;
@@ -116,7 +142,8 @@ static CLLocationManager *locationManager;
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
     return 40.0f;
-}
+}*/
+
 
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -126,101 +153,58 @@ static CLLocationManager *locationManager;
         height = 60.0f;
     }*/
     
-    return 60.0f;
+    return 80.0f;
 }
 
 
--(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
+/*-(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
     NSString *headerTitle = nil;
-    if (section == 2) {
-        headerTitle = @"Add Your Own Location";
-    }else if (section == 1){
-     headerTitle = @"Pick a Location - SUBA";
-    }else if (section == 0){
+    
+ 
+     if (section == 0){
         headerTitle = @"Pick a Location - FOURSQUARE";
     }
     
     return headerTitle;
-}
+}*/
 
 
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    NSInteger numberOfRows = 0;
-    if (section == 2) {
-        
-        return 1;
-    }else if(section == 1){
-        return [self.subaLocations count];
-    }else if (section == 0){
-        if (tableView == self.searchDisplayController.searchResultsTableView) {
-            
-            numberOfRows = [self.filteredLocations count];
-        }else{
-            
-            numberOfRows = [self.locations count];
-        }
-    }
-    
-    return numberOfRows;
+    return [self.filteredLocations count];
 }
+
+
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (indexPath.section == 2) {
-        static NSString *CellIdentifier = @"AddNewLocation";
-        UITableViewCell *newLocationCell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-        newLocationCell.textLabel.text = @"Add a new Location";
-        
-        return newLocationCell;
-    }else if(indexPath.section == 1){
-        static NSString *CellIdentifier = @"SubaVenueCell";
-        UITableViewCell *subaLocationCell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-        if ([self.subaLocations count] == 0) {
-           subaLocationCell.textLabel.text = @"No Suba locations near you";
-        }else{
-            if (self.lastSelected.row == indexPath.row){
-                //DLog(@"Last selected row - %li",(long)indexPath.row);
-                //subaLocationCell.accessoryType = UITableViewCellAccessoryCheckmark;
-                
-            }else subaLocationCell.accessoryType = UITableViewCellAccessoryNone;
-            
-            NSDictionary *subaLocation = self.subaLocations[indexPath.row];
-            subaLocationCell.textLabel.text = subaLocation[@"locationName"];
-        }
-        
-        return subaLocationCell;
-    }else if (indexPath.section == 0){
     static NSString *CellIdentifier = @"VenueCell";
     FoursquareVenueCell *cell = [self.venuesTableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
-        // Configure the cell...
-    if (tableView == self.searchDisplayController.searchResultsTableView) {
-        cell.textLabel.text = [self.filteredLocations[indexPath.row] objectForKey:@"name"];
-    }else{
-        if (self.lastSelected.row == indexPath.row){ 
-            //DLog(@"Last selected row - %li",(long)indexPath.row);
-            //cell.accessoryType = UITableViewCellAccessoryCheckmark;
-            
-        }else cell.accessoryType = UITableViewCellAccessoryNone;
+    
         
-        //DLog(@"Class of venue - %@",[self.locations[indexPath.row] class]);
-        NSArray *venueDets = [self retrieveVenueDetails:(NSDictionary *)self.locations[indexPath.row]];
+    if (self.lastSelected.row == indexPath.row){
+    }else cell.accessoryType = UITableViewCellAccessoryNone;
+    
+    NSArray *venueDets = [self retrieveVenueDetails:(NSDictionary *)self.filteredLocations[indexPath.row]];
         
-        cell.venueName.text = venueDets[0];
-        cell.distanceLabel.text = [NSString stringWithFormat:@"%@ meters",venueDets[1]];
-        if ([venueDets count] == 3) {
-            [cell.venueIcon setImageWithURL:[NSURL URLWithString:venueDets[2]] placeholderImage:[UIImage imageNamed:@"PointerIcon"]];
+    cell.venueName.text = venueDets[0];
+    if ([venueDets count] == 2) {
+        cell.addressLabel.text = venueDets[1];
+    }
+        
+        /*cell.distanceLabel.text = [NSString stringWithFormat:@"%@ meters",venueDets[1]];
+        if ([venueDets count] >= 4) {
+            [cell.venueIcon setImageWithURL:[NSURL URLWithString:[venueDets lastObject]] placeholderImage:[UIImage imageNamed:@"PointerIcon"]];
         }else{
         [cell.venueIcon setImage:[UIImage imageNamed:@"PointerIcon"]];
-        }
     }
+        
+    return cell;
+   }*/
     
     return cell;
-   }
-    
-    return nil;
 }
 
 
@@ -273,10 +257,10 @@ static CLLocationManager *locationManager;
             
             FoursquareVenueCell *cell = (FoursquareVenueCell *)[self.venuesTableView cellForRowAtIndexPath:indexPath];
             self.currentLocationSelected = cell.venueName.text;
-            NSString *latitude = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"lat"];
-            NSString *longitude = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"lng"];
-            NSString *city = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"city"];
-            NSString *country = [[self.locations[indexPath.row] objectForKey:@"location"] objectForKey:@"country"];
+            NSString *latitude = [[self.filteredLocations[indexPath.row] objectForKey:@"location"] objectForKey:@"lat"];
+            NSString *longitude = [[self.filteredLocations[indexPath.row] objectForKey:@"location"] objectForKey:@"lng"];
+            NSString *city = [[self.filteredLocations[indexPath.row] objectForKey:@"location"] objectForKey:@"city"];
+            NSString *country = [[self.filteredLocations[indexPath.row] objectForKey:@"location"] objectForKey:@"country"];
             
             self.venueChosen = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.currentLocationSelected];
             self.venueChosen.city = (city != nil) ? city : nil ;
@@ -357,7 +341,7 @@ static CLLocationManager *locationManager;
 
 #pragma mark - Custom selectors
 - (void)displayFourSquareLocations:(Location *)locationPassed{
-    [self showLoadingLocationsView:YES];
+    [self.loadingMatchingLocationsIndicator startAnimating];
     NSString *near = [NSString stringWithFormat:@"%@,%@",locationPassed.latitude,locationPassed.longitude];
     NSString *radius = @"1000";
     NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
@@ -371,16 +355,23 @@ static CLLocationManager *locationManager;
                                          @"v" : @"20140108"
                                         }
          success:^(AFHTTPRequestOperation *operation, id responseObject) {
-             [self showLoadingLocationsView:NO];
+             //[self showLoadingLocationsView:NO];
              NSArray *foursquareLocations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
              // Sort by distance
              NSSortDescriptor *distanceSorter = [[NSSortDescriptor alloc] initWithKey:@"location.distance" ascending:YES];
              
-             NSArray *sortDescriptors = [NSArray arrayWithObject:distanceSorter];
+             //NSSortDescriptor *countrySorter = [[NSSortDescriptor alloc] initWithKey:@"location.country" ascending:YES];
+             NSArray *sortDescriptors = @[distanceSorter];
              NSArray *sortedLocations = [foursquareLocations sortedArrayUsingDescriptors:sortDescriptors];
-             self.locations = [NSMutableArray arrayWithArray:sortedLocations];
              
-        [self.venuesTableView reloadData];
+             self.locations = [NSMutableArray arrayWithArray:sortedLocations];
+             DLog(@"Self.Locations: %@",self.locations);
+             self.filteredLocations = [[NSMutableArray arrayWithArray:sortedLocations] mutableCopy];
+             if ([self.locations count] > 0) {
+                 [self.loadingMatchingLocationsIndicator stopAnimating];
+             }
+             
+             [self.venuesTableView reloadData];
         
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         DLog(@"Error: %@", error);
@@ -410,24 +401,65 @@ static CLLocationManager *locationManager;
 
 -(NSArray *)retrieveVenueDetails:(NSDictionary *)venue{
     NSMutableArray *venueDetails = [NSMutableArray arrayWithCapacity:2];
+    NSString *address = nil;
+    
     NSString *venueName = [venue objectForKey:@"name"];
-    NSString *venueDistanceFromUserCurrentLocation = [[venue objectForKey:@"location"] objectForKey:@"distance"];
+    //NSString *venueDistanceFromUserCurrentLocation = [[venue objectForKey:@"location"] objectForKey:@"distance"];
     
-    [venueDetails addObjectsFromArray:@[venueName,venueDistanceFromUserCurrentLocation]];
     
-    NSArray *categories = [venue objectForKey:@"categories"];
-    NSString *venueIconURL = nil;
-    if ([categories count] > 0) {
+    if ([venue objectForKey:@"location"]) {
+        
+       NSDictionary * venueLocation = (NSDictionary *)[venue objectForKey:@"location"];
+        
+        if (venueLocation[@"country"] && ![AppHelper userCountry]) {
+            [AppHelper setUserCountry:venueLocation[@"country"]];
+        }
+        
+        if (venueLocation[@"formattedAddress"] && [venueLocation[@"formattedAddress"] count] > 0){
+            NSArray *formattedAddress = venueLocation[@"formattedAddress"];
+            NSLog(@"How many in formatted address- %lu",(unsigned long)[formattedAddress count]);
+            if ([formattedAddress count] ==1) {
+               address = formattedAddress[0];
+            
+            }else if ([formattedAddress count] == 2) {
+                address = [NSString stringWithFormat:@"%@, %@",formattedAddress[0],formattedAddress[1]];
+            }else if([formattedAddress count] == 3){
+               address = [NSString stringWithFormat:@"%@, %@, %@",formattedAddress[0],formattedAddress[1],formattedAddress[2]];
+            }
+            
+
+            
+        }else if(venueLocation[@"country"]){
+            address = venueLocation[@"country"];
+        }else if (venueLocation[@"cc"]){
+            address = venueLocation[@"cc"];
+        }
+    }
+    
+    [venueDetails addObject:venueName];
+    
+    if (address) {
+        [venueDetails addObject:address];
+    }
+    
+    DLog(@"Venue details - %@",venueDetails.description);
+    
+    //NSArray *categories = [venue objectForKey:@"categories"];
+    //NSString *venueIconURL = nil;
+    
+    /*if ([categories count] > 0) {
         
         NSString *venueIconURLPrefix = [[categories[0] objectForKey:@"icon"] objectForKey:@"prefix"];
         NSString *venueIconURLSuffix = [[categories[0] objectForKey:@"icon"] objectForKey:@"suffix"];
         
          venueIconURL = [NSString stringWithFormat:@"%@bg_64%@",venueIconURLPrefix,venueIconURLSuffix];
         [venueDetails addObject:venueIconURL];
-    }
+    }*/
     
        return venueDetails;
 }
+
+
 - (IBAction)dismissVC:(id)sender
 {
     /*[self dismissViewControllerAnimated:YES completion:nil];*/
@@ -484,8 +516,31 @@ static CLLocationManager *locationManager;
     [self.filteredLocations removeAllObjects];
     
     // Filter the array using NSPredicate
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"name contains[c] %@",searchText];
-    self.filteredLocations = [NSMutableArray arrayWithArray:[self.locations filteredArrayUsingPredicate:predicate]];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"name contains[c]%@",searchText];
+    self.filteredLocations = [[NSMutableArray arrayWithArray:[self.locations filteredArrayUsingPredicate:predicate]] mutableCopy];
+}
+
+- (void)filterMatchingLocations:(NSString *)searchText matchingLocations:(NSArray *)locations
+{
+    // Update the filtered array based on the search text and scope.
+    // Remove all objects from the filtered search array
+    [self.filteredLocations removeAllObjects];
+    
+    NSMutableArray *locationsToFilter = [NSMutableArray arrayWithArray:self.locations];
+    if (locations) {
+       [locationsToFilter addObjectsFromArray:locations];
+    }
+    
+    DLog(@"self.locations: %@",self.locations);
+    
+    // Filter the array using NSPredicate
+        NSPredicate *namePredicate = [NSPredicate predicateWithFormat:@"name contains[c] %@",searchText];
+        self.filteredLocations = [[NSMutableArray arrayWithArray:[locationsToFilter
+                                                                 filteredArrayUsingPredicate:namePredicate]] mutableCopy];
+   
+    DLog(@"Filtered Locations: %@",self.filteredLocations);
+    
+    [self.venuesTableView reloadData];
 }
 
 
@@ -549,6 +604,45 @@ static CLLocationManager *locationManager;
     }
 }
 
+-(void)displayGlobalFourSquareLocations:(NSString *)locationPassed{
+    
+    //NSLog(@"Will start searching foursquare");
+    [self.loadingMatchingLocationsIndicator startAnimating];
+    NSString *radius = @"1000";
+    NSString *requestURL = [NSString stringWithFormat:@"%@venues/search",FOURSQUARE_BASE_URL_STRING];
+    
+    AFHTTPRequestOperationManager *manager =[AFHTTPRequestOperationManager manager];
+    [manager GET:requestURL parameters:@{@"client_id": FOURSQUARE_API_CLIENT_ID,
+                                         @"client_secret": FOURSQUARE_API_CLIENT_SECRET,
+                                         @"intent" : @"global",
+                                         @"query" : locationPassed,
+                                         @"radius" : radius,
+                                         @"limit" : @"50",
+                                         @"v" : @"20141108"
+                                        }
+         success:^(AFHTTPRequestOperation *operation,id responseObject){
+             
+             NSArray *foursquareLocations = [[responseObject objectForKey:@"response"] objectForKey:@"venues"];
+             // Sort by name
+             NSSortDescriptor *distanceSorter = [[NSSortDescriptor alloc] initWithKey:@"location.name"
+                                                                            ascending:YES];
+             
+             NSArray *sortDescriptors = [NSArray arrayWithObject:distanceSorter];
+             NSArray *sortedLocations = [foursquareLocations sortedArrayUsingDescriptors:sortDescriptors];
+             
+             DLog(@"4square locations: %@",sortedLocations);
+             /*NSPredicate *predicate = [NSPredicate predicateWithFormat:@"location.country contains [c] %@",[AppHelper userCountry]];*/
+             
+             self.globalMatchingLocations = [NSMutableArray arrayWithArray:sortedLocations];
+             if ([self.globalMatchingLocations count] > 0) {
+                 [self.loadingMatchingLocationsIndicator stopAnimating];
+             }
+             [self filterMatchingLocations:locationPassed matchingLocations:self.globalMatchingLocations];
+            
+         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+             NSLog(@"Error: %@", error);
+         }];
+}
 
 
 
@@ -574,5 +668,65 @@ static CLLocationManager *locationManager;
         [self locationChangeDone:self.doneButton];
     }
 }
+
+
+
+#pragma mark - UISearchbar Delegate Methods
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
+{
+    [searchBar setShowsCancelButton:YES animated:YES];
+}
+
+- (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar
+{
+    [searchBar setShowsCancelButton:NO animated:YES];
+}
+
+
+-(void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
+{
+   [searchBar setShowsCancelButton:NO animated:YES];
+    [searchBar resignFirstResponder];
+    
+    if(searchBar.text.length <= 0){
+        if (self.filteredLocations) {
+            [self.filteredLocations removeAllObjects];
+        }
+        NSMutableArray *foursquareLocations = self.locations;
+        self.filteredLocations = [foursquareLocations mutableCopy];
+        [self.venuesTableView reloadData];
+    }
+}
+
+
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    if (searchText.length > 0) {
+       [self displayGlobalFourSquareLocations:searchText];
+        [self filterMatchingLocations:searchText matchingLocations:nil];
+    }else{
+        if (self.filteredLocations) {
+            [self.filteredLocations removeAllObjects];
+        }
+        NSMutableArray *foursquareLocations = self.locations;
+        self.filteredLocations = [foursquareLocations mutableCopy];
+        [self.venuesTableView reloadData];
+    }
+    
+    
+    
+}
+
+-(void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+    [searchBar resignFirstResponder];
+    if (searchBar.text.length > 0) {
+        [self displayGlobalFourSquareLocations:searchBar.text];
+    }
+    
+    [self filterMatchingLocations:searchBar.text matchingLocations:nil];
+}
+
 
 @end

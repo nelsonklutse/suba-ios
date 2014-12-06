@@ -10,6 +10,7 @@
 #import "LSPushProviderAPIClient.h"
 #import "PhotoStreamViewController.h"
 #import "NotificationCell.h"
+#import "User.h"
 
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
@@ -40,29 +41,61 @@
     
     self.navigationItem.titleView = navImageView;
     
-    NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
-    if (remoteNotificationType == 0) {
-        // Show give us notifications
-        self.notRegisteredForRemoteNotificationsView.alpha = 1;
-        self.noRemoteNotificationsView.alpha = 0;
-        self.notificationsTableView.alpha = 0;
-    }else{
-        self.notRegisteredForRemoteNotificationsView.alpha = 0;
-        self.noRemoteNotificationsView.alpha = 0;
-        self.notificationsTableView.alpha = 1;
-        [self.notificationsTableView reloadData];
-       [self fetchNotificationsFromProvider];
+    DLog();
+    DLog(@"System ios version: %f",[[[UIDevice currentDevice] systemVersion] floatValue]);
+    if (IS_OS_8_OR_LATER){
+        //DLog(@"We're using ios 8");
+        if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+        // We register differently on iOS 8
+        
+        UIUserNotificationSettings *notificationSettings = [[UIApplication sharedApplication] currentUserNotificationSettings];
+        
+        //DLog(@"User Notification Settings: %u",[notificationSettings types]);
+        if (notificationSettings == 0) {
+            // Show give us notifications
+            self.notRegisteredForRemoteNotificationsView.alpha = 1;
+            self.noRemoteNotificationsView.alpha = 0;
+            self.notificationsTableView.alpha = 0;
+        }else{
+            self.notRegisteredForRemoteNotificationsView.alpha = 0;
+            self.noRemoteNotificationsView.alpha = 0;
+            self.notificationsTableView.alpha = 1;
+            [self.notificationsTableView reloadData];
+            [self fetchNotificationsFromProvider];
+        }
     }
+    
+    } else  if(IS_OS_7_OR_BEFORE){
+        DLog(@"We're using ios 7");
+        NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+        
+        if (remoteNotificationType == 0) {
+            // Show give us notifications
+            self.notRegisteredForRemoteNotificationsView.alpha = 1;
+            self.noRemoteNotificationsView.alpha = 0;
+            self.notificationsTableView.alpha = 0;
+        }else{
+            self.notRegisteredForRemoteNotificationsView.alpha = 0;
+            self.noRemoteNotificationsView.alpha = 0;
+            self.notificationsTableView.alpha = 1;
+            [self.notificationsTableView reloadData];
+            [self fetchNotificationsFromProvider];
+        }
+
+    }
+    
+
+
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userRegisteredForPushNotification:) name:kUserRegisterForPushNotification object:nil];
     
-    DLog(@"Notification enabled for app - %u",[[UIApplication sharedApplication] enabledRemoteNotificationTypes]);
+    
 }
 
 
 -(void)viewDidAppear:(BOOL)animated
 {
-    NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
+    /*NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
     if (remoteNotificationType == 0) {
         // Show give us notifications
         self.notRegisteredForRemoteNotificationsView.alpha = 1;
@@ -74,7 +107,7 @@
         self.notificationsTableView.alpha = 1;
         [self.notificationsTableView reloadData];
         [self fetchNotificationsFromProvider];
-    }
+    }*/
 
 }
 
@@ -89,7 +122,7 @@
 #pragma mark - Remote Notifications methods
 -(void)fetchNotificationsFromProvider
 {
-    //DLog(@"Fetch notifications");
+    DLog(@"Fetch notifications");
     
     [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:YES];
     
@@ -102,7 +135,7 @@
                 NSArray *attachments = [responseObject objectForKey:@"notifications"];
                 self.notifications = attachments;
                 if ([attachments count] > 0) {
-                    DLog(@"Notifications - %@",attachments);
+                    DLog(@"Notifications - %@",attachments); 
                                                   
                     NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
                    
@@ -157,18 +190,20 @@
     cell.senderImageView.layer.cornerRadius = 25;
     cell.senderImageView.layer.borderWidth = 1;
     cell.senderImageView.layer.borderColor = [UIColor lightGrayColor].CGColor;
-    
+    //cell.senderImageView.image = nil;
     cell.notificationMessage.text = self.notifications[indexPath.row][@"message"];
     [cell.notificationMessage sizeToFit];
     
     DLog(@"Notification Message: %@",cell.notificationMessage.text);
     
-    if (self.notifications[indexPath.row][@"objectOfInterest"]){
-        NSString *senderPhoto = self.notifications[indexPath.row][@"objectOfInterest"];
+    if (self.notifications[indexPath.row][@"senderPhoto"]){
+        NSString *senderPhoto = self.notifications[indexPath.row][@"senderPhoto"];
         NSURL *senderPhotoURL = [NSURL URLWithString:senderPhoto];
         
         [cell.senderImageView setImageWithURL:senderPhotoURL
                        placeholderImage:[UIImage imageNamed:@"anonymousUser"]];
+    }else{
+        [cell.senderImageView setImage:[UIImage imageNamed:@"anonymousUser"]];
     }
 
     return cell;
@@ -240,5 +275,23 @@
     [self.notificationsTableView reloadData];
     [self fetchNotificationsFromProvider];
 }
+
+
+
+-(void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data completion:(GeneralCompletion)completionBlock
+{
+    [[User currentlyActiveUser] joinSpotCompletionCode:spotCode completion:^(id results, NSError *error){
+        if (!error) {
+            [Flurry logEvent:@"Join_Stream_With_Code"];
+            completionBlock(results,nil);
+        }else{
+            completionBlock(nil,error);
+        }
+    }];
+}
+
+
+
+
 
 @end

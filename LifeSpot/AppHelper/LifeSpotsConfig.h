@@ -11,8 +11,7 @@
 
 //#define LifespotsAPIBaseURLString @"http://10.1.0.62:9000/"
 
-
-#pragma mark - Foursquare constants
+#define kSUBA_GOOGLEPLUS_CLIENT_ID @"512360568953-nlqmelssq00kiibok7u4bkf5o0rhca7n.apps.googleusercontent.com"
 
 #define FOURSQUARE_BASE_URL_STRING @"https://api.foursquare.com/v2/"
 #define FOURSQUARE_API_CLIENT_ID @"IMWAXAYYFEMCEUYIGPZXTLDLW4E0TTACE1PBPPWXRMXYO2SK"
@@ -33,6 +32,9 @@
 #define USER_HAS_INVITED @"user_has_invited"
 #define SHOW_FIRST_TIME_VIEW @"firstTimeView"
 #define GUEST_USER_ID @"guestUserId"
+#define PENDING_INVITES @"pendingInvites"
+#define kUSER_COUNTRY @"country"
+
 
 #define CREATE_ACCOUNT_TO_REMIX_PHOTOS @"You'll need a free Suba account to doodle on photos. Create one now? It will take seconds."
 
@@ -67,6 +69,7 @@
 #define FBLOGIN @"FBLogin"
 #define NATIVE_LOGIN @"loggedIn"
 #define FACEBOOK_LOGIN @"1"
+#define GOOGLE_LOGIN @"2"
 #define FB_SESSION @"FacebookSession"
 #define NATIVE @"0"
 #define IS_SPOT_ACTIVE @"ACTIVE_ALBUM"
@@ -114,6 +117,7 @@
 
 #define kEMPTY_STRING_WITH_SPACE @" "
 #define kEMPTY_STRING_WITHOUT_SPACE @""
+#define k_SEPARATOR_CHARACTER @"<>"
 
 // Notifications
 #define kFBInfoWasFetchedNotification @"FbUserInfoNotification"
@@ -125,7 +129,11 @@
 #define kPhotoGalleryTappedAtIndexNotification @"kPhotoGalleryTapped"
 #define kPhotoCellTappedAtIndexNotification @"kPhotoCellTapped"
 #define kUserReloadStreamNotification @"kUserJoinedSpot"
+#define kUpdateStreamNotification @"kUpdateStreamNotification"
 #define kUserRegisterForPushNotification @"kUserRegisteredForPushNotification"
+#define kInviteToStreamNotification @"InviteToStreamNotification"
+#define kGetStartedNotification @"GetStartedNotification"
+
 
 // User Status
 #define kSUBA_USER_STATUS_ANONYMOUS @"anonymous"
@@ -141,5 +149,35 @@
 
 #define kSUBA_APP_COLOR  [UIColor colorWithRed:217/255.0f green:77/255.0f blue:20/255.0f alpha:1.0f]
 
+// HTTP Methods
+#define kHTTP_METHOD_POST @"POST"
+#define kHTTP_METHOD_GET @"GET"
+
+
+// API ENDPOINTS
+#define kUPLOAD_PHOTOS_PATH @"spot/pictures/add"
+#define kUPLOAD_PHOTO_PATH @"spot/picture/add"
+
+
+// AVIARY KEYS
+#define kAviaryAPIKey @"2028899c9a9a6b5b"
+#define kAviarySecret @"07628d614c0e9472"
+
+#define RAND_FROM_TO(min, max) (min + arc4random_uniform(max - min + 1))
+
+
+
+// Suba status Codes
+#define kFAILED_UPLOAD @"s400"
+#define kRELOAD_STREAM_IMAGES @"s401"
+
+
+// View Controller Segues
+#define kPhotosStreamSegue @"PhotosStreamSegue"
+#define kFromUserSpotsToPhotosStreamSegue @"FromUserSpotsToPhotosStreamSegue"
+
+// ios version
+#define IS_OS_8_OR_LATER ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0)
+#define IS_OS_7_OR_BEFORE ([[[UIDevice currentDevice] systemVersion] floatValue] < 8.0)
 
 #endif

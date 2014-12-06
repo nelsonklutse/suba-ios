@@ -1,9 +1,9 @@
 #CSNotificationView
 
-Easy to use, iOS-7-style, semi-translucent notification view with blur that drops into `UIView` and `UITableView`.
+Easy to use, semi-translucent and blurring notification view that drops into `UIView`, `UITableView`, `UICollectionView`.
 Also supports displaying progress.
 
-**Requires iOS 7.**
+**Supports iOS 7 and iOS 8. Requires Xcode 6.**
 
 
 <div style="float: left; text-align: center">
@@ -18,7 +18,7 @@ Also supports displaying progress.
 
 ##Example code
 
-###Fire up quickly
+###Quick presentation
 
 ```objc
 [CSNotificationView showInViewController:self
@@ -32,7 +32,7 @@ Also supports displaying progress.
 									  
 ```
 
-###Activity
+###UIActivityIndicatorView built-in
 
 ```objc
 CSNotificationView* note = (...);
@@ -44,9 +44,23 @@ note.showingActivity = YES;
 	      duration:kCSNotificationViewDefaultShowDuration animated:YES];
 ```
 
-###Customize appearance
+###Tap handling
 
-####Use your custom image
+Handle tap events on the notification using a block callback
+
+```objc
+    __block typeof(self) weakSelf = self;
+    self.loadingNotificationView.tapHandler = ^{
+        [weakSelf cancelOperationXYZ];
+        [weakSelf.loadingNotificationView dismissWithStyle:CSNotificationViewStyleError
+                                  	   message:@"Cancelled"
+                                  	  duration:kCSNotificationViewDefaultShowDuration animated:YES];
+    };
+```
+
+###Customization
+
+####Custom image / icon
 
 ```objc
 note.image = [UIImage imageNamed:@"mustache"];

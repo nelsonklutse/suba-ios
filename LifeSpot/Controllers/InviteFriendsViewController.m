@@ -43,7 +43,6 @@ typedef enum{
 
 - (void)sendSMSToRecipients:(NSMutableArray *)recipients;
 -(void)showFbWebDialog:(NSDictionary *)params;
-//- (NSMutableArray *)filterFacebookFriends:(NSArray *)fbUsers;
 - (void)loadFacebookFriends;
 - (void)openFbSession;
 - (void)refreshTableView:(UITableView *)tableView;
@@ -413,7 +412,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 
 - (void)publishStory{
     
-    FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
+    /*FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
     params.link = [NSURL URLWithString:@"http://bit.ly/suba_fb"];
     params.friends = self.facebookRecipients;
     params.name = @"Suba ";
@@ -454,7 +453,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         
         // Invoke the Web Dialog
         [self showFbWebDialog:params];
-    }
+    }*/
 }
 
 
@@ -484,7 +483,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
                                                  NSError *error){
                                                    if (!error){
                                                        if ([[AppHelper facebookID] isEqualToString:@"-1"]){ // Facebook ID is not set
-                                                           [AppHelper setFacebookID:user.id]; // set the facebook id
+                                                           [AppHelper setFacebookID:user.objectID]; // set the facebook id
                                                            [self loadFacebookFriends];
                                                        }
                                                        
@@ -615,7 +614,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         }
         
         if ([self.facebookRecipients containsObject:friendInfo]) {
-            DLog(@"Contains object at row - %i",indexPath.row);
+            //DLog(@"Contains object at row - %li",indexPath.row);
             fbUserCell.accessoryType = UITableViewCellAccessoryCheckmark;
         }else if(![self.facebookRecipients containsObject:friendInfo]){
             fbUserCell.accessoryType = UITableViewCellAccessoryNone;
@@ -640,7 +639,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 -(NSIndexPath *)tableView:(UITableView *)tableView willSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // Lets check whether person can share with the native Facebook share dialog
-    FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
+    /*FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
     params.link = [NSURL URLWithString:@"http://www.subaapp.com"];
     params.friends = self.facebookRecipients;
     params.name = @"Suba";
@@ -652,7 +651,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
         DLog(@"Facebook App not installed");
         self.facebookFriendsTableView.allowsMultipleSelection = NO;
         //self.searchDisplayController.searchResultsTableView.allowsMultipleSelection = NO;
-    }
+    }*/
     return indexPath;
 }
 

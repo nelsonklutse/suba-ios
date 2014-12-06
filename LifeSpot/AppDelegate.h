@@ -9,14 +9,19 @@
 #import <UIKit/UIKit.h>
 
 @class SubaTutorialController;
+@class MainStreamViewController;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 @property (strong, nonatomic) SubaTutorialController *viewController;
+
+//@property (strong,nonatomic) MainStreamViewController *viewControllerForRefresh;
+
 @property (strong,nonatomic) UINavigationController *rootNavController;
 @property (strong,nonatomic) UITabBarController *mainTabBarController;
 @property (strong,nonatomic) SubaAPIClient *apiBaseURL;
+@property (strong,nonatomic) UIViewController *topViewController;
 
 - (UIViewController *)topViewController;
 - (void)resetMainViewController;

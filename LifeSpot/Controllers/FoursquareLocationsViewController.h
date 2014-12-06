@@ -15,7 +15,7 @@
 
 @property (strong,nonatomic) id<FourSquareLocationsDelegate> delegate;
 @property (strong,nonatomic) Location *currentLocation;
-@property (retain,nonatomic) NSArray *locations;
+@property (strong,nonatomic) NSMutableArray *locations;
 @property (retain,nonatomic,readonly) NSString *currentLocationSelected;
 @property (strong,nonatomic,readonly) Location *venueChosen;
 @property (strong,nonatomic) NSArray *subaLocations;

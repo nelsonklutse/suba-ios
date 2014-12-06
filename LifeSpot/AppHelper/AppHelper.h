@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+typedef void (^SBRefreshCompletionHandler) (BOOL didReceiveNewStreams);
 typedef void (^GeneralCompletion) (id results,NSError *error);
 typedef void (^UserNameCheckerCompletion) (id results,NSError *error);
 typedef void (^UserLoggedInCompletion) (id results,NSError *error);
@@ -74,6 +75,8 @@ typedef void (^NotificationCompletion) ();
 + (NSInteger)appSessions;
 + (void)increaseAppSessions;
 
++ (NSString *)userCountry;
++ (void)setUserCountry:(NSString *)country;
 
 + (NSString *)userStatus;
 + (void)setUserStatus:(NSString *)status;
@@ -121,8 +124,10 @@ typedef void (^NotificationCompletion) ();
 + (void)increasePhotoStreamEntries;
 
 + (void)openFBSession:(GeneralCompletion)completion;
-
-
++ (void)saveInviteParams:(NSDictionary *)referringParams;
++ (NSMutableArray *)getInviteParams;
++ (BOOL)inviteParamsExists:(NSDictionary *)referringParams;
++ (void)clearPendingInvites:(NSDictionary *)referringParams;
 @end
 
 

@@ -63,9 +63,9 @@
 /*! Loads assets from the assets group (album)
  *
  * \param albumName Custom album name
- *
- * \return An array of images from target album
+ * \param completion Block to be executed when succeed or failed to load images from target album
  */
-- (NSArray *)loadPhotosFromAlbum:(NSString *)albumName;
+- (void)loadImagesFromAlbum:(NSString *)albumName
+                 completion:(void (^)(NSMutableArray *images, NSError *error))completion;
 
 @end

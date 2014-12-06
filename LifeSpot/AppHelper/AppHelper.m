@@ -9,6 +9,7 @@
 #import "AppHelper.h"
 #import "SubaAPIClient.h"
 #import "User.h"
+#import "Branch.h"
 
 @interface AppHelper()
 + (void)clearUserSession;
@@ -172,6 +173,24 @@
     NSString *albums =  [userDefaults valueForKey:NUMBER_OF_ALBUMS];
     return [albums integerValue];
 }
+
++(void)setUserCountry:(NSString *)country
+{
+   NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    
+    [userDefaults setValue:country forKey:kUSER_COUNTRY];
+    DLog(@"Saving %@ as user country",country);
+    [userDefaults synchronize];
+}
+
++(NSString *)userCountry
+{
+    NSString *userCountry = [[NSUserDefaults standardUserDefaults] valueForKey:kUSER_COUNTRY];
+    DLog(@"User is from %@",userCountry);
+    return userCountry;
+}
+
+
 
 + (void)updateNumberOfAlbums:(NSInteger)update
 {
@@ -516,6 +535,68 @@
     [userDefaults synchronize];
 }
 
++ (void)saveInviteParams:(NSDictionary *)referringParams
+{
+    if (![self inviteParamsExists:referringParams]){
+        
+        NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+        NSMutableArray *pendingInvites = [[self getInviteParams] mutableCopy];
+        
+        if (pendingInvites == nil) {
+            pendingInvites = [NSMutableArray array];
+            [pendingInvites addObject:referringParams];
+        }else{
+            [pendingInvites addObject:referringParams];
+        }
+        
+        [userDefaults setObject:pendingInvites forKey:PENDING_INVITES];
+        [userDefaults synchronize];
+        
+        //DLog(@::)
+        
+    }else{
+       DLog(@"We've already saved this pending invite");
+   }
+    
+}
+
++(NSMutableArray *)getInviteParams
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    return [userDefaults valueForKey:PENDING_INVITES];
+}
+
++(BOOL)inviteParamsExists:(NSDictionary *)referringParams
+{
+    NSMutableArray *pendingInvites = [self getInviteParams];
+    
+    for(NSDictionary *params in pendingInvites){
+        
+        if ([params[@"streamId"] integerValue] == [referringParams[@"streamId"] integerValue]){
+            DLog(@"Pending invite stream Name: %@\nNew invite stream name: %@",params[@"streamName"],referringParams[@"streamName"]);
+            
+            return YES;
+        }
+    }
+    
+    return NO;
+}
+
+
++(void)clearPendingInvites:(NSDictionary *)referringParams
+{
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSMutableArray *invites = [[self getInviteParams] mutableCopy];
+    [invites removeObject:referringParams];
+    
+    [userDefaults setObject:invites forKey:PENDING_INVITES];
+    [userDefaults synchronize];
+    
+    Branch *branch = [Branch getInstance:@"55726832636395855"];
+    [branch logout];
+    DLog(@"Saved invites: %@",[self getInviteParams]);
+}
+
 
 + (NSDictionary *)userPreferences{
      NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -535,10 +616,10 @@
 #pragma mark - API calls
 + (void)createUserAccount:(NSDictionary *)user WithType:(NSString *)type completion:(GeneralCompletion)completionBlock{
     
-    if ([type isEqualToString:FACEBOOK_LOGIN]){
+    if ([type isEqualToString:FACEBOOK_LOGIN] || [type isEqualToString:GOOGLE_LOGIN]){
+        DLog(@"Login type: %@",type);
         
         //Do Facebook Login
-        
         [[SubaAPIClient sharedInstance]
          POST:@"authenticate"
          parameters:@{
@@ -613,7 +694,7 @@
             EMAIL: emailOrUserName,
             PASSWORD : password
        } success:^(NSURLSessionDataTask *task, id responseObject) {
-            DLog(@"Response - %@",responseObject);
+            DLog(@"Login - %@",responseObject);
            //[self setUserSession:@"login"];
            completionBlock(responseObject,nil);
            
@@ -740,7 +821,7 @@
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     CGRect frame = CGRectZero;
     NSString *initials = [[self initialStringForPersonString:person] uppercaseString];
-    int numberOfCharacters = initials.length;
+    NSUInteger numberOfCharacters = initials.length;
     
     if (numberOfCharacters == 1){
         
@@ -770,24 +851,33 @@
 +(NSString *)initialStringForPersonString:(NSString *)personString
 {
     NSString *initials = nil;
-    NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
-    NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
-    
-    for (NSString *component in mutableComps) {
-        if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]) {
-            [mutableComps removeObject:component];
+    @try {
+        if (![personString isKindOfClass:[NSNull class]]) {
+            
+            NSArray *comps = [personString componentsSeparatedByString:k_SEPARATOR_CHARACTER];
+            NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
+            
+            for (NSString *component in mutableComps) {
+                if ([component isEqualToString:kEMPTY_STRING_WITH_SPACE]
+                    || [component isEqualToString:kEMPTY_STRING_WITHOUT_SPACE]){
+                    
+                    [mutableComps removeObject:component];
+                }
+            }
+            
+            if ([mutableComps count] >= 2) {
+                NSString *firstName = mutableComps[0];
+                NSString *lastName = mutableComps[1];
+                
+                initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
+            } else if ([mutableComps count] == 1) {
+                NSString *name = mutableComps[0];
+                initials =  [name substringToIndex:1];
+            }
         }
-    }
-    
-    if ([mutableComps count] >= 2) {
-        NSString *firstName = mutableComps[0];
-        NSString *lastName = mutableComps[1];
         
-        initials =  [NSString stringWithFormat:@"%@%@", [firstName substringToIndex:1], [lastName substringToIndex:1]];
-    } else if ([mutableComps count]) {
-        NSString *name = mutableComps[0];
-        initials =  [name substringToIndex:1];
-    }
+    }@catch (NSException *exception) {}
+    @finally {}
     
     return initials;
 }
@@ -826,7 +916,7 @@
     NSInteger numberOfStreamEntries = [self numberOfPhotoStreamEntries] + 1;
     
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
-    [userDefaults setValue:[NSString stringWithFormat:@"%i",numberOfStreamEntries] forKey:kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES];
+    [userDefaults setValue:[NSString stringWithFormat:@"%li",(long)numberOfStreamEntries] forKey:kSUBA_USER_NUMBER_OF_PHOTO_STREAM_ENTRIES];
     
     [userDefaults synchronize];
 }
@@ -834,7 +924,7 @@
 
 +(void)openFBSession:(GeneralCompletion)completion
 {
-    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
         
         
         DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
@@ -867,12 +957,12 @@
                         
                         [AppHelper setProfilePhotoURL:pictureURL];
                         
-                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.objectID,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
                         
                         
                         
                         NSDictionary *fbSignUpDetails = @{
-                                                          @"id" :user.id,
+                                                          @"id" :user.objectID, 
                                                           FIRST_NAME: user.first_name,
                                                           LAST_NAME : user.last_name,
                                                           EMAIL :  userEmail,

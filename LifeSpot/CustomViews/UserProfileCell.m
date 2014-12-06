@@ -13,6 +13,7 @@
 @interface UserProfileCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
 
 @property (strong,nonatomic) NSArray *gImages;
+@property (strong,nonatomic) NSArray *allPhotos;
 @property (strong,nonatomic) NSMutableDictionary *spotInfo;
 @property NSInteger galleryIndex;
 
@@ -102,13 +103,13 @@
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     self.galleryIndex = index;
     
-    NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
+    /*NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
     NSRange rangeSecondArray = NSMakeRange(0, index);
     NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
-    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];
+    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];*/
     
-    self.gImages = [firstArray arrayByAddingObjectsFromArray:secondArray];
-    [self.spotInfo setValue:self.gImages forKey:@"photoURLs"];
+    //self.allPhotos = [firstArray arrayByAddingObjectsFromArray:secondArray];
+    [self.spotInfo setValue:self.allPhotos forKey:@"photoURLs"];
     
     [[NSNotificationCenter defaultCenter]
      postNotificationName:kPhotoGalleryTappedAtIndexNotification
@@ -125,13 +126,13 @@
     NSArray *allphotos = [NSMutableArray arrayWithArray:
                           [NSOrderedSet orderedSetWithArray:spotInfo[@"photoURLs"]].array];
     
-    DLog(@"Number of Photos to load - %i",[allphotos count]);
+    //DLog(@"Number of Photos to load - %i",[allphotos count]);
     
     NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
-    NSArray *sortedPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
+    self.allPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
     
-    self.gImages = [NSMutableArray arrayWithArray:sortedPhotos];
+    self.gImages = [NSMutableArray arrayWithObject:self.allPhotos[0]];
     
     self.galleryIndex = indexPath.row;
     
@@ -177,7 +178,7 @@
      makeObjectsPerformSelector:@selector(removeFromSuperview)];
     CGRect frame = CGRectZero;
     NSString *initials = [[self initialStringForPersonString:person] uppercaseString];
-    int numberOfCharacters = initials.length;
+    NSUInteger numberOfCharacters = initials.length;
     
     if (numberOfCharacters == 1){
         
@@ -209,7 +210,7 @@
     @try {
         if (![personString isKindOfClass:[NSNull class]]) {
             
-            NSArray *comps = [personString componentsSeparatedByString:kEMPTY_STRING_WITH_SPACE];
+            NSArray *comps = [personString componentsSeparatedByString:k_SEPARATOR_CHARACTER];
             NSMutableArray *mutableComps = [NSMutableArray arrayWithArray:comps];
             
             for (NSString *component in mutableComps) {

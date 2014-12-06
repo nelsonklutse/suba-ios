@@ -8,6 +8,7 @@
 
 #import "SignUpViewController.h"
 #import "PhotoStreamViewController.h"
+#import "TermsViewController.h"
 
 @interface SignUpViewController ()<UITextFieldDelegate>
 
@@ -34,8 +35,8 @@
 - (void)checkAllTextFields;
 - (void)checkUserName:(NSString *)userName;
 - (void)createUserAccount:(NSDictionary *)params;
-- (void)keyboardWillShowNotification:(NSNotification *)aNotification;
-- (void)keyboardWillHidesNotification:(NSNotification *)aNotification;
+//- (void)keyboardWillShowNotification:(NSNotification *)aNotification;
+//- (void)keyboardWillHidesNotification:(NSNotification *)aNotification;
 
 @end
 
@@ -141,13 +142,16 @@ bool isUserNameAvailable = NO;
 }
 
 - (IBAction)dismissKeypad:(id)sender{
-   
+    DLog();
     [self.firstNameField resignFirstResponder];
     [self.lastNameField resignFirstResponder];
     [self.emailField resignFirstResponder];
     [self.userNameField resignFirstResponder];
     [self.passwordField resignFirstResponder];
     [self.confirmPasswordField resignFirstResponder];
+    
+    UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+    [scrollView setContentOffset:CGPointMake(0,0) animated:YES];
 }
 
 
@@ -157,13 +161,26 @@ bool isUserNameAvailable = NO;
 {
     if (textField == self.firstNameField)[self.lastNameField becomeFirstResponder];
     if (textField == self.lastNameField)[self.userNameField becomeFirstResponder];
-    if (textField == self.userNameField)[self.emailField becomeFirstResponder];
-    if (textField == self.emailField)[self.passwordField becomeFirstResponder];
-    if (textField == self.passwordField)[self.confirmPasswordField becomeFirstResponder];
+    if (textField == self.userNameField){
+        UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+        [scrollView setContentOffset:CGPointMake(0, scrollView.frame.origin.y + textField.frame.size.height) animated:YES];
+      [self.emailField becomeFirstResponder];
+    }
+    if (textField == self.emailField){
+        UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+        [scrollView setContentOffset:CGPointMake(0, scrollView.frame.origin.y + self.emailField.frame.size.height) animated:YES];
+        [self.passwordField becomeFirstResponder];
+    }
+    if (textField == self.passwordField){
+        UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+        [scrollView setContentOffset:CGPointMake(0, scrollView.frame.origin.y + self.passwordField.frame.size.height+50) animated:YES];
+        
+        [self.confirmPasswordField becomeFirstResponder];
+    }
     
     if (textField == self.confirmPasswordField && ![textField.text isEqualToString:@""]) {
         
-        if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]
+        /*if (![self.emailField.text isEqualToString:@""] && ![self.userNameField.text isEqualToString:@""]
              && ![self.firstNameField.text isEqualToString:@""] && ![self.lastNameField.text isEqualToString:@""]
             && ![self.passwordField.text isEqualToString:@""]){
             // Now all the fields are not empty
@@ -204,7 +221,20 @@ bool isUserNameAvailable = NO;
                 
                 [alertView show];
             }
-        }
+        }*/
+        
+        DLog();
+        [self.firstNameField resignFirstResponder];
+        [self.lastNameField resignFirstResponder];
+        [self.emailField resignFirstResponder];
+        [self.userNameField resignFirstResponder];
+        [self.passwordField resignFirstResponder];
+        [self.confirmPasswordField resignFirstResponder];
+        
+        UIScrollView *scrollView = (UIScrollView *)[self.view viewWithTag:100];
+        [scrollView setContentOffset:CGPointMake(0,0) animated:YES];
+
+        
         
     }
     return YES;
@@ -299,6 +329,23 @@ bool isUserNameAvailable = NO;
         pVC.spotName = streamInfo[@"streamName"];
         pVC.numberOfPhotos = [streamInfo[@"photos"] integerValue];
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACTIVE_SPOT_CODE];
+        
+    }else if ([segue.identifier isEqualToString:@"Agree_Terms_Segue"]){
+        
+        NSURL *url = nil;
+        TermsViewController *tVC = segue.destinationViewController;
+        url = [NSURL URLWithString:@"http://www.subaapp.com/terms.html"];
+        tVC.navigationItem.title = @"Terms";
+        tVC.urlToLoad = url;
+        
+    }else if ([segue.identifier isEqualToString:@"Agree_Privacy_Segue"]){
+        NSURL *url = nil;
+        TermsViewController *tVC = segue.destinationViewController;
+        url = [NSURL URLWithString:@"http://www.subaapp.com/privacy.html"];
+        tVC.navigationItem.title = @"Privacy";
+        tVC.urlToLoad = url;
+
+        
     }
 }
 
@@ -335,7 +382,7 @@ bool isUserNameAvailable = NO;
 }
 
 #pragma mark - Handle the keyboard
--(void)keyboardWillShowNotification:(NSNotification *)aNotification
+/*-(void)keyboardWillShowNotification:(NSNotification *)aNotification
 {
     DLog(@"Keyboard notification Info -%@",[aNotification description]);
     NSDictionary *userInfo = [aNotification userInfo];
@@ -349,5 +396,6 @@ bool isUserNameAvailable = NO;
 -(void)keyboardWillHidesNotification:(NSNotification *)aNotification
 {
     DLog(@"Keyboard notification Info - %@",[aNotification description]);
-}
+}*/
+
 @end

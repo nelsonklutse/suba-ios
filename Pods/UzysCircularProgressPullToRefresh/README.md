@@ -6,12 +6,13 @@ Give Pinterest Like PullToRefresh to any UIScrollView with just simple code
 ![Screenshot](https://raw.github.com/uzysjung/UzysCircularProgressPullToRefresh/master/UzysCircularProgressPulltoRefresh2.gif)
 <!---![Screenshot](https://raw.github.com/uzysjung/UzysCircularProgressPullToRefresh/master/UzysCircularProgressPullToRefresh.gif)--->
 
-**UzysSlideMenu features:**
+**UzysCircularProgressPullToRefresh features:**
 
 * It's very simple to use.
 * Support iOS7.
 * Support only ARC
-* Support CocoaPods. (to be)
+* Support CocoaPods.
+* Support Orientation change.
 
 ## Installation
 Copy over the files libary folder to your project folder
@@ -45,7 +46,7 @@ adding PullToRefreshActionHandler
 [_tableView stopRefreshAnimation];
 ```
 
-### support customization
+### support customization 
 #### size change
 ``` objective-c
 [self.tableView.pullToRefreshView setSize:CGSizeMake(40, 40)];
@@ -63,6 +64,17 @@ adding PullToRefreshActionHandler
 [self.tableView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"thunderbird"]];
 ```
 
+#### pulling offset change
+``` objective-c
+[self.tableView.pullToRefreshView setProgressThreshold:25];
+```
+
+#### set LandScape Inset , Portrait Inset at Each Orientation.
+``` objective-c
+[self.tableView addTopInsetInPortrait:64 TopInsetInLandscape:52]; 
+// iOS 7 LandScape Navigationbar size 52 , Portrait Navigationbar size 64  
+```
+must call these customization methods after calling 'addPullToRefreshActionHandler'
 
 ## Contact
  - [Uzys.net](http://uzys.net)

@@ -108,6 +108,8 @@ int counter;
     NSString *albumName = aVC.spotName;
     NSString *spotId = aVC.spotID;
     
+    DLog(@"Spot name: %@\nSpot ID: %@",albumName,spotId);
+    
     int counter = 0;
     for (NSDictionary *spotToRemove in self.userSpots){
         
@@ -115,13 +117,20 @@ int counter;
             
             [self.userSpots removeObject:spotToRemove];
             
-            [self updateCollectionView:self.normalUserStreamCollectionView
-                            withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:1]]];
-            
+            //[self updateCollectionView:self.normalUserStreamCollectionView
+                           // withUpdate:@[[NSIndexPath indexPathForItem:counter inSection:0]]];
             break;
             
         }
         counter += 1;
+    }
+    
+    
+    if (self.normalUserStreamCollectionView.alpha == 1) {
+        //[self updateCollectionView:self.normalUserStreamCollectionView
+         //withUpdate:@[[NSIndexPath indexPathForItem:(counter-1) inSection:0]]];
+        
+        [self.normalUserStreamCollectionView reloadData];
     }
     
     UIColor *tintColor = [UIColor colorWithRed:(217.0f/255.0f)
@@ -451,8 +460,10 @@ int counter;
     
     [self figureOutWhichCollectionViewToShow];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshStream) name:kUserReloadStreamNotification object:nil];
-
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(refreshStream)
+                                                 name:kUserReloadStreamNotification
+                                               object:nil];
 }
 
 
@@ -504,23 +515,21 @@ int counter;
         [self performSelector:@selector(showMainSettings) withObject:nil afterDelay:0];
         
     }else{
-    
-    
-    
+        
     NSString  *userId = ( self.userId ) ? self.userId : [AppHelper userID];
-    DLog(@" Crrent UserId -%@\nApp user - %@",userId,[AppHelper userID]);
+        
     if (![userId isEqualToString:[AppHelper userID]]){
-        DLog(@"UserId to load -%@\nApp user - %@",userId,[AppHelper userID]);
+        //DLog(@"UserId to load -%@\nApp user - %@",userId,[AppHelper userID]);
         [self fetchUserStreams:userId];
         [self fetchUserInfo:userId];
     }else{
         //DLog(@"fetching streams of user with ID - %@",userId);
         [self fetchUserStreams:[AppHelper userID]];
-        [self fetchUserInfo:[AppHelper userID]];
+        //[self fetchUserInfo:[AppHelper userID]];
     }
         
      [self figureOutWhichCollectionViewToShow];
-    }
+  }
     
 }
 
@@ -587,11 +596,15 @@ int counter;
         if (error) {
             DLog(@"Error - %@",error);
         }else{
+            DLog(@"User streams- %@\nUser Info: %@",results[@"streams"],results[@"userInfo"]);
+            
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                NSArray *userStreams = results[@"spots"];
+                NSArray *userStreams = results[@"streams"];
+                self.userProfileInfo = results[@"userInfo"];
+                //DLog(@"Number of streams user  - %lu",(unsigned long)[userStreams count]);
                 if ([userStreams count] > 0){
                     
-                    //DLog(@"Number of streams user is a member of - %lu",(unsigned long)[userStreams count]);
+                    DLog(@"Number of streams user is a member of - %lu",(unsigned long)[userStreams count]);
                     
                     //NSArray *createdSpots = userStreams;
                     
@@ -599,7 +612,7 @@ int counter;
                     NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
                     NSArray *sortedSpots = [userStreams sortedArrayUsingDescriptors:sortDescriptors];
                     if (self.userSpots){
-                        //DLog(@"We already have some streams loaded previously");
+                        DLog(@"User streams- %@",self.userSpots);
                         [self.userSpots removeAllObjects];
                     }
                     self.userSpots = [NSMutableArray arrayWithArray:sortedSpots];
@@ -607,12 +620,9 @@ int counter;
                     [self figureOutWhichCollectionViewToShow];
                     
                 }
-
             }
-            
         }
     }];
-    
 }
 
 
@@ -620,30 +630,38 @@ int counter;
 {
     if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS] &&
         [AppHelper numberOfPhotoStreamEntries] == 0){
-        
+        DLog(@"showNoStreamsCollectionView");
         [self showNoStreamsCollectionView];
         
     }else if ([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_CONFIRMED] &&
               [AppHelper numberOfPhotoStreamEntries] >= 0){
-        
+        DLog(@"showNormalCollectionView");
         [self showNormalCollectionView];
         
     }else if([[AppHelper userStatus] isEqualToString:kSUBA_USER_STATUS_ANONYMOUS] && [AppHelper numberOfPhotoStreamEntries] > 0){
+        
+        DLog(@"showCreateAccountCollectionView");
         [self showCreateAccountCollectionView];
+    }else{
+        [self showNormalCollectionView];
     }
 }
 
--(void)fetchUserInfo:(NSString *)userId
+
+- (void)fetchUserInfo:(NSString *)userId
 {
     [User fetchUserProfileInfoCompletion:userId completion:^(id results, NSError *error){
         if (error) {
             //Log the error
             DLog(@"Error -  %@",error);
         }else{
+  
             DLog(@"User info - %@",results);
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 self.userProfileInfo = (NSDictionary *)results;
-                
+                if (results[@"profilePicURL"]) {
+                    [AppHelper setProfilePhotoURL:results[@"profilePicURL"]];
+                }
                 [self figureOutWhichCollectionViewToShow];
 
                 //[self.normalUserStreamCollectionView reloadData];
@@ -654,6 +672,8 @@ int counter;
         }
     }];
 }
+
+
 
 
 -(void)updateUserProfile
@@ -678,10 +698,24 @@ int counter;
 }
 
 
+-(void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data completion:(GeneralCompletion)completionBlock
+{
+    [[User currentlyActiveUser] joinSpotCompletionCode:spotCode completion:^(id results, NSError *error){
+        if (!error) {
+            [Flurry logEvent:@"Join_Stream_With_Code"];
+            completionBlock(results,nil);
+        }else{
+            completionBlock(nil,error);
+        }
+    }];
+}
+
+
+
 #pragma mark - UICollectionViewDatasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    DLog(@"how many spots to display - %i",[self.userSpots count]);
+    //DLog(@"how many spots to display - %lu",[self.userSpots count]);
     return [self.userSpots count];
 }
 
@@ -721,9 +755,12 @@ int counter;
         [userStreamsCell fillView:userStreamsCell.userNameView WithImage:imageSrc];
     }else{
         if (spotsToDisplay[indexPath.item][@"creatorFirstName"] && spotsToDisplay[indexPath.item][@"creatorLastName"]){
-            NSString *firstName = spotsToDisplay[indexPath.item][@"creatorFirstName"];
-            NSString *lastName = spotsToDisplay[indexPath.item][@"creatorLastName"];
-            NSString *personString = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
+            NSString *firstName = [(NSString *)spotsToDisplay[indexPath.item][@"creatorFirstName"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            
+            
+            NSString *lastName = [(NSString *)spotsToDisplay[indexPath.item][@"creatorLastName"] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            
+            NSString *personString = [NSString stringWithFormat:@"%@<>%@",firstName,lastName];
             
             [userStreamsCell makeInitialPlaceholderView:userStreamsCell.userNameView name:personString];
             
@@ -1007,17 +1044,15 @@ int counter;
          
          NSURL *profilePhotoURL = nil;
          
-         if (self.userProfileInfo){
-        
+         if(self.userProfileInfo){
              NSString *userName = self.userProfileInfo[@"userName"];
              if (self.userProfileInfo[@"firstName"] && self.userProfileInfo[@"lastName"]) {
              NSString *userFullName = [NSString stringWithFormat:@"%@ %@",self.userProfileInfo[@"firstName"],self.userProfileInfo[@"lastName"]];
-             
              headerView.userFullName.text = userFullName;
-             
              [headerView makeInitialPlaceholderViewWithSize:30.0
                                                        view:headerView.userProfileView
                                                        name:userFullName];
+                 
          }else if (self.userProfileInfo[@"firstName"]) {
              NSString *userFullName = [NSString stringWithFormat:@"%@",self.userProfileInfo[@"firstName"]];
              headerView.userFullName.text = userFullName;
@@ -1030,9 +1065,8 @@ int counter;
          }else{
              headerView.userUserName.text = [NSString stringWithFormat:@"@%@",userName];
          }
-  
-        NSString *numberOfSpots = [self.userProfileInfo[@"numberOfSpots"] stringValue];
              
+        //NSString *numberOfSpots = [self.userProfileInfo[@"numberOfSpots"] stringValue];
         if (self.userProfileInfo[@"profilePicURL"]){
             if (![[profilePhotoURL absoluteString] isEqualToString:kSUBA_GUEST_USER_ID]) {
                 profilePhotoURL = [NSURL URLWithString:self.userProfileInfo[@"profilePicURL"]];
@@ -1042,16 +1076,13 @@ int counter;
                      
                  }
              }
-             
-             headerView.userNumberOfStreamsLabel.text = numberOfSpots;
-             headerView.streamsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Stream" : @"Streams";
-             headerView.numberOfPhotosLabel.text = [self.userProfileInfo[@"photos"] stringValue];
+             //headerView.userNumberOfStreamsLabel.text = numberOfSpots;
+             //headerView.streamsLabel.text = ([numberOfSpots integerValue] == 1) ? @"Stream" : @"Streams";
+             //headerView.numberOfPhotosLabel.text = [self.userProfileInfo[@"photos"] stringValue];
              headerView.photosLabel.text = ([self.userProfileInfo[@"photos"] integerValue] == 1) ? @"Photo" : @"Photos";
-             
         }
-
-         reusableview = headerView;
          
+         reusableview = headerView;
      }
      return reusableview;
  }
@@ -1081,11 +1112,13 @@ int counter;
 #pragma mark - Segue Methods
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    if ([segue.identifier isEqualToString:@"FromUserSpotsToPhotosStreamSegue"]){
+    if ([segue.identifier isEqualToString:kFromUserSpotsToPhotosStreamSegue]){
         DLog(@"Preparing Segue");
         if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]){
             
             PhotoStreamViewController *photosVC = segue.destinationViewController;
+            
+            
             if (sender[@"photoURLs"]) {
                 
                 photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"photoURLs"]];
@@ -1094,16 +1127,15 @@ int counter;
             photosVC.spotName = sender[@"spotName"];
             photosVC.spotID = sender[@"spotId"];
             photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
+            photosVC.isUserMemberOfStream = @"YES";
             
             DLog(@"sender - %@",[sender description]);
         }
     }else if ([segue.identifier isEqualToString:@"UserProfileToMainSettingsSegue"]){
         
         if ([sender  isEqual: @(1)]) {
-            //DLog(@"Sender class - %@",[sender class]);
             UserSettingsViewController *userSettingsVC = segue.destinationViewController;
             userSettingsVC.autoInvite = YES;
-            //DLog();
         }
         
         
@@ -1117,7 +1149,7 @@ int counter;
     [self.fbLoginIndicator startAnimating];
     
     
-    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
         
         
         DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
@@ -1150,12 +1182,12 @@ int counter;
                         
                         [AppHelper setProfilePhotoURL:pictureURL];
                         
-                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
+                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.objectID,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL); 
                         
                         
                         
                         NSDictionary *fbSignUpDetails = @{
-                                                          @"id" :user.id,
+                                                          @"id" :user.objectID,
                                                           FIRST_NAME: user.first_name,
                                                           LAST_NAME : user.last_name,
                                                           EMAIL :  userEmail,
@@ -1190,10 +1222,6 @@ int counter;
     }];
     
 }
-
-
-
-
 
 
 

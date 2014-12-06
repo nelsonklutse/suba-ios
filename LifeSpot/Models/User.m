@@ -483,7 +483,8 @@
 }
 
 
-+ (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
+
+- (void)commentOnPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
 {
     [[SubaAPIClient sharedInstance] POST:@"photo/comment" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
         completion(responseObject,nil);
@@ -493,7 +494,19 @@
 }
 
 
-+(void)enterInviteCodeToJoinStream:(NSDictionary *)params completion:(GeneralCompletion)completion
+
++ (void)commentsForPhoto:(NSDictionary *)params completion:(GeneralCompletion)completion
+{
+    [[SubaAPIClient sharedInstance] POST:@"photo/comments" parameters:params success:^(NSURLSessionDataTask *task,id responseObject){
+        completion(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        completion(nil,error);
+    }];
+}
+
+
+
++ (void)enterInviteCodeToJoinStream:(NSDictionary *)params completion:(GeneralCompletion)completion
 {
     [[SubaAPIClient sharedInstance] GET:@"stream/join/secret" parameters:params success:^(NSURLSessionDataTask *task, id responseObject){
         completion(responseObject,nil);
@@ -524,6 +537,21 @@
         completionBlock(nil,error);
     }];
 }
+
+
+
++(void)resetPassword:(NSString *)email completion:(GeneralCompletion)completionHandler
+{
+    [[SubaAPIClient sharedInstance] POST:@"user/account/reset/email" parameters:@{@"email" : email} success:^(NSURLSessionDataTask *task, id responseObject){
+        DLog(@"response: %@",responseObject);
+        completionHandler(responseObject,nil);
+    } failure:^(NSURLSessionDataTask *task, NSError *error) {
+        DLog(@"response: %@",error);
+        completionHandler(nil,error);
+    }];
+}
+
+
 
 
 @end

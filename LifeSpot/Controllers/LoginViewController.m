@@ -9,7 +9,7 @@
 #import "LoginViewController.h"
 #import "User.h"
 
-@interface LoginViewController ()<UITextFieldDelegate>
+@interface LoginViewController ()<UITextFieldDelegate,UIAlertViewDelegate>
 @property (copy,nonatomic) NSString *userName;
 @property (copy,nonatomic) NSString *pass;
 
@@ -18,12 +18,12 @@
 @property (strong, nonatomic) IBOutlet UIScrollView *loginScrollView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *fbLoginIndicator;
 
-
 @property (weak, nonatomic) IBOutlet UIButton *facebookLoginBtn;
 - (IBAction)doFacebookLogin:(UIButton *)sender;
 
 - (void)loginUserWithEmail:(NSString *)email AndPassword:(NSString *)password;
 - (void)openFBSession;
+- (IBAction)resetPassword:(UIButton *)sender;
 @end
 
 @implementation LoginViewController
@@ -34,6 +34,7 @@
     self.loginBtn.enabled = NO;
     self.navigationController.navigationBarHidden = YES;
 	// Do any additional setup after loading the view.
+   
     
 }
 
@@ -93,7 +94,7 @@
 #pragma mark - Textfield delegate method
 -(BOOL)textFieldShouldBeginEditing:(UITextField *)textField
 {
-    [self.loginScrollView setContentOffset:CGPointMake(self.loginScrollView.frame.origin.x,50.0f)];
+    [self.loginScrollView setContentOffset:CGPointMake(self.loginScrollView.frame.origin.x,145.0f)];
     return YES;
 }
 
@@ -103,6 +104,7 @@
         [self.pwdField becomeFirstResponder];
     }else if (textField == self.userNameField && textField.text.length <= 0){
         [textField resignFirstResponder];
+        [self.loginScrollView setContentOffset:CGPointMake(self.loginScrollView.frame.origin.x,0.0f)];
     }
     
     if (textField == self.pwdField) { // if we are in the password field
@@ -161,7 +163,7 @@
 -(void)openFBSession
 {
     [self.fbLoginIndicator startAnimating];
-    [FBSession openActiveSessionWithReadPermissions:@[@"basic_info",@"email",@"user_birthday"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
+    [FBSession openActiveSessionWithReadPermissions:@[@"public_profile",@"email",@"user_friends"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
         
         
         DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
@@ -173,7 +175,7 @@
             
             
             
-            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
+            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,email,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
                 DLog(@"FB Auth Result - %@\nError - %@",result,error);
@@ -189,22 +191,17 @@
                         NSString *pictureURL = [[[result valueForKey:@"picture"] valueForKey:@"data"] valueForKey:@"url"];
                         
                         [AppHelper setProfilePhotoURL:pictureURL];
-                        
-                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nUsername - %@\nPicture - %@\n",user.id,user.first_name,user.last_name,[user valueForKey:@"email"],user.username,pictureURL);
-                        
-                        
+                        DLog(@"ID - %@\nfirst_name - %@\nLast_name - %@\nEmail - %@\nPicture - %@\n",user.objectID,user.first_name,user.last_name,[user valueForKey:@"email"],pictureURL);
                         
                         NSDictionary *fbSignUpDetails = @{
-                                                          @"id" :user.id,
+                                                          @"id" :user.objectID,
                                                           FIRST_NAME: user.first_name,
                                                           LAST_NAME : user.last_name,
                                                           EMAIL :  userEmail,
-                                                          USER_NAME : user.username,
+                                                          USER_NAME : userEmail,
                                                           @"pass" : @"",
                                                           PROFILE_PHOTO_URL : pictureURL
                                                         };
-                        
-                        //DLog(@"FB LOGIN UP DETAILS : %@",fbSignUpDetails);
                         
                         [AppHelper createUserAccount:fbSignUpDetails WithType:FACEBOOK_LOGIN completion:^(id results, NSError *error) {
                             [self.fbLoginIndicator stopAnimating];
@@ -222,22 +219,52 @@
                                     [self presentViewController:personalSpotsVC animated:YES completion:nil];
                                 }
                             }else{
-                                DLog(@"Error - %@",error);
+                                
+                                //DLog(@"Error - %@",error);
                                 [AppHelper showAlert:@"Authentication Error"
-                                             message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
+                                             message:@"There was a problem logging you in. Please wait a minute and try again"
                                              buttons:@[@"OK"]
                                             delegate:nil];
-                                
-                            }
+                                }
                         }];
                     }
                 }
             }];
         }
-        
     }];
-  
 }
+
+
+- (IBAction)resetPassword:(UIButton *)sender
+{
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"" message:@"Reset password" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Reset", nil];
+    alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
+    
+    alertView.tag = 300;
+    
+    [alertView show];
+    
+}
+
+
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (alertView.tag == 300) {
+        if (buttonIndex == 1) {
+            DLog(@"Send email");
+            NSString *alertViewText = [[alertView textFieldAtIndex:0] text];
+            [User resetPassword:alertViewText completion:^(id results, NSError *error){
+                if (error) {
+                    DLog(@"Error: %@",error);
+                }else DLog(@"results: %@",results);
+            }];
+        }
+        
+        
+
+    }
+}
+
 
 
 - (IBAction)doFacebookLogin:(UIButton *)sender

@@ -11,9 +11,13 @@
 @interface PhotoStreamCell : UICollectionViewCell
 
 @property (weak, nonatomic) IBOutlet UIImageView *photoCardImage;
+@property (weak, nonatomic) IBOutlet UIView *viewDoodleContainer;
+@property (weak, nonatomic) IBOutlet UIView *doodlePhotoContainer;
 
 @property (weak, nonatomic) IBOutlet UIView *loadingPictureView;
+
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingPictureIndicator;
+
 @property (weak, nonatomic) IBOutlet UIView *pictureTakerView;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfLikesLabel;
 @property (weak, nonatomic) IBOutlet UIButton *likePhotoButton;
@@ -23,11 +27,14 @@
 @property (weak, nonatomic) IBOutlet UIView *footerView;
 @property (weak, nonatomic) IBOutlet UIView *headerView;
 @property (weak, nonatomic) IBOutlet UIView *photoCardFooterView;
-@property (weak, nonatomic) IBOutlet UIButton *toggleDoodleButton;
+
+@property (weak, nonatomic) IBOutlet UIButton *commentsIcon;
 
 @property (weak, nonatomic) IBOutlet UILabel *numberOfRemixersLabel;
-@property (weak, nonatomic) IBOutlet UIButton *seeDoodleBtn;
 
+@property (weak, nonatomic) IBOutlet UIButton *showCommentsActionButton;
+
+@property (weak, nonatomic) IBOutlet UILabel *numberOfCommentsLabel;
 
 - (void)setBorderAroundView:(UIView *)view;
 - (void)makeInitialPlaceholderView:(UIView *)contextView name:(NSString *)person;

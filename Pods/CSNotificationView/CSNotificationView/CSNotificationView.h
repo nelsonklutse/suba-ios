@@ -17,6 +17,8 @@ typedef enum {
     CSNotificationViewStyleError,
 } CSNotificationViewStyle;
 
+typedef void(^CSVoidBlock)();
+
 @interface CSNotificationView : UIView
 
 #pragma mark + quick presentation
@@ -31,12 +33,24 @@ typedef enum {
            message:(NSString*)message
           duration:(NSTimeInterval)duration;
 
++ (void)showInViewController:(UIViewController*)viewController
+                   tintColor:(UIColor*)tintColor
+                        font:(UIFont*)font
+               textAlignment:(NSTextAlignment)textAlignment
+                       image:(UIImage*)image
+                     message:(NSString*)message
+                    duration:(NSTimeInterval)duration;
+
 #pragma mark + creators
 
 + (CSNotificationView*)notificationViewWithParentViewController:(UIViewController*)viewController
                                                       tintColor:(UIColor*)tintColor
                                                           image:(UIImage*)image
                                                         message:(NSString*)message;
+
+#pragma mark + icons
+
++ (UIImage*)imageForStyle:(CSNotificationViewStyle)style;
 
 #pragma mark - initialization
 
@@ -59,5 +73,7 @@ typedef enum {
 @property (nonatomic, strong) UIColor* tintColor;
 
 @property (nonatomic, getter = isShowingActivity) BOOL showingActivity;
+
+@property (nonatomic, copy) CSVoidBlock tapHandler;
 
 @end

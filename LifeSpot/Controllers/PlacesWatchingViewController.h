@@ -9,6 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface PlacesWatchingViewController : UIViewController
+
 @property (strong,nonatomic) NSMutableArray *spotsWatching;
 @property (strong,nonatomic) NSString *locationName;
+
 @end

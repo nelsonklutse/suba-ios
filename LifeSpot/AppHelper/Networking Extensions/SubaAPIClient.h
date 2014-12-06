@@ -9,5 +9,5 @@
 
 @interface SubaAPIClient : AFHTTPSessionManager
 + (instancetype)sharedInstance;
-+ (instancetype)subaAPIBaseURL;
++ (NSURL *)subaAPIBaseURL;
 @end

@@ -26,13 +26,13 @@
 
 @property (weak, nonatomic) IBOutlet UITextField *streamNameField;
 @property (weak, nonatomic) IBOutlet UITextField *streamCodeField;
-@property (weak, nonatomic) IBOutlet UITextView *spotDescription;
+//@property (weak, nonatomic) IBOutlet UITextView *spotDescription;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *saveAlbumSettingsBarItem;
 @property (weak, nonatomic) IBOutlet UIButton *locationNameButton;
 
-@property (weak, nonatomic) IBOutlet UISwitch *viewPrivacySwitch;
-@property (weak, nonatomic) IBOutlet UISwitch *addPrivacySwitch;
-@property (weak, nonatomic) IBOutlet UISwitch *memberInviteSwitch;
+//@property (weak, nonatomic) IBOutlet UISwitch *viewPrivacySwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *makeStreamPrivateSwitch;
+//@property (weak, nonatomic) IBOutlet UISwitch *memberInviteSwitch;
 @property (weak, nonatomic) IBOutlet UIButton *leaveAlbumButton;
 @property (weak, nonatomic) IBOutlet UIView *loadStreamSettingsIndicatorView;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingStreamSettingsOndicator;
@@ -41,10 +41,10 @@
 - (IBAction)unWindToSpotSettingsFromCancel:(UIStoryboardSegue *)segue;
 - (IBAction)unWindToSpotSettingsFromDone:(UIStoryboardSegue *)segue;
 
-- (IBAction)toggleViewPrivacySwitch:(UISwitch *)sender;
-- (IBAction)toggleAddPrivacySwitch:(UISwitch *)sender;
+//- (IBAction)toggleViewPrivacySwitch:(UISwitch *)sender;
+- (IBAction)toggleMakeStreamPrivateSwitch:(UISwitch *)sender;
 - (IBAction)saveAlbumAction:(UIBarButtonItem *)sender;
-- (IBAction)toggleMemberInviteSwitch:(id)sender;
+//- (IBAction)toggleMemberInviteSwitch:(id)sender;
 - (IBAction)locationButtonTapped:(id)sender;
 - (IBAction)leaveAlbumAction:(UIButton *)sender;
 - (IBAction)dismissKeypadOnBackgroundClick:(id)sender;
@@ -73,10 +73,10 @@ static CLLocationManager *locationManager;
     
     [self updateViewWithSpotInfo];
     
-    if (!self.addPrivacySwitch.isOn) {
+    /*if (!self.addPrivacySwitch.isOn) {
         self.viewPrivacySwitch.on = YES;
         self.viewPrivacySwitch.enabled = NO;
-    }
+    }*/
     
     self.leaveAlbumButton.enabled = NO;
     //self.deleteButton.enabled = NO;
@@ -109,7 +109,12 @@ static CLLocationManager *locationManager;
         
         locationManager = [[CLLocationManager alloc] init];
         locationManager.delegate = self;
-        [locationManager startUpdatingLocation];
+        if (IS_OS_7_OR_BEFORE) {
+            DLog(@"IOS 7");
+            [locationManager startUpdatingLocation];
+        }else if(IS_OS_8_OR_LATER){
+            [locationManager requestWhenInUseAuthorization];
+        }
         
         //}
     }
@@ -152,49 +157,46 @@ static CLLocationManager *locationManager;
     [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView
                          indicator:self.loadingStreamSettingsOndicator flag:YES];
     
-    
     [Spot fetchSpotInfo:self.spotID
              completion:^(id results, NSError *error){
                  
                  [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView indicator:self.loadingStreamSettingsOndicator flag:NO];
                  
                  if (!error){
-                     if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                         self.spotInfo = (NSDictionary *)results;
-                         self.spotName =  self.streamNameField.text = self.spotInfo[@"spotName"];
-                         
-                        self.streamCodeField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
+                     if([results[STATUS] isEqualToString:ALRIGHT]) {
+                       self.spotInfo = (NSDictionary *)results;
+                       DLog(@"SpotInfo: %@",self.spotInfo);
+                       self.spotName =  self.streamNameField.text = self.spotInfo[@"spotName"];
+                       self.streamCodeField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
                          ? @"" : self.spotInfo[@"spotCode"];
                 
                 [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
                 [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateDisabled];
+                self.makeStreamPrivateSwitch.on=([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE])?NO:YES;
                          
                 //self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
                          
-                self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
-                self.addPrivacySwitch.on = ([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
-                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"]
-                                               isEqualToString:sANYONE]) ? YES : NO;
+                /*self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
+                                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"]
+                                               isEqualToString:sANYONE]) ? YES : NO;*/
                          
-                if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
-                //DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
-                             
-                        // User did not create this album so disable stuff that he should not do
-                              [self disableViews];
-                              self.leaveAlbumButton.hidden = NO;
-                              [self.view viewWithTag:100].hidden = NO;
+                if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
+                    
+                    // User did not create this album so disable stuff that he should not do
+                        [self disableViews];
+                        self.leaveAlbumButton.hidden = NO;
+                        [self.view viewWithTag:100].hidden = NO;
                              
                          }else{ // If user is creator
                              self.leaveAlbumButton.hidden = YES;
                              [self.view viewWithTag:100].hidden = YES;
                              
                              if ([self canUserDeleteStream]) {
-                                 self.deleteButton.hidden = NO;
+                                  self.deleteButton.hidden = NO;
                                 }else{
                                  self.deleteButton.hidden = YES;
-                            
                              }
-                         }
+                           }
                         }
                      
                             self.leaveAlbumButton.enabled = YES;
@@ -213,11 +215,11 @@ static CLLocationManager *locationManager;
 
 
 - (IBAction)saveAlbumAction:(UIBarButtonItem *)sender {
+    
     UIActivityIndicatorView *acIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
     acIndicator.hidesWhenStopped = YES;
     acIndicator.frame = CGRectMake(135, 150, 30, 30);
     [acIndicator startAnimating];
-    //self.saveAlbumSettingsBarItem.
     NSMutableDictionary *spotInfo = [NSMutableDictionary dictionaryWithDictionary:
                                      @{@"userId" : [AppHelper userID],@"spotId": self.spotID}];
     
@@ -226,10 +228,10 @@ static CLLocationManager *locationManager;
         [spotInfo addEntriesFromDictionary:@{@"spotName": self.spotName}];
     }
     
-    if (![self.streamCodeField.text isEqualToString:self.spotInfo[@"spotCode"]]) {
+    //if (![self.streamCodeField.text isEqualToString:self.spotInfo[@"spotCode"]]){
         self.spotKey = self.streamCodeField.text;
         [spotInfo addEntriesFromDictionary:@{@"spotKey": self.spotKey}];
-    }
+    //}
     
     if (![self.locationNameButton.titleLabel.text isEqualToString:@"NONE"]
                 && ![self.spotInfo[@"venue"] isEqualToString:@"NONE"]){
@@ -253,22 +255,21 @@ static CLLocationManager *locationManager;
         [spotInfo addEntriesFromDictionary:@{@"description" : self.spotDesc}];
     }*/
     
-    NSString *viewPrivacy = @"0";
-    NSString *addPrivacy = @"0";
-    NSString *memberInvitePrivacy = @"0";
+    //NSString *viewPrivacy = @"0";
+    NSString *makeStreamPrivateSwitch = @"0";
+    //NSString *memberInvitePrivacy = @"0";
     
     
     
-    if (!self.addPrivacySwitch.isOn) {
-        self.viewPrivacySwitch.on = YES;
-    }
-    viewPrivacy = (self.viewPrivacySwitch.isOn) ? @"0" : @"1";
-    addPrivacy = (self.addPrivacySwitch.isOn) ? @"0" : @"1";
-    memberInvitePrivacy = (self.memberInviteSwitch.isOn) ? @"0" : @"1";
+    /*if (!self.makeStreamPrivateSwitch.isOn) {
+        self.makeStreamPrivateSwitch.on = YES;
+    }*/
     
-    [spotInfo addEntriesFromDictionary:@{@"viewSecurity": viewPrivacy,
-                                         @"addSecurity" : addPrivacy,
-                                         @"memberInvitePrivacy" : memberInvitePrivacy}];
+    //viewPrivacy = (self.viewPrivacySwitch.isOn) ? @"0" : @"1";
+    makeStreamPrivateSwitch = (self.makeStreamPrivateSwitch.isOn) ? @"1" : @"0";
+    //memberInvitePrivacy = (self.memberInviteSwitch.isOn) ? @"0" : @"1";
+    
+    [spotInfo addEntriesFromDictionary:@{@"addSecurity" : makeStreamPrivateSwitch}];
     
     
     [self saveAlbumInfo:spotInfo indicator:acIndicator];
@@ -278,6 +279,7 @@ static CLLocationManager *locationManager;
 - (void)saveAlbumInfo:(NSMutableDictionary *)spotInfo indicator:(id)indicator
 {
     DLog(@"Spot Info - %@",spotInfo);
+    
     //handle the save
     [Spot updateSpotInfo:spotInfo completion:^(id results, NSError *error) {
         
@@ -323,40 +325,48 @@ static CLLocationManager *locationManager;
     self.streamNameField.enabled = NO;
     self.streamCodeField.enabled = NO;
     self.locationNameButton.enabled = NO;
-    self.addPrivacySwitch.enabled = NO;
-    self.viewPrivacySwitch.enabled = NO;
-    self.memberInviteSwitch.enabled = NO;
+    self.makeStreamPrivateSwitch.enabled = NO;
+    
+    //self.viewPrivacySwitch.enabled = NO;
+    //self.memberInviteSwitch.enabled = NO;
 }
 
 
-- (IBAction)toggleViewPrivacySwitch:(UISwitch *)sender
+/*- (IBAction)toggleViewPrivacySwitch:(UISwitch *)sender
 {
     if (self.addPrivacySwitch.isOn) {
         self.viewPrivacySwitch.on = sender.on;
     }
     
     self.saveAlbumSettingsBarItem.enabled = YES;
-}
+}*/
 
-- (IBAction)toggleAddPrivacySwitch:(UISwitch *)sender
+- (IBAction)toggleMakeStreamPrivateSwitch:(UISwitch *)sender
 {
-    self.addPrivacySwitch.on = sender.on;
+    self.makeStreamPrivateSwitch.on = sender.on;
     
-    if (!self.addPrivacySwitch.isOn) {
-        self.viewPrivacySwitch.on = YES;
-        self.viewPrivacySwitch.enabled = NO;
-    }else{
-        self.viewPrivacySwitch.enabled = YES;
-    }
+    // Show alert to user here
+    UIAlertView *privacyAlertView = [[UIAlertView alloc]
+                                     initWithTitle:@"Private Stream"
+                                     message:@"Private streams do not show in nearby"
+                                     delegate:self
+                                     cancelButtonTitle:@"Cancel"
+                                     otherButtonTitles:@"Make Private", nil];
+    
+    privacyAlertView.tag = 10000;
+    [privacyAlertView show];
+    
+    
     self.saveAlbumSettingsBarItem.enabled = YES;
 }
 
 
-- (IBAction)toggleMemberInviteSwitch:(UISwitch *)sender
+/*- (IBAction)toggleMemberInviteSwitch:(UISwitch *)sender
 {
     self.memberInviteSwitch.on = sender.on;
     self.saveAlbumSettingsBarItem.enabled = YES;
-}
+}*/
+
 
 - (IBAction)locationButtonTapped:(id)sender
 {
@@ -365,7 +375,7 @@ static CLLocationManager *locationManager;
 
 - (IBAction)leaveAlbumAction:(UIButton *)sender
 {
-    // This is a destructive action. Prompt the user later before finally deleting the album
+    // This is a destructive action. Prompt the user before he leaves the album
     
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Stream"
                                                     message:@"Are you sure you want to leave this stream? It will no longer display in the My Streams view."
@@ -434,12 +444,16 @@ static CLLocationManager *locationManager;
                 if (!error) {
                     [Flurry logEvent:@"Leave_Stream"];
                     if ([results[STATUS] isEqualToString:ALRIGHT]) {
-                        
-                        [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                        DLog(@"where to unwind: %@",[self.whereToUnwind class]);
+                        if ([self.whereToUnwind class] == [MainStreamViewController class]){
+                            [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
+                        }else{
+                            //[[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                            [self performSegueWithIdentifier:@"DELETE_STREAM_TO_USERPROFILE" sender:nil];
+                        }
                     }
                 }
             }];
-            
         }
         
     }else if (alertView.tag == 2000){ // We are deleting a stream
@@ -452,16 +466,26 @@ static CLLocationManager *locationManager;
                     [Flurry logEvent:@"Stream_Deleted"];
                     
                     if ([results[STATUS] isEqualToString:ALRIGHT]){
-                        if ([self.whereToUnwind class] == [MainStreamViewController class]) {
+                        
+                        DLog(@"where to unwind: %@",[self.whereToUnwind class]);
+                        
+                        if ([self.whereToUnwind class] == [MainStreamViewController class]){
                             [self performSegueWithIdentifier:@"LEAVE_STREAM_SEGUE" sender:nil];
                         }else{
-                           [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
+                           //[[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                            [self performSegueWithIdentifier:@"DELETE_STREAM_TO_USERPROFILE" sender:nil]; 
                         }
-                        
                     }
                 }
             }];
+        }
+        
+    }else if (alertView.tag == 10000){
+        if (buttonIndex == 0){
+            // User cancelled making a stream private
+            self.makeStreamPrivateSwitch.on = NO;
+        }else{
+            self.makeStreamPrivateSwitch.on = YES;
         }
         
     }

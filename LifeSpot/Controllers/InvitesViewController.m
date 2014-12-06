@@ -14,7 +14,6 @@
 #import "LSPushProviderAPIClient.h"
 #import <AddressBook/AddressBook.h>
 #import <MessageUI/MessageUI.h>
-#import "FacebookAPIClient.h" 
 
 #define PhoneContactsKey @"PhoneContactsKey"
 #define FacebookUsersKey @"FacebookUsersKey"
@@ -114,24 +113,7 @@ static BOOL isFiltered = NO;
         } failure:^(NSURLSessionDataTask *task, NSError *error) {
             DLog(@"Failure reason - %@",error.localizedFailureReason);
         }];
-        
-        NSDictionary *params = @{@"senderId": [AppHelper userID],
-                                 @"recipientIds" : [self.invitedSubaUsers description],
-                                 @"spotOwner" : [AppHelper userName],
-                                 @"spotId" : self.spotToInviteUserTo[@"spotId"],
-                                 @"spotName" : self.spotToInviteUserTo[@"spotName"]};
-    
-        
-        [[LSPushProviderAPIClient sharedInstance] POST:@"invitedtoalbum" parameters:params constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-            
-        } success:^(NSURLSessionDataTask *task, id responseObject) {
-            DLog(@"Response from Push Provider - %@",responseObject);
-        } failure:^(NSURLSessionDataTask *task, NSError *error) {
-            DLog(@"Error from Push - %@",error);
-
-        }];
-        
-               
+       
         [self.presentingViewController dismissViewControllerAnimated:YES completion:nil];
     
    //[self.invitesSearchBar resignFirstResponder];

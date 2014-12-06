@@ -10,5 +10,5 @@
 
 @interface LSPushProviderAPIClient : AFHTTPSessionManager
 + (instancetype)sharedInstance;
-+ (instancetype)LSPushProviderAPIBaseURL;
++ (NSURL *)LSPushProviderAPIBaseURL;
 @end

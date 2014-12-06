@@ -13,7 +13,7 @@
 #import "TermsViewController.h"
 #import <MessageUI/MessageUI.h>
 
-@interface UserSettingsViewController ()<MFMailComposeViewControllerDelegate,UIActionSheetDelegate>
+@interface UserSettingsViewController()<MFMailComposeViewControllerDelegate,UIActionSheetDelegate>
 
 @property(strong,nonatomic) NSArray *accountSettings;
 @property(strong,nonatomic) NSArray *help;
@@ -26,9 +26,11 @@
 - (IBAction)unwindToUserSettings:(UIStoryboardSegue *)segue;
 - (void)showActionSheet;
 
+
 - (void)shareViaServiceType:(NSString *)serviceType;
 - (void)showUnavailableAlertForServiceType: (NSString *)serviceType;
 - (void)rateApp;
+
 @end
 
 @implementation UserSettingsViewController

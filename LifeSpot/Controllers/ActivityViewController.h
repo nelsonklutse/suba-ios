@@ -10,4 +10,6 @@
 
 @interface ActivityViewController : UIViewController
 
+
+-(void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data completion:(GeneralCompletion)completionBlock;
 @end

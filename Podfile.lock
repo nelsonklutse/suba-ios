@@ -1,87 +1,87 @@
 PODS:
-  - AFNetworking (2.0.3):
+  - AFNetworking (2.4.1):
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
     - AFNetworking/UIKit
-  - AFNetworking/NSURLConnection (2.0.3):
+  - AFNetworking/NSURLConnection (2.4.1):
     - AFNetworking/Reachability
     - AFNetworking/Security
     - AFNetworking/Serialization
-  - AFNetworking/NSURLSession (2.0.3):
+  - AFNetworking/NSURLSession (2.4.1):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/Reachability (2.4.1)
+  - AFNetworking/Security (2.4.1)
+  - AFNetworking/Serialization (2.4.1)
+  - AFNetworking/UIKit (2.4.1):
     - AFNetworking/NSURLConnection
-  - AFNetworking/Reachability (2.0.3)
-  - AFNetworking/Security (2.0.3)
-  - AFNetworking/Serialization (2.0.3)
-  - AFNetworking/UIKit (2.0.3):
-    - AFNetworking/NSURLConnection
-  - ALAssetsLibrary-CustomPhotoAlbum (1.1.4)
+    - AFNetworking/NSURLSession
+  - ALAssetsLibrary-CustomPhotoAlbum (1.1.5)
   - AMScrollingNavbar (0.5.4)
   - Appirater (2.0.2)
   - BDKNotifyHUD (1.1.0)
-  - BOSImageResizeOperation (0.1.0)
-  - CSNotificationView (0.3.3)
+  - Bolts (1.1.3)
+  - CSNotificationView (0.5.1)
   - DACircularProgress (2.1.0)
-  - DBCamera (2.3.1):
-    - GPUImage (~> 0.1)
-  - GPUImage (0.1.5)
+  - Facebook-iOS-SDK (3.20.0):
+    - Bolts (~> 1.0)
   - Harpy (2.5.2)
-  - IDMPhotoBrowser (1.3.5):
-    - AFNetworking (~> 2.2.3)
-    - DACircularProgress (~> 2.2)
-    - SVProgressHUD (~> 1.0)
+  - IDMPhotoBrowser (1.4):
+    - AFNetworking
+    - DACircularProgress
+    - pop
+  - ImageMagick (6.8.8-9):
+    - ImageMagick/jpeg
+    - ImageMagick/png
+    - ImageMagick/tiff
+    - ImageMagick/wand
+  - ImageMagick/jpeg (6.8.8-9)
+  - ImageMagick/png (6.8.8-9)
+  - ImageMagick/tiff (6.8.8-9)
+  - ImageMagick/wand (6.8.8-9)
   - ionicons (1.1)
-  - iVersion (1.10.6)
+  - pop (1.0.7)
   - SDWebImage (3.7.1):
     - SDWebImage/Core
   - SDWebImage/Core (3.7.1)
-  - SVProgressHUD (1.0)
-  - UIPhotoGallery (0.1.2):
-    - SDWebImage (~> 3.0)
-  - UzysCircularProgressPullToRefresh (1.0.4)
+  - UzysCircularProgressPullToRefresh (1.0.8)
 
 DEPENDENCIES:
-  - AFNetworking (~> 2.0)
-  - ALAssetsLibrary-CustomPhotoAlbum (~> 1.1.4)
+  - AFNetworking (~> 2.4.1)
+  - ALAssetsLibrary-CustomPhotoAlbum (~> 1.1.5)
   - AMScrollingNavbar
   - Appirater
   - BDKNotifyHUD (~> 1.1.0)
-  - BOSImageResizeOperation (from `git://github.com/BucketOSoftware/BOSImageResizeOperation.git`)
-  - CSNotificationView (~> 0.3.3)
+  - CSNotificationView (~> 0.5.1)
   - DACircularProgress (~> 2.1.0)
-  - DBCamera (~> 2.3)
+  - Facebook-iOS-SDK (~> 3.20.0)
   - Harpy
-  - IDMPhotoBrowser
+  - IDMPhotoBrowser (~> 1.4)
+  - ImageMagick (~> 6.8.8-9)
   - ionicons
-  - iVersion (~> 1.10.6)
-  - SDWebImage (= 3.2)
-  - UIPhotoGallery (~> 0.1.2)
-  - UzysCircularProgressPullToRefresh (~> 1.0.4)
-
-EXTERNAL SOURCES:
-  BOSImageResizeOperation:
-    :git: git://github.com/BucketOSoftware/BOSImageResizeOperation.git
+  - SDWebImage (~> 3.7.1)
+  - UzysCircularProgressPullToRefresh (~> 1.0.8)
 
 SPEC CHECKSUMS:
-  AFNetworking: a4d0e9a64de9242986620dafd1b3cee3b413ac5c
-  ALAssetsLibrary-CustomPhotoAlbum: c628baf39d3e64b5ded7590177009e7f20ff2a8b
+  AFNetworking: 0aabc6fae66d6e5d039eeb21c315843c7aae51ab
+  ALAssetsLibrary-CustomPhotoAlbum: 785e1852efacd51235dd8dd19a8a467196fdeafa
   AMScrollingNavbar: 1f89bc7ffbb8c3a674f2fb9080978d3fa3b1acf0
   Appirater: a5e00fb01d47a9a6acf4b2f22323b4ccf4f23fbb
   BDKNotifyHUD: dd7c23043da457c72056fb4a0c8bae9967acff28
-  BOSImageResizeOperation: 301cf26dee926abd52fc0a4664b77486b276f0f3
-  CSNotificationView: 21575accc254fa6684314bc6099c8475a4b52684
+  Bolts: 3db0a875235e0c9042b013af13af0f00f79b102c
+  CSNotificationView: 647c524da966e21d082263f5146e5ba62f67c2b4
   DACircularProgress: 4dfac2cc9efe2e352cabe32a2b243fd9768a3b6c
-  DBCamera: d76b83e3f9d97417e703d6829dea1c2889936dd4
-  GPUImage: 5114a47f5fc33eb312f3731550a3cea379416d04
+  Facebook-iOS-SDK: 5854404b4b651f612a8ef79ca06d766858f4cb8e
   Harpy: 686f775c4793b532952f38918baf2099e58a222d
-  IDMPhotoBrowser: d691bcdf470553e165f8eb982c5cd8e9a58bcdef
+  IDMPhotoBrowser: da2110d99ea8735ad9a0ba52f2d184e756104a71
+  ImageMagick: 69968e0a19a4407abaae92c09a13e9a7fd0d2ba3
   ionicons: 83f9b09405311133e7c5118819150f1cbf2c3d64
-  iVersion: bd6b244d3e381fd7838a9b1a94b9bcaa2c018e70
+  pop: 2f14a1ea61339767af9e66741b418c831b3844df
   SDWebImage: 116e88633b5b416ea0ca4b334a4ac59cf72dd38d
-  SVProgressHUD: 5034c6e22b8c2ca3e09402e48d41ed0340aa1c50
-  UIPhotoGallery: 1dd2dbe4ea352ab42f8092ded8c1ac3d9e6be708
-  UzysCircularProgressPullToRefresh: d4e98df6b412855493254ba7a2a69e3007369125
+  UzysCircularProgressPullToRefresh: 8bf470411b06d8c4a8a9e966b64649ab230452fe
 
-COCOAPODS: 0.33.1
+COCOAPODS: 0.34.4

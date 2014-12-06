@@ -208,47 +208,46 @@
                     failureBlock:failure];
 }
 
-- (NSArray *)loadPhotosFromAlbum:(NSString *)albumName
+- (void)loadImagesFromAlbum:(NSString *)albumName
+                 completion:(void (^)(NSMutableArray *, NSError *))completion
 {
-    NSMutableArray *images = [[NSMutableArray alloc] init];
-    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+  ALAssetsLibraryGroupsEnumerationResultsBlock block = ^(ALAssetsGroup *group, BOOL *stop) {
+    // Checking if library exists
+    if (group == nil) *stop = YES;
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [library enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
-            // Checking if library exists
-            if (group == nil)
-            {
-                return;
-            }
-            // If we have found library with given title we enumerate it
-            if ([[group valueForProperty:ALAssetsGroupPropertyName] isEqualToString:albumName]) {
-                [group enumerateAssetsUsingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
-                    // Checking if grup isn't empty
-                    if(result == nil) {
-                        return;
-                    }
-                    
-                    // Getting the image from the asset
-                    UIImage *img = [UIImage imageWithCGImage:[[result defaultRepresentation] fullScreenImage]
-                                                       scale:1.0
-                                                 orientation:(UIImageOrientation)[[result valueForProperty:@"ALAssetPropertyOrientation"] intValue]];
-
-                    // saving this image to the array
-                    [images addObject:img];
-                 }];
-            }
-            
-            if (stop) {
-                return;
-            }
-            
-        } failureBlock:^(NSError *error) {
-            NSLog(@"%@", [error localizedDescription]);
-        }];
-    });
-    
-    // Returning array of images from the custom album
-    return images;
+    // If we have found library with given title we enumerate it
+    if ([albumName compare:[group valueForProperty:ALAssetsGroupPropertyName]] == NSOrderedSame) {
+      NSMutableArray * images = [[NSMutableArray alloc] init];
+      [group enumerateAssetsUsingBlock:^(ALAsset *result, NSUInteger index, BOOL *stop) {
+        // Checking if group isn't empty
+        if (! result) return;
+        
+        // Getting the image from the asset
+        UIImageOrientation orientation =
+          (UIImageOrientation)[[result valueForProperty:@"ALAssetPropertyOrientation"] intValue];
+        UIImage * image = [UIImage imageWithCGImage:[[result defaultRepresentation] fullScreenImage]
+                                              scale:1.0
+                                        orientation:orientation];
+        // Saving this image to the array
+        [images addObject:image];
+      }];
+      
+      // Execute the |completion| block
+      if (completion) completion(images, nil);
+      
+      // Album was found, bail out of the method
+      *stop = YES;
+    }
+  };
+  
+  ALAssetsLibraryAccessFailureBlock failureBlock = ^(NSError *error) {
+    NSLog(@"%s: %@", __PRETTY_FUNCTION__, [error localizedDescription]);
+    if (completion) completion(nil, error);
+  };
+  
+  [self enumerateGroupsWithTypes:ALAssetsGroupAll
+                      usingBlock:block
+                    failureBlock:failureBlock];
 }
 
 @end

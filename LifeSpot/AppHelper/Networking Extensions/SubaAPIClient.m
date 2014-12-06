@@ -8,17 +8,20 @@
 
 #import "SubaAPIClient.h"
 
-static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
+//static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
+
 //static NSString * const SubaAPIBaseURLString   =  @"http://54.201.118.129/";
-//static NSString * const SubaAPIBaseURLString   =  @"http://54.200.15.155/";
-//static NSString * const SubaAPIBaseURLString   =  @"http://127.0.0.1:8080/";
+static NSString * const SubaAPIBaseURLString   =  @"http://192.168.8.101:8081/";
+
+//static NSString * const SubaAPIBaseURLString   =    @"http://localhost:8081/";
+
 //static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.200:8080/";
-//static NSString * const SubaAPIBaseURLString     =  @"http://192.168.8.101:8080/";
+
+//static NSString * const SubaAPIBaseURLString     =  @"http://172.20.10.3:8080/";
 
 //static NSString * const SubaAPIBaseURLString =  @"http://api-dev.subaapp.com/";
 
-@implementation SubaAPIClient
-
+@implementation SubaAPIClient 
 
 + (instancetype)sharedInstance
 {
@@ -40,10 +43,10 @@ static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
 }
 
 
-
-+ (instancetype)subaAPIBaseURL
++ (NSURL *)subaAPIBaseURL
 {
     return [NSURL URLWithString:SubaAPIBaseURLString];
 }
+
 
 @end

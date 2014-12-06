@@ -1,1 +1,0 @@
-../../UIPhotoGallery/UIPhotoGallery/UIPhotoGalleryViewController.h

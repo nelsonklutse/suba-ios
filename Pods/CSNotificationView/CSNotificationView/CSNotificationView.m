@@ -7,26 +7,10 @@
 //
 
 #import "CSNotificationView.h"
+#import "CSNotificationView_Private.h"
 
-static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
-
-@interface CSNotificationView ()
-
-#pragma mark - blur effect
-@property (nonatomic, strong) UIToolbar *toolbar;
-@property (nonatomic, strong) CALayer *blurLayer;
-
-#pragma mark - presentation
-@property (nonatomic, weak) UIViewController* parentViewController;
-@property (nonatomic, weak) UINavigationController* parentNavigationController;
-@property (nonatomic, getter = isVisible) BOOL visible;
-
-#pragma mark - content views
-@property (nonatomic, strong, readonly) UIView* symbolView; // is updated by -(void)updateSymbolView
-@property (nonatomic, strong) UILabel* textLabel;
-@property (nonatomic, strong) UIColor* contentColor;
-
-@end
+#import "CSLayerStealingBlurView.h"
+#import "CSNativeBlurView.h"
 
 @implementation CSNotificationView
 
@@ -43,6 +27,34 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
     __block CSNotificationView* note = [[CSNotificationView alloc] initWithParentViewController:viewController];
     note.tintColor = tintColor;
     note.image = image;
+    note.textLabel.text = message;
+    
+    void (^completion)() = ^{[note setVisible:NO animated:YES completion:nil];};
+    [note setVisible:YES animated:YES completion:^{
+        double delayInSeconds = duration;
+        dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
+        dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+            completion();
+        });
+    }];
+    
+}
+
++ (void)showInViewController:(UIViewController*)viewController
+                   tintColor:(UIColor*)tintColor
+                        font:(UIFont*)font
+               textAlignment:(NSTextAlignment)textAlignment
+                       image:(UIImage*)image
+                     message:(NSString*)message
+                    duration:(NSTimeInterval)duration
+{
+    NSAssert(message, @"'message' must not be nil.");
+    
+    __block CSNotificationView* note = [[CSNotificationView alloc] initWithParentViewController:viewController];
+    note.tintColor = tintColor;
+    note.image = image;
+    note.textLabel.font = font;
+    note.textLabel.textAlignment = textAlignment;
     note.textLabel.text = message;
     
     void (^completion)() = ^{[note setVisible:NO animated:YES completion:nil];};
@@ -93,22 +105,24 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
     self = [super initWithFrame:CGRectZero];
     if (self) {
         
-        //Blur | thanks to https://github.com/JagCesar/iOS-blur for providing this under the WTFPL-license!
+        self.backgroundColor = [UIColor clearColor];
+        
+        //Blur view
         {
-            [self setToolbar:[[UIToolbar alloc] initWithFrame:[self bounds]]];
-            [self setBlurLayer:[[self toolbar] layer]];
             
-            UIView *blurView = [UIView new];
-            [blurView setUserInteractionEnabled:NO];
-            [blurView.layer addSublayer:[self blurLayer]];
-            [blurView setTranslatesAutoresizingMaskIntoConstraints:NO];
-            [blurView setAutoresizingMask:UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight];
-            [self insertSubview:blurView atIndex:0];
+            if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1) {
+                //Use native effects
+                self.blurView = [[CSNativeBlurView alloc] initWithFrame:CGRectZero];
+            } else {
+                //Use layer stealing
+                self.blurView = [[CSLayerStealingBlurView alloc] initWithFrame:CGRectZero];
+            }
             
-            [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[blurView]|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(blurView)]];
-            [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-1)-[blurView]-(-1)-|" options:0 metrics:nil views:NSDictionaryOfVariableBindings(blurView)]];
+            self.blurView.userInteractionEnabled = NO;
+            self.blurView.translatesAutoresizingMaskIntoConstraints = NO;
+            self.blurView.clipsToBounds = NO;
+            [self insertSubview:self.blurView atIndex:0];
             
-            [self setBackgroundColor:[UIColor clearColor]];
         }
         
         //Parent view
@@ -126,21 +140,35 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
             
         }
         
+        //Notifications
+        {
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(navigationControllerWillShowViewControllerNotification:) name:kCSNotificationViewUINavigationControllerWillShowViewControllerNotification object:nil];
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(navigationControllerDidShowViewControllerNotification:) name:kCSNotificationViewUINavigationControllerDidShowViewControllerNotification object:nil];
+        }
+
+        //Key-Value Observing
+        {
+            [self addObserver:self forKeyPath:kCSNavigationBarBoundsKeyPath options:NSKeyValueObservingOptionNew context:kCSNavigationBarObservationContext];
+        }
+        
         //Content views
         {
             //textLabel
             {
                 _textLabel = [[UILabel alloc] init];
                 
-                UIFontDescriptor* textLabelFontDescriptor = [UIFontDescriptor preferredFontDescriptorWithTextStyle:UIFontTextStyleBody];
-                _textLabel.font = [UIFont fontWithDescriptor:textLabelFontDescriptor size:17.0f];
+                _textLabel.textColor = [UIColor whiteColor];
+                _textLabel.backgroundColor = [UIColor clearColor];
+                _textLabel.translatesAutoresizingMaskIntoConstraints = NO;
+            
+                _textLabel.numberOfLines = 2;
                 _textLabel.minimumScaleFactor = 0.6;
                 _textLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+                
+                UIFontDescriptor* textLabelFontDescriptor = [UIFontDescriptor preferredFontDescriptorWithTextStyle:UIFontTextStyleBody];
+                _textLabel.font = [UIFont fontWithDescriptor:textLabelFontDescriptor size:17.0f];
                 _textLabel.adjustsFontSizeToFitWidth = YES;
                 
-                _textLabel.numberOfLines = 2;
-                _textLabel.textColor = [UIColor whiteColor];
-                _textLabel.translatesAutoresizingMaskIntoConstraints = NO;
                 [self addSubview:_textLabel];
             }
             //symbolView
@@ -149,10 +177,66 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
             }
         }
         
-        self.autoresizingMask = UIViewAutoresizingNone;
+        //Interaction
+        {
+            //Tap gesture
+            self.tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapInView:)];
+            [self addGestureRecognizer:self.tapRecognizer];
+        }
+
+        self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleBottomMargin;
         
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [self removeObserver:self forKeyPath:kCSNavigationBarBoundsKeyPath context:kCSNavigationBarObservationContext];
+}
+
+- (void)navigationControllerWillShowViewControllerNotification:(NSNotification*)note
+{
+    if (self.visible && [self.parentNavigationController isEqual:note.object]) {
+        
+        __block typeof(self) weakself = self;
+        [UIView animateWithDuration:0.1 animations:^{
+            CGRect endFrame;
+            [weakself animationFramesForVisible:weakself.visible startFrame:nil endFrame:&endFrame];
+            [weakself setFrame:endFrame];
+            [weakself updateConstraints];
+        }];
+        
+    }
+}
+
+- (void)navigationControllerDidShowViewControllerNotification:(NSNotification*)note
+{
+    if (self.visible && [self.parentNavigationController.navigationController isEqual:note.object]) {
+        
+        //We're about to be pushed away! This might happen in a UISplitViewController with both master/detailViewControllers being UINavgiationControllers
+        //Move to new parent
+        
+        __block typeof(self) weakself = self;
+        [self setVisible:NO animated:NO completion:^{
+            weakself.parentNavigationController = note.object;
+            [weakself setVisible:YES animated:NO completion:nil];
+        }];
+        
+    }
+}
+
+#pragma mark - Key-Value Observing
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (context == kCSNavigationBarObservationContext && [keyPath isEqualToString:kCSNavigationBarBoundsKeyPath]) {
+        self.frame = self.visible ? [self visibleFrame] : [self hiddenFrame];
+        [self setNeedsLayout];
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 #pragma mark - layout
@@ -160,6 +244,13 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
 - (void)updateConstraints
 {
     [self removeConstraints:self.constraints];
+    
+    NSDictionary* bindings = @{@"blurView":self.blurView};
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[blurView]|"
+                                                                 options:0 metrics:nil views:bindings]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-(-1)-[blurView]-(-1)-|"
+                                                                 options:0 metrics:nil views:bindings]];
+
     
     CGFloat symbolViewWidth = self.symbolView.tag != kCSNotificationViewEmptySymbolViewTag ?
                                 kCSNotificationViewSymbolViewSidelength : 0.0f;
@@ -181,15 +272,13 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
                             metrics:metrics
                                 views:NSDictionaryOfVariableBindings(_symbolView)]];
     
-    CGFloat topInset = CGRectGetHeight(self.frame) - 4;
-    
     [self addConstraint:[NSLayoutConstraint
                 constraintWithItem:_symbolView
                          attribute:NSLayoutAttributeBottom
                          relatedBy:NSLayoutRelationEqual
                             toItem:self
                          attribute:NSLayoutAttributeBottom
-                         multiplier:0.0f constant:topInset]];
+                         multiplier:1.0f constant:-3]];
     
     [self addConstraint:[NSLayoutConstraint
         constraintWithItem:_textLabel
@@ -202,20 +291,22 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
     [super updateConstraints];
 }
 
-- (void)setFrame:(CGRect)frame
-{
-    [super setFrame:frame];
-    self.blurLayer.frame = self.bounds;
-}
-
 #pragma mark - tint color
 
 - (void)setTintColor:(UIColor *)tintColor
 {
     _tintColor = tintColor;
-    //Use 0.6 alpha value for translucency blur in UIToolbar
-    [self.toolbar setBarTintColor:[tintColor colorWithAlphaComponent:0.6]];
+    [self.blurView setBlurTintColor:tintColor];
     self.contentColor = [self legibleTextColorForBlurTintColor:tintColor];
+}
+
+#pragma mark - interaction
+
+-(void)handleTapInView:(UITapGestureRecognizer*)tapGestureRecognizer
+{
+    if (self.tapHandler && tapGestureRecognizer.state == UIGestureRecognizerStateEnded) {
+        self.tapHandler();
+    }
 }
 
 #pragma mark - presentation
@@ -225,8 +316,9 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
     if (_visible != visible) {
         
         NSTimeInterval animationDuration = animated ? 0.4 : 0.0;
-        CGRect startFrame = visible ? [self hiddenFrame]:[self visibleFrame];
-        CGRect endFrame = visible ? [self visibleFrame] : [self hiddenFrame];
+        
+        CGRect startFrame, endFrame;
+        [self animationFramesForVisible:visible startFrame:&startFrame endFrame:&endFrame];
         
         if (!self.superview) {
             self.frame = startFrame;
@@ -243,6 +335,7 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
         [UIView animateWithDuration:animationDuration animations:^{
             [weakself setFrame:endFrame];
         } completion:^(BOOL finished) {
+            
             if (!visible) {
                 [weakself removeFromSuperview];
             }
@@ -255,6 +348,12 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
     } else if (completion) {
         completion();
     }
+}
+
+- (void)animationFramesForVisible:(BOOL)visible startFrame:(CGRect*)startFrame endFrame:(CGRect*)endFrame
+{
+    if (startFrame) *startFrame = visible ? [self hiddenFrame]:[self visibleFrame];
+    if (endFrame) *endFrame = visible ? [self visibleFrame] : [self hiddenFrame];
 }
 
 - (void)dismissWithStyle:(CSNotificationViewStyle)style message:(NSString *)message duration:(NSTimeInterval)duration animated:(BOOL)animated
@@ -283,11 +382,11 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
 //Workaround as there is a bug: sometimes, when accessing topLayoutGuide, it will render contentSize of UITableViewControllers to be {0, 0}
 - (CGFloat)topLayoutGuideLengthCalculation
 {
-    CGFloat top = CGRectGetHeight([[UIApplication sharedApplication] statusBarFrame]);
+    CGFloat top = MIN([UIApplication sharedApplication].statusBarFrame.size.height, [UIApplication sharedApplication].statusBarFrame.size.width);
     
-    if (self.parentNavigationController) {
+    if (self.parentNavigationController && !self.parentNavigationController.navigationBarHidden) {
         
-        top += CGRectIntersection(self.parentNavigationController.view.bounds, self.parentNavigationController.navigationBar.frame).size.height;
+        top += CGRectGetHeight(self.parentNavigationController.navigationBar.frame);
     }
     
     return top;
@@ -297,9 +396,14 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
 {
     UIViewController* viewController = self.parentNavigationController ?: self.parentViewController;
     
+    if (!viewController.isViewLoaded) {
+        return CGRectZero;
+    }
+    
     CGFloat topLayoutGuideLength = [self topLayoutGuideLengthCalculation];
 
-    CGRect displayFrame = CGRectMake(0, 0, CGRectGetWidth(viewController.view.frame),
+    CGSize transformedSize = CGSizeApplyAffineTransform(viewController.view.frame.size, viewController.view.transform);
+    CGRect displayFrame = CGRectMake(0, 0, fabs(transformedSize.width),
                                      kCSNotificationViewHeight + topLayoutGuideLength);
     
     return displayFrame;
@@ -309,10 +413,15 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
 {
     UIViewController* viewController = self.parentNavigationController ?: self.parentViewController;
     
-    CGFloat topLayoutGuideLength = [self topLayoutGuideLengthCalculation];
+    if (!viewController.isViewLoaded) {
+        return CGRectZero;
+    }
     
+    CGFloat topLayoutGuideLength = [self topLayoutGuideLengthCalculation];
+
+    CGSize transformedSize = CGSizeApplyAffineTransform(viewController.view.frame.size, viewController.view.transform);
     CGRect offscreenFrame = CGRectMake(0, -kCSNotificationViewHeight - topLayoutGuideLength,
-                                       CGRectGetWidth(viewController.view.frame),
+                                       fabs(transformedSize.width),
                                        kCSNotificationViewHeight + topLayoutGuideLength);
     
     return offscreenFrame;
@@ -425,12 +534,14 @@ static NSInteger const kCSNotificationViewEmptySymbolViewTag = 666;
 + (UIImage*)imageForStyle:(CSNotificationViewStyle)style
 {
     UIImage* matchedImage = nil;
+    //Load images from bundle generated by CocoaPods
+    NSBundle *assetsBundle = [NSBundle bundleWithURL:[[NSBundle mainBundle] URLForResource:@"CSNotificationView" withExtension:@"bundle"]];
     switch (style) {
         case CSNotificationViewStyleSuccess:
-            matchedImage = [UIImage imageNamed:@"CSNotificationView_checkmarkIcon"];
+            matchedImage = [UIImage imageWithContentsOfFile:[assetsBundle pathForResource:@"checkmark" ofType:@"png"]];
             break;
         case CSNotificationViewStyleError:
-            matchedImage = [UIImage imageNamed:@"CSNotificationView_exclamationMarkIcon"];
+            matchedImage = [UIImage imageWithContentsOfFile:[assetsBundle pathForResource:@"exclamationMark" ofType:@"png"]];
             break;
         default:
             break;

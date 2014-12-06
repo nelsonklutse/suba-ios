@@ -15,4 +15,7 @@
 @property BOOL myStreamsNeedsUpdate;
 @property BOOL placesNeedsUpdate;
 
+- (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data;
+- (void)joinSpot:(NSString *)spotCode data:(NSDictionary *)data completion:(GeneralCompletion)completionBlock;
+//- (void)fetchNearbyStreamsInBackgroundWithCompletion:(SBRefreshCompletionHandler)completionHandler;
 @end

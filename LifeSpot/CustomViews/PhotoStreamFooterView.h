@@ -14,7 +14,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *inviteFriendsText;
 @property (weak, nonatomic) IBOutlet UIButton *emailInviteButton;
 @property (weak, nonatomic) IBOutlet UIButton *smsInviteButton;
-@property (weak, nonatomic) IBOutlet UIButton *inviteByUsernameButton;
+@property (weak, nonatomic) IBOutlet UIButton *inviteByWhatsappButton;
 @property (weak, nonatomic) IBOutlet UITextField *emailTextField;
 @property (weak, nonatomic) IBOutlet UIButton *otherInviteOptionsButton;
 
