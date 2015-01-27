@@ -142,8 +142,8 @@ static BOOL isFiltered = NO;
                                  indicator:self.loadingDataActivityIndicator flag:NO];
         }else{
             DLog(@"Loading Facebook friends error %@",[error debugDescription]);
-            [AppHelper showAlert:@"Facebook Error"
-                         message:error.localizedDescription
+            [AppHelper showAlert:@"Oops!"
+                         message:@"Something went wrong. Try again?"
                          buttons:@[@"OK"] delegate:nil];
         }
     }];
@@ -410,7 +410,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, void (^complet
 }
 
 
-- (void)publishStory{
+- (void)publishStory{ 
     
     /*FBShareDialogParams *params = [[FBShareDialogParams alloc] init];
     params.link = [NSURL URLWithString:@"http://bit.ly/suba_fb"];

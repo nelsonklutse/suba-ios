@@ -77,13 +77,15 @@
                                         [self performSegueWithIdentifier:@"Login_MainTabBar_Segue" sender:nil];
                                         
                                     }else{
-                                        [AppHelper showAlert:results[STATUS] message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
+                                        [AppHelper showAlert:@"Oops!" message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
                                     }
                                 }else{
                                     
                                     DLog(@"Error localizedDescription - %@\nError Description - %@\nError localizedFailureReason - %@",error.localizedDescription,error.userInfo,error.localizedFailureReason);
                                     
-                                    [AppHelper showAlert:@"Login Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                                    [AppHelper showAlert:@"Oops!"
+                                                 message:@"Something went wrong. Try again?"
+                                                 buttons:@[@"OK"] delegate:nil];
                                 }
                             }];
 }
@@ -178,13 +180,15 @@
             NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,email,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-                DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                
+                 //DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                
                 if (!error) {
                     NSDictionary<FBGraphUser> *user = result;
                     
                     NSString *userEmail = [user valueForKey:@"email"];
                     if (userEmail == NULL) {
-                        [AppHelper showAlert:@"Facebook Error"
+                        [AppHelper showAlert:@"Oops!"
                                      message:@"There was an issue retrieving your facebook email address."
                                      buttons:@[@"OK"] delegate:nil];
                                             }else{
@@ -221,7 +225,7 @@
                             }else{
                                 
                                 //DLog(@"Error - %@",error);
-                                [AppHelper showAlert:@"Authentication Error"
+                                [AppHelper showAlert:@"Oops!"
                                              message:@"There was a problem logging you in. Please wait a minute and try again"
                                              buttons:@[@"OK"]
                                             delegate:nil];
@@ -237,7 +241,7 @@
 
 - (IBAction)resetPassword:(UIButton *)sender
 {
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"" message:@"Reset password" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Reset", nil];
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"" message:@"Enter your email below and we'll send you a link to reset your password." delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Reset", nil];
     alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
     
     alertView.tag = 300;
@@ -251,7 +255,7 @@
 {
     if (alertView.tag == 300) {
         if (buttonIndex == 1) {
-            DLog(@"Send email");
+            //DLog(@"Send email");
             NSString *alertViewText = [[alertView textFieldAtIndex:0] text];
             [User resetPassword:alertViewText completion:^(id results, NSError *error){
                 if (error) {

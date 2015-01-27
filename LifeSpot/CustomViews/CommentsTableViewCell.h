@@ -7,8 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <HTKDynamicResizingTableViewCell.h>
 
-@interface CommentsTableViewCell : UITableViewCell
+@interface CommentsTableViewCell : HTKDynamicResizingTableViewCell
+
 @property (weak, nonatomic) IBOutlet UIImageView *userImageView;
 @property (weak, nonatomic) IBOutlet UILabel *commentUserName;
 

@@ -245,7 +245,7 @@ typedef enum{
     }
     @catch (NSException *exception) {
         // What to do when there's an error
-        [AppHelper showAlert:@"Invites Error" message:@"We encountered an error inviting your friends, Please try again" buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:@"We encountered an error inviting your friends, Please try again" buttons:@[@"OK"] delegate:nil];
     }
     @finally {
         

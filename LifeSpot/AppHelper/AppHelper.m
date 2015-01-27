@@ -645,6 +645,24 @@
                  [self setFacebookLogin:@"YES"];
                  //[self setShowFirstTimeView:YES];
                  [self setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
+                 
+                 //[[NSNotificationCenter defaultCenter] postNotificationName:kUserDidSignUpNotification object:nil];
+                 
+                 if (IS_OS_8_OR_LATER){
+                     if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+                         // We register differently on iOS 8
+                         
+                         DLog(@"iOS 8");
+                         
+                        UIUserNotificationType types = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+                         
+                         UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
+                         
+                         [[UIApplication sharedApplication] registerForRemoteNotifications];
+                         [[UIApplication sharedApplication] registerUserNotificationSettings:notificationSettings];
+                     }
+                 }
+                 
                  completionBlock(responseObject,nil);
              }
              
@@ -666,6 +684,25 @@
                  [self setFacebookLogin:@"NO"];
                  [self setShowFirstTimeView:YES];
                  [self setUserStatus:kSUBA_USER_STATUS_CONFIRMED];
+                 
+                 
+                 if (IS_OS_8_OR_LATER){
+                     if ([[UIApplication sharedApplication] respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+                         // We register differently on iOS 8
+                         
+                         DLog(@"iOS 8");
+                         
+                         UIUserNotificationType types = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+                         
+                         UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
+                         
+                         [[UIApplication sharedApplication] registerForRemoteNotifications];
+                         [[UIApplication sharedApplication] registerUserNotificationSettings:notificationSettings];
+                     }
+                 }
+
+                 
+                 
                  completionBlock(responseObject,nil);
              }
          }
@@ -945,8 +982,8 @@
                     
                     NSString *userEmail = [user valueForKey:@"email"];
                     if (userEmail == NULL) {
-                        [AppHelper showAlert:@"Facebook Error"
-                                     message:@"There was an issue retrieving your facebook email address."
+                        [AppHelper showAlert:@"Oops!"
+                                     message:@"Something went wrong. Try again?"
                                      buttons:@[@"OK"] delegate:nil];
                         
                         /*[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
@@ -978,10 +1015,9 @@
                                 completion(response,nil);
                             }else{
                                 DLog(@"Error - %@",error);
-                                [AppHelper showAlert:@"Authentication Error"
-                                             message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
-                                             buttons:@[@"OK"]
-                                            delegate:nil];
+                                [AppHelper showAlert:@"Oops!"
+                                             message:@"Something went wrong. Try again?"
+                                             buttons:@[@"OK"] delegate:nil];
                                 
                             }
                         }];

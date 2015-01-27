@@ -13,7 +13,7 @@ pod 'BDKNotifyHUD', '~> 1.1.0'
 
 pod 'DACircularProgress', '~> 2.1.0'
 
-pod 'Harpy'
+pod 'Harpy', '~>3.3.1'
 
 pod "Appirater"
 
@@ -28,3 +28,9 @@ pod 'IDMPhotoBrowser','~>1.4'
 pod 'ImageMagick', '~>6.8.8-9'
 
 pod 'Facebook-iOS-SDK','~>3.20.0'
+
+pod 'HTKDynamicResizingCell', '~> 0.0.1'
+
+pod 'PHFComposeBarView', '~> 2.0.1'
+
+pod "Branch"

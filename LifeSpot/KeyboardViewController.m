@@ -10,7 +10,7 @@
 #import "TPKeyboardAvoidingScrollView.h"
 
 @interface KeyboardViewController ()<UITextViewDelegate>
-@property (weak, nonatomic) IBOutlet TPKeyboardAvoidingScrollView *avoidingscrollview;
+
 
 @end
 
@@ -18,6 +18,8 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    [self.avoidingscrollview contentSizeToFit];
     // Do any additional setup after loading the view.
 }
 

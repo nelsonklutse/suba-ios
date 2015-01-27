@@ -12,5 +12,7 @@
 @property (weak, nonatomic) IBOutlet UIImageView *senderImageView;
 
 @property (weak, nonatomic) IBOutlet UILabel *notificationMessage;
+@property (weak, nonatomic) IBOutlet UIImageView *photoImageView;
+@property (weak, nonatomic) IBOutlet UILabel *notificationTimestamp;
 
 @end

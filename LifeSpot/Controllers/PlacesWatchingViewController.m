@@ -221,12 +221,7 @@
     
     if ([photos integerValue] > 0) {  // If there are photos to display
         
-        [placesSpotsCell prepareForGallery:self.spotsWatching[indexPath.row] index:indexPath];
-        if ([placesSpotsCell.pGallery superview]) {
-            [placesSpotsCell.pGallery removeFromSuperview];
-        }
-        placesSpotsCell.photoGalleryView.backgroundColor = [UIColor clearColor];
-        [placesSpotsCell.photoGalleryView addSubview:placesSpotsCell.pGallery];
+        
         
     }else{
         

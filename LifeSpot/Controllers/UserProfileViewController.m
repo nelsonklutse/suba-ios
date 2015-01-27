@@ -236,7 +236,7 @@ int counter;
 {
     if (![self.reTypePasswordField.text isEqualToString:self.passwordField.text]){
         
-        [AppHelper showAlert:@"Password Error" message:@"Your passwords do not match"
+        [AppHelper showAlert:@"Oops!" message:@"Your passwords do not match"
                      buttons:@[@"Try again"] delegate:nil];
         
    }else{
@@ -430,7 +430,9 @@ int counter;
                                 }else{
                                     DLog(@"Error localizedDescription - %@\nError Description - %@\nError localizedFailureReason - %@",error.localizedDescription,error.description,error.localizedFailureReason);
                                     
-                                    [AppHelper showAlert:@"Login Failure" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                                    [AppHelper showAlert:@"Oops!"
+                                                 message:@"Something went wrong. Try again?"
+                                                 buttons:@[@"OK"] delegate:nil];
                                 }
             }];
 }
@@ -715,10 +717,8 @@ int counter;
 #pragma mark - UICollectionViewDatasource
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    //DLog(@"how many spots to display - %lu",[self.userSpots count]);
     return [self.userSpots count];
 }
-
 
 
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -728,10 +728,6 @@ int counter;
     static NSString *cellIdentifier = @"USER_STREAMS_CELL";
     
     UserProfileCell *userStreamsCell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
-    
-    if (userStreamsCell.pGallery.hidden) {
-        userStreamsCell.pGallery.hidden = NO;
-    }
     NSArray *spotsToDisplay = self.userSpots;
     
     NSString *spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
@@ -1004,18 +1000,20 @@ int counter;
     
     if ([photos integerValue] > 0) {  // If there are photos to display
         
-        [userStreamsCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
+        [userStreamsCell setImageURL:spotsToDisplay[indexPath.row] index:indexPath];
+        
+        /*[userStreamsCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
         
         if ([userStreamsCell.pGallery superview]) {
             [userStreamsCell.pGallery removeFromSuperview];
         }
         userStreamsCell.photoGalleryView.backgroundColor = [UIColor clearColor];
-        [userStreamsCell.photoGalleryView addSubview:userStreamsCell.pGallery];
+        [userStreamsCell.photoGalleryView addSubview:userStreamsCell.pGallery];*/
         
         
     }else{
         
-        UIImageView *noPhotosImageView = [[UIImageView alloc] initWithFrame:userStreamsCell.photoGalleryView.bounds];
+        /*UIImageView *noPhotosImageView = [[UIImageView alloc] initWithFrame:userStreamsCell.photoGalleryView.bounds];
         noPhotosImageView.image = [UIImage imageNamed:@"newaddFirstPhoto"];
         noPhotosImageView.contentMode = UIViewContentModeScaleAspectFit;
         
@@ -1023,7 +1021,9 @@ int counter;
             [noPhotosImageView removeFromSuperview];
         }
         
-        [userStreamsCell.photoGalleryView addSubview:noPhotosImageView];
+        [userStreamsCell.photoGalleryView addSubview:noPhotosImageView];*/
+        
+        [userStreamsCell.firstPhotoImageView setImage:[UIImage imageNamed:@"newaddFirstPhoto"]];
     }
     
     DLog(@"counter - %i",counter);
@@ -1096,12 +1096,23 @@ int counter;
             
             NSString *spotID = self.userSpots[indexPath.item][@"spotId"];
             NSString *spotName = self.userSpots[indexPath.item][@"spotName"];
+            NSString *streamVenue = self.userSpots[indexPath.item][@"venue"];
+            NSString *streamDate = self.userSpots[indexPath.item][@"timestamp"];
             NSInteger numberOfPhotos = [self.userSpots[indexPath.item][@"photos"] integerValue];
-            NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
-            [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue" sender:dataPassed];
+            NSDictionary *dataPassed = @{
+                                         @"spotId": spotID,
+                                         @"spotName":spotName,
+                                         @"photos" : @(numberOfPhotos),
+                                         @"venue" : streamVenue,
+                                         @"timestamp" : streamDate
+                                         };
+        
+            [self performSegueWithIdentifier:kFromUserSpotsToPhotosStreamSegue sender:dataPassed];
     }else{
         
-        [self performSegueWithIdentifier:@"FromUserSpotsToPhotosStreamSegue"
+        //DLog(@"Self.user streams: %@",self.userSpots[indexPath.item]);
+        
+        [self performSegueWithIdentifier:kFromUserSpotsToPhotosStreamSegue
                                   sender:self.userSpots[indexPath.item]];
     }
 
@@ -1113,7 +1124,7 @@ int counter;
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
     if ([segue.identifier isEqualToString:kFromUserSpotsToPhotosStreamSegue]){
-        DLog(@"Preparing Segue");
+        //DLog(@"Preparing Segue");
         if ([segue.destinationViewController isKindOfClass:[PhotoStreamViewController class]]){
             
             PhotoStreamViewController *photosVC = segue.destinationViewController;
@@ -1122,14 +1133,18 @@ int counter;
             if (sender[@"photoURLs"]) {
                 
                 photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"photoURLs"]];
+                photosVC.spotInfo = (NSDictionary *)sender;
             }
             
+            
             photosVC.spotName = sender[@"spotName"];
+            photosVC.streamVenue = sender[@"venue"];
+            photosVC.timestamp = sender[@"timestamp"];
             photosVC.spotID = sender[@"spotId"];
             photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
             photosVC.isUserMemberOfStream = @"YES";
             
-            DLog(@"sender - %@",[sender description]);
+            DLog(@"UserProfile Sender - %@",[sender description]);
         }
     }else if ([segue.identifier isEqualToString:@"UserProfileToMainSettingsSegue"]){
         
@@ -1170,8 +1185,8 @@ int counter;
                     
                     NSString *userEmail = [user valueForKey:@"email"];
                     if (userEmail == NULL) {
-                        [AppHelper showAlert:@"Facebook Error"
-                                     message:@"There was an issue retrieving your facebook email address."
+                        [AppHelper showAlert:@"Oops!"
+                                     message:@"Something went wrong. Try again?"
                                      buttons:@[@"OK"] delegate:nil];
                         
                         /*[AppHelper showLoadingDataView:self.connectingToFacebookView indicator:self.connectingToFacebookIndicator flag:NO];
@@ -1207,7 +1222,7 @@ int counter;
                                 
                             }else{
                                 DLog(@"Error - %@",error);
-                                [AppHelper showAlert:@"Authentication Error"
+                                [AppHelper showAlert:@"Oops!"
                                              message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
                                              buttons:@[@"OK"]
                                             delegate:nil];

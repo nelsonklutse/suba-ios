@@ -5,11 +5,12 @@
 //  Copyright (c) 2014 Aviary. All rights reserved.
 //
 
-#import <AviarySDK/AFPhotoEditorController.h>
-#import <AviarySDK/AFInAppPurchaseManager.h>
-#import <AviarySDK/AFOpenGLManager.h>
-#import <AviarySDK/AFPhotoEditorContext.h>
-#import <AviarySDK/AFPhotoEditorController.h>
-#import <AviarySDK/AFPhotoEditorProduct.h>
-#import <AviarySDK/AFPhotoEditorSession.h>
-#import <AviarySDK/AFPhotoEditorCustomization.h>
+#import <AviarySDK/AVYPhotoEditorController.h>
+#import <AviarySDK/AVYInAppPurchaseManager.h>
+#import <AviarySDK/AVYOpenGLManager.h>
+#import <AviarySDK/AVYPhotoEditorContext.h>
+#import <AviarySDK/AVYPhotoEditorController.h>
+#import <AviarySDK/AVYPhotoEditorProduct.h>
+#import <AviarySDK/AVYPhotoEditorSession.h>
+#import <AviarySDK/AVYPhotoEditorCustomization.h>
+#import <AviarySDK/AVYPhotoEditorCompatibility.h>

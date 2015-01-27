@@ -10,7 +10,7 @@
 #import "DACircularProgressView.h"
 #import "S3PhotoFetcher.h"
 
-@interface UserProfileCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
+@interface UserProfileCell()
 
 @property (strong,nonatomic) NSArray *gImages;
 @property (strong,nonatomic) NSArray *allPhotos;
@@ -44,7 +44,7 @@
 
 
 
-#pragma UIPhotoGalleryDataSource methods
+/*#pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
     if ([self.gImages count] >= 3) {
         return 3;
@@ -103,10 +103,6 @@
 - (void)photoGallery:(UIPhotoGalleryView *)photoGallery didTapAtIndex:(NSInteger)index {
     self.galleryIndex = index;
     
-    /*NSRange rangeForFirstArray = NSMakeRange(index, [self.gImages count] - index);
-    NSRange rangeSecondArray = NSMakeRange(0, index);
-    NSArray *firstArray = [self.gImages subarrayWithRange:rangeForFirstArray];
-    NSArray *secondArray = [self.gImages subarrayWithRange:rangeSecondArray];*/
     
     //self.allPhotos = [firstArray arrayByAddingObjectsFromArray:secondArray];
     [self.spotInfo setValue:self.allPhotos forKey:@"photoURLs"];
@@ -115,10 +111,10 @@
      postNotificationName:kPhotoGalleryTappedAtIndexNotification
      object:nil userInfo:@{@"photoIndex": @(index),@"spotInfo" : self.spotInfo}];
     
-}
+}*/
 
 
-#pragma mark - Class Helpers
+/*#pragma mark - Class Helpers
 - (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
 {
     //DLog(@"SpotInfo is: %@",spotInfo);
@@ -168,7 +164,7 @@
         });
     }
     
-}
+}*/
 
 
 #pragma mark - Stream members images
@@ -267,6 +263,44 @@
     
     [self.contentView.layer addSublayer:TopBorder];
 }
+
+
+- (void)setImageURL:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath
+{
+    if ([self.contentView viewWithTag:1500]) {
+        // If we have a DACircular Progress View
+        [[self.contentView viewWithTag:1500] removeFromSuperview];
+    }
+    
+    
+    self.spotInfo = [NSMutableDictionary dictionaryWithDictionary:spotInfo];
+    NSArray *allphotos = spotInfo[@"photoURLs"];
+    
+    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+    self.allPhotos = [allphotos sortedArrayUsingDescriptors:sortDescriptors];
+    
+    self.gImages = [NSMutableArray arrayWithObject:self.allPhotos[0]];
+    NSString *imageURL = self.gImages[0][@"s3name"];
+    
+    DACircularProgressView *progressView = [[DACircularProgressView alloc]
+                                            initWithFrame:CGRectMake((self.firstPhotoImageView.bounds.size.width/2) -
+                                                                     20,(self.firstPhotoImageView.bounds.size.height/2)+10, 40.0f, 40.0f)];
+    
+    progressView.thicknessRatio = .1f;
+    progressView.roundedCorners = YES;
+    progressView.trackTintColor = [UIColor whiteColor];
+    progressView.progressTintColor = [UIColor colorWithRed:0.850f green:0.301f blue:0.078f alpha:1];
+    progressView.tag = 1500;
+    [self.contentView addSubview:progressView];
+    
+    [[S3PhotoFetcher s3FetcherWithBaseURL] downloadPhoto:imageURL to:self.firstPhotoImageView placeholderImage:[UIImage imageNamed:@"blurBg"] progressView:progressView downloadOption:SDWebImageContinueInBackground completion:^(id results, NSError *error){
+        
+        [progressView removeFromSuperview];
+    }];
+
+}
+
 
 
 @end

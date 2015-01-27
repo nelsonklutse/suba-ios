@@ -18,7 +18,7 @@ typedef void (^SpotInfoChangedCompletion) (id results,NSError *error);
 
 @interface Spot : NSObject
 @property (strong,nonatomic) NSString *name;
-@property (readwrite,nonatomic) NSString *description;
+//@property (readwrite,nonatomic) NSString *description;
 @property (strong,nonatomic) NSString *key;
 @property (strong,nonatomic) Privacy *privacy;
 @property (strong,nonatomic) Location *venue;

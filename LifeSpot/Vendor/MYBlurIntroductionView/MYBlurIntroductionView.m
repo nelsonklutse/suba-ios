@@ -63,7 +63,16 @@
         skipStringWidth = ceilf(skipStringWidth);
     }
     else {
-        skipStringWidth = [skipString sizeWithFont:kSkipButtonFont constrainedToSize:CGSizeMake(MAXFLOAT, MAXFLOAT) lineBreakMode:NSLineBreakByWordWrapping].width;
+        
+        NSMutableParagraphStyle * paragraphStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
+        paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
+        NSDictionary * attributes = @{NSFontAttributeName:kSkipButtonFont,
+                                      NSParagraphStyleAttributeName:paragraphStyle
+                                      };
+
+        skipStringWidth = [skipString boundingRectWithSize:CGSizeMake(MAXFLOAT, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin attributes:attributes context:nil].size.width;
+        
+        //skipStringWidth = [skipString sizeWithFont:kSkipButtonFont constrainedToSize:CGSizeMake(MAXFLOAT, MAXFLOAT) lineBreakMode:NSLineBreakByWordWrapping].width;
     }
     
     //Left Skip Button

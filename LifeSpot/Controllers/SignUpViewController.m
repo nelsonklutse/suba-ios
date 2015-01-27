@@ -126,7 +126,7 @@ bool isUserNameAvailable = NO;
 - (IBAction)signUp:(UIButton *)sender {
     
     if (![self.confirmPasswordField.text isEqualToString:self.passwordField.text]) {
-        [AppHelper showAlert:@"Password Error" message:@"Your passwords do not match" buttons:@[@"Will check again"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:@"Your passwords do not match" buttons:@[@"Will check again"] delegate:nil];
     }else{
     
     //Save these in a model
@@ -312,7 +312,7 @@ bool isUserNameAvailable = NO;
             
         }else{
             DLog(@"Error : %@",error);
-            [AppHelper showAlert:@"Sign Up Failed"
+            [AppHelper showAlert:@"Oops!"
                          message:@"There was an issue signing you up for Suba.Please do not despair.Try again"buttons:@[@"I'll try again"] delegate:nil];
         }
     }];

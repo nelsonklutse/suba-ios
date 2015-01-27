@@ -63,6 +63,8 @@
 
 
 // Other
+#define DOWNLOAD_LINK @"http://subaapp.com/download"
+#define kBRANCH_API_KEY @"55726832636395855"
 #define PASSWORD @"pass"
 #define STATUS   @"status"
 #define ALRIGHT  @"ok"

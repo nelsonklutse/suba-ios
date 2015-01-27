@@ -8,6 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
+@class TPKeyboardAvoidingScrollView;
+
 @interface KeyboardViewController : UIViewController
+@property (retain, nonatomic) IBOutlet TPKeyboardAvoidingScrollView *avoidingscrollview;
 
 @end

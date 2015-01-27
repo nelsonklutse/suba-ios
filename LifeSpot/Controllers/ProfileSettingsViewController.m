@@ -12,7 +12,7 @@
 #import "ALAssetsLibrary+CustomPhotoAlbum.h"
 #import <AviarySDK/AviarySDK.h>
 
-@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,AFPhotoEditorControllerDelegate>
+@interface ProfileSettingsViewController ()<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UITextFieldDelegate,AVYPhotoEditorControllerDelegate>
 
 @property (strong,nonatomic) UIImage *profilePhoto;
 @property (strong,nonatomic) NSString *userName;
@@ -519,7 +519,7 @@
     
     // Customize the tools that appear
     // Set the tools to Contrast, Brightness, Enhance, and Crop (to be displayed in that order).
-    [AFPhotoEditorCustomization setToolOrder:@[kAFEnhance,kAFEffects,kAFCrop,kAFOrientation]];
+    [AFPhotoEditorCustomization setToolOrder:@[kAVYEnhance,kAVYEffects,kAVYCrop,kAVYOrientation]];
     
     //DLog(@"Displaying aviary 2");
     [self presentViewController:editorController animated:YES completion:nil];

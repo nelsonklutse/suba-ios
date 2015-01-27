@@ -10,7 +10,7 @@
 #import "DACircularProgressView.h"
 #import "S3PhotoFetcher.h"
 
-@interface PhotosCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate>
+@interface PhotosCell()
 
 @property (strong,nonatomic) NSArray *gImages;
 @property (strong,nonatomic) NSMutableDictionary *spotInfo;
@@ -30,7 +30,7 @@
 */
 
 
-#pragma UIPhotoGalleryDataSource methods
+/*#pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
     if ([self.gImages count] >= 3) {
         return 3;
@@ -160,7 +160,7 @@
             
         });
     }
-}
+}*/
 
 
 @end

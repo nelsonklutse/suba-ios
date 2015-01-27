@@ -63,11 +63,13 @@ static CLLocationManager *locationManager;
 
 -(IBAction)unWindToHomeScreen:(UIStoryboardSegue *)segue{}
 
+
 - (IBAction)seeNearbyStreams:(UIButton *)sender
 {
     [Flurry logEvent:@"See_Nearby_Streams"];
     [self checkLocation];
 }
+
 
 - (IBAction)loginWithGoogle:(UIButton *)sender
 {
@@ -108,6 +110,7 @@ static CLLocationManager *locationManager;
 }
 
 
+
 #pragma mark - Facebook Login
 - (void)openFBSession{
     //[self.fbLoginIndicator startAnimating];
@@ -134,7 +137,7 @@ static CLLocationManager *locationManager;
                     
                     NSString *userEmail = [user valueForKey:@"email"];
                     if (userEmail == NULL) {
-                        [AppHelper showAlert:@"Facebook Error"
+                        [AppHelper showAlert:@"Oops!"
                                      message:@"There was an issue retrieving your facebook email address."
                                      buttons:@[@"OK"] delegate:nil];
                         
@@ -178,7 +181,7 @@ static CLLocationManager *locationManager;
                          }
                         }else{
                             DLog(@"Error - %@",error);
-                            [AppHelper showAlert:@"Authentication Error"
+                            [AppHelper showAlert:@"Oops!"
                                          message:@"There was a problem authenticating you on our servers. Please wait a minute and try again"
                                          buttons:@[@"OK"]
                                         delegate:nil];
@@ -194,15 +197,13 @@ static CLLocationManager *locationManager;
     
 }
 
+
 - (IBAction)fbLoginAction:(UIButton *)sender
 {
     sender.enabled = NO;
     [self.activityIndicator startAnimating];
     [self openFBSession];
 }
-
-
-
 
 
 
@@ -385,7 +386,7 @@ static CLLocationManager *locationManager;
         [self.activityIndicator stopAnimating];
         self.signInWithGoogleButton.enabled = NO;
         if (error) {
-            [AppHelper showAlert:@"Google Login" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"OK"] delegate:nil];
+            [AppHelper showAlert:@"Oops!" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"OK"] delegate:nil];
         }else{
             // We have the user info
             
@@ -436,7 +437,7 @@ static CLLocationManager *locationManager;
                     }
                 }else{
                     DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Authentication Error"
+                    [AppHelper showAlert:@"Oops!"
                                  message:@"There was a problem authenticating you on our servers. Please wait a minute and try again"
                                  buttons:@[@"OK"]
                                 delegate:nil];
@@ -459,7 +460,7 @@ static CLLocationManager *locationManager;
     if (!error) {
         [self fetchGoogleUserInfo:auth];
     }else{
-        [AppHelper showAlert:@"Google Login Error" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"Try Again"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"Try Again"] delegate:nil];
     }
 }
 

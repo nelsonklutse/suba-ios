@@ -157,7 +157,7 @@ static CLLocationManager *locationManager;
     [AppHelper showLoadingDataView:self.creatingStreamIndicatorView
                          indicator:self.createStreamIndicator flag:YES];
     if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }else{
         if ([locationManager location]) {
             [[[CLGeocoder alloc] init] reverseGeocodeLocation:[locationManager location] completionHandler:^(NSArray *placemarks, NSError *error) {
@@ -194,7 +194,9 @@ static CLLocationManager *locationManager;
                             [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
                         }else{
                            // DLog(@"Error - %@",error);
-                            [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                            [AppHelper showAlert:@"Oops!"
+                                         message:@"Something went wrong. Try again?"
+                                         buttons:@[@"OK"] delegate:nil];
                         }
                     }];
                     

@@ -12,5 +12,6 @@
 
 @property (strong,nonatomic) NSString *spotID;
 @property (strong,nonatomic) NSDictionary *spotInfo;
+@property BOOL shouldShowMembers;
 
 @end

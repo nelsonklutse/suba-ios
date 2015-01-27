@@ -78,6 +78,12 @@
 #define COCOAPODS_VERSION_MINOR_Bolts 1
 #define COCOAPODS_VERSION_PATCH_Bolts 3
 
+// Branch
+#define COCOAPODS_POD_AVAILABLE_Branch
+#define COCOAPODS_VERSION_MAJOR_Branch 0
+#define COCOAPODS_VERSION_MINOR_Branch 3
+#define COCOAPODS_VERSION_PATCH_Branch 96
+
 // CSNotificationView
 #define COCOAPODS_POD_AVAILABLE_CSNotificationView
 #define COCOAPODS_VERSION_MAJOR_CSNotificationView 0
@@ -96,11 +102,17 @@
 #define COCOAPODS_VERSION_MINOR_Facebook_iOS_SDK 20
 #define COCOAPODS_VERSION_PATCH_Facebook_iOS_SDK 0
 
+// HTKDynamicResizingCell
+#define COCOAPODS_POD_AVAILABLE_HTKDynamicResizingCell
+#define COCOAPODS_VERSION_MAJOR_HTKDynamicResizingCell 0
+#define COCOAPODS_VERSION_MINOR_HTKDynamicResizingCell 0
+#define COCOAPODS_VERSION_PATCH_HTKDynamicResizingCell 2
+
 // Harpy
 #define COCOAPODS_POD_AVAILABLE_Harpy
-#define COCOAPODS_VERSION_MAJOR_Harpy 2
-#define COCOAPODS_VERSION_MINOR_Harpy 5
-#define COCOAPODS_VERSION_PATCH_Harpy 2
+#define COCOAPODS_VERSION_MAJOR_Harpy 3
+#define COCOAPODS_VERSION_MINOR_Harpy 3
+#define COCOAPODS_VERSION_PATCH_Harpy 1
 
 // IDMPhotoBrowser
 #define COCOAPODS_POD_AVAILABLE_IDMPhotoBrowser
@@ -137,6 +149,18 @@
 #define COCOAPODS_VERSION_MAJOR_ImageMagick_wand 6
 #define COCOAPODS_VERSION_MINOR_ImageMagick_wand 8
 #define COCOAPODS_VERSION_PATCH_ImageMagick_wand 8
+
+// PHFComposeBarView
+#define COCOAPODS_POD_AVAILABLE_PHFComposeBarView
+#define COCOAPODS_VERSION_MAJOR_PHFComposeBarView 2
+#define COCOAPODS_VERSION_MINOR_PHFComposeBarView 0
+#define COCOAPODS_VERSION_PATCH_PHFComposeBarView 1
+
+// PHFDelegateChain
+#define COCOAPODS_POD_AVAILABLE_PHFDelegateChain
+#define COCOAPODS_VERSION_MAJOR_PHFDelegateChain 1
+#define COCOAPODS_VERSION_MINOR_PHFDelegateChain 0
+#define COCOAPODS_VERSION_PATCH_PHFDelegateChain 1
 
 // SDWebImage
 #define COCOAPODS_POD_AVAILABLE_SDWebImage

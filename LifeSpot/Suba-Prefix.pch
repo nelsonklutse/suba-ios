@@ -24,9 +24,6 @@
     #import "AppHelper.h"
     #import "LifeSpotsConfig.h"
     #import "UIScrollView+UzysCircularProgressPullToRefresh.h"
-    #import "UIPhotoGalleryView.h"
-    #import "UIPhotoItemView.h"
-    #import "UIPhotoGalleryViewController.h"
     #import <CSNotificationView.h>
     #import "Flurry.h"
     #import <Harpy.h>
@@ -35,6 +32,7 @@
     #import <IonIcons.h>
     #import <ionicons-codes.h>
     #import <LSPushProviderAPIClient.h>
+
 #endif
 
 

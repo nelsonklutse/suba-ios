@@ -23,6 +23,7 @@
 #import "StreamTypeViewController.h"
 #import "Branch.h"
 
+
 typedef void (^SBCurrentLocationCompletionHandler) (NSDictionary *latlng,NSError *error);
 typedef void (^SBNewStreamsCompletionHandler) (BOOL newstreams);
 
@@ -56,6 +57,8 @@ typedef enum{
 
 
 @interface MainStreamViewController()<UICollectionViewDataSource,UICollectionViewDelegate,CLLocationManagerDelegate,UIAlertViewDelegate,UITextFieldDelegate,UIGestureRecognizerDelegate>
+
+//@property (strong,nonatomic) AFDropdownNotification *notification;
 
 @property (strong,nonatomic) NSMutableArray *nearbyStreams;
 @property (strong,nonatomic) NSDictionary *currentSelectedSpot;
@@ -203,8 +206,8 @@ static NSInteger selectedButton = 10;
 {
     if([segue.identifier isEqualToString:@"JoinAnotherStream"]){
         // What if we're coming from photo stream VC, hmmm...
-        Branch *branch = [Branch getInstance:@"55726832636395855"];
-        NSDictionary *params = [branch getReferringParams];
+        Branch *branch = [Branch getInstance:kBRANCH_API_KEY];
+        NSDictionary *params = [branch getLatestReferringParams];
         if ([params count] > 0) {
             // Prepare info for segue
             NSString *numberOfPhotos = params[@"photos"];
@@ -226,13 +229,17 @@ static NSInteger selectedButton = 10;
 
 #pragma mark - View life cycle
 - (void)canWeJoinStreamFromInvite
-{
-    // Get the current referring params if we still have one
-    Branch *branch = [Branch getInstance:@"55726832636395855"];
-    NSDictionary *params = [branch getReferringParams];
+{    // Get the current referring params if we still have one
+    Branch *branch = [Branch getInstance:kBRANCH_API_KEY];
+    NSDictionary *params = [branch getLatestReferringParams];
+    //DLog();
     if (![self.view viewWithTag:4]) {
+        
         DLog(@"Referring params: %@",params);
-        if ([params count] > 0){
+        
+        if (params[@"streamId"]){
+            
+            DLog(@"streamId: %@",params[@"streamId"]);
             
             // Prepare info for segue
             NSString *numberOfPhotos = (params[@"photos"]) ? params[@"photos"] : @(0);
@@ -240,15 +247,22 @@ static NSInteger selectedButton = 10;
             NSString *streamId = params[@"streamId"];
             NSString *streamCode = params[@"streamCode"];
             
-            NSDictionary *inviteInfo = @{@"photos":numberOfPhotos,@"spotName":streamName,@"spotId":streamId};
-            
-            [self joinSpot:streamCode data:inviteInfo completion:^(id results, NSError *error){
-                [AppHelper clearPendingInvites:params];
-                if (self.navigationController){
-                    [self performSegueWithIdentifier:kPhotosStreamSegue sender:inviteInfo];
-                }
+            if (numberOfPhotos != nil && streamName != nil && streamId != nil && streamCode != nil) {
+                NSDictionary *inviteInfo = @{@"photos":numberOfPhotos,@"spotName":streamName,@"spotId":streamId};
                 
-            }];
+                DLog(@"Invite info: %@",inviteInfo);
+                [AppHelper clearPendingInvites:params];
+                
+                [self joinSpot:streamCode data:inviteInfo completion:^(id results, NSError *error){
+                    
+                    if (self.navigationController){
+                        [self performSegueWithIdentifier:kPhotosStreamSegue sender:inviteInfo];
+                    }
+                    
+                }];
+            }
+            
+            
         }
     }
     
@@ -257,6 +271,7 @@ static NSInteger selectedButton = 10;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     
     //[self.plusicon setImage:[UIImage imageNamed:@"PlusIconWhite"]];
     [self.searchBarButton setImage:[IonIcons imageWithIcon:icon_ios7_search size:48 color:[UIColor whiteColor]]];
@@ -356,9 +371,6 @@ static NSInteger selectedButton = 10;
         //[self checkForLocation];
     }*/
 
-   
-    // If we are coming from an invite
-    [self canWeJoinStreamFromInvite];
 }
 
 
@@ -459,7 +471,26 @@ static NSInteger selectedButton = 10;
 
 -(void)viewDidAppear:(BOOL)animated
 {
+    
     [super viewDidAppear:animated];
+    
+    
+    /*_notification = [[AFDropdownNotification alloc] init];
+    _notification.notificationDelegate = self;
+    
+    _notification.titleText = @"Update available";
+    _notification.subtitleText = @"Do you want to download the update of this file?";
+    //notification.image = [UIImage imageNamed:@"update"];
+    _notification.topButtonText = @"Accept";
+    _notification.bottomButtonText = @"Cancel";
+    
+    
+    [_notification presentInView:self.view withGravityAnimation:YES];*/
+    
+    
+    // If we are coming from an invite
+    [self canWeJoinStreamFromInvite];
+    
     
     /*if ([AppHelper inviteCodeDetails]){
         
@@ -829,7 +860,7 @@ static NSInteger selectedButton = 10;
         [self dataLoadingView:NO];
         if (error) {
             DLog(@"Error - %@",error);
-            [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+            [AppHelper showAlert:@"Oops!" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
             if (completionHandler) {
                completionHandler(NO);
             }
@@ -893,8 +924,8 @@ static NSInteger selectedButton = 10;
             }
         }else{
             DLog(@"Error - %@",error);
-            [AppHelper showAlert:@"Network Error"
-                         message:error.localizedDescription
+            [AppHelper showAlert:@"Oops!"
+                         message:@"Something went wrong. Try again?"
                          buttons:@[@"OK"] delegate:nil];
         }
     }];
@@ -1156,7 +1187,6 @@ static NSInteger selectedButton = 10;
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    
     self.currentIndexPath = indexPath;
     static NSString *cellIdentifier = @"NearbySpotCell";
     PersonalSpotCell *personalSpotCell = nil;
@@ -1179,11 +1209,11 @@ static NSInteger selectedButton = 10;
     CGColorRef coloref = [UIColor colorWithRed:156/255.0f green:150/255.0f blue:129/255.0f alpha:1.0f].CGColor;
     [personalSpotCell setUpBorderWithColor:coloref AndThickness:.5f];
     
-        if (personalSpotCell.pGallery.hidden) {
+        /*if (personalSpotCell.pGallery.hidden) {
             personalSpotCell.pGallery.hidden = NO;
-        }
+        }*/
     
-    DLog(@"Stream name: %@ ---- Stream code : %@",spotsToDisplay[indexPath.item][@"spotName"],spotsToDisplay[indexPath.item][@"spotCode"]);
+    personalSpotCell.firstPhotoImageView.clipsToBounds = YES;
         spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
         /*if ([spotCode isEqualToString:@"NONE"] || [spotCode class] == [NSNull class] || spotCode == NULL){
             personalSpotCell.privateStreamImageView.hidden = YES; 
@@ -1192,7 +1222,7 @@ static NSInteger selectedButton = 10;
         }*/
     
     
-    [[personalSpotCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    //[[personalSpotCell.photoGalleryView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     NSString *photos = spotsToDisplay[indexPath.row][@"photos"];
     
@@ -1414,7 +1444,7 @@ static NSInteger selectedButton = 10;
         }if (spotsToDisplay[indexPath.item][@"thirdMemberPhoto"]){
             NSString *thirdMemberPhotoURL = spotsToDisplay[indexPath.item][@"thirdMemberPhoto"];
             [personalSpotCell fillView:personalSpotCell.thirdMemberPhoto WithImage:thirdMemberPhotoURL];
-            //DLog(@"Third memberPhotoURL - %@",thirdMemberPhotoURL);
+            DLog(@"Third memberPhotoURL - %@",thirdMemberPhotoURL);
         }else if(spotsToDisplay[indexPath.item][@"thirdMember"]){
             
             NSString *personString = spotsToDisplay[indexPath.item][@"thirdMember"];
@@ -1429,14 +1459,7 @@ static NSInteger selectedButton = 10;
     
     if ([photos integerValue] > 0) {  // If there are photos to display
             
-            [personalSpotCell prepareForGallery:spotsToDisplay[indexPath.row] index:indexPath];
-        
-            if ([personalSpotCell.pGallery superview]) {
-                [personalSpotCell.pGallery removeFromSuperview];
-            }
-            personalSpotCell.photoGalleryView.backgroundColor = [UIColor clearColor];
-            [personalSpotCell.photoGalleryView addSubview:personalSpotCell.pGallery];
-
+        [personalSpotCell setImageURL:spotsToDisplay[indexPath.row] index:indexPath];
         
     }else{
         
@@ -1448,7 +1471,7 @@ static NSInteger selectedButton = 10;
             [noPhotosImageView removeFromSuperview];
         }
         
-        [personalSpotCell.photoGalleryView addSubview:noPhotosImageView];
+        //[personalSpotCell.photoGalleryView addSubview:noPhotosImageView];
     }
     
     
@@ -1476,16 +1499,12 @@ static NSInteger selectedButton = 10;
 #pragma mark - CollectionView Delegate
 -(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSInteger numberOfPhotos = 0;
-    NSArray *spotsToDisplay = nil;
- 
-    //[Flurry logEvent:@"Stream_Selected_My_Stream"];
-        
+        NSInteger numberOfPhotos = 0;
+        NSArray *spotsToDisplay = nil;
+    
         [Flurry logEvent:@"Stream_Selected_Nearby"];
         spotsToDisplay = self.nearbyStreams;
         numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-    
-    
     
         if (numberOfPhotos == 0){
             
@@ -1498,81 +1517,16 @@ static NSInteger selectedButton = 10;
             self.currentSelectedSpot = dataPassed;
             
             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-            
-            /*if (isMember){
-                // User is a member so let him view photos;
-                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-            }else if ([spotCode isEqualToString:@"NONE"]) {
-                // This album has no spot code and user is not a member, so we add user to this stream
-                [[User currentlyActiveUser] joinSpot:spotID completion:^(id results, NSError *error) {
-                    
-                    if (!error){
-                        //DLog(@"Album is public so joining spot");
-                        if ([results[STATUS] isEqualToString:ALRIGHT]){
-                            DLog(@"User has been added to a stream");
-                            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-             
-                            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-                        }else{
-                            DLog(@"Server error - %@",error);
-                        }
-                    }else{
-                        DLog(@"Error - %@",error);
-                    }
-                }];
-            }else{
-                //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the stream you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
-                alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
-                [alertView show];
-            }*/
-            
+        
         }else if (numberOfPhotos > 0){
             // User Tapped the name of the stream
-            //NSArray *photos = self.nearbyStreams[indexPath.item][@"photoURLs"];
             
             // It is the nearby stream
             self.currentSelectedSpot = self.nearbyStreams[indexPath.item];
             NSDictionary *streamInfo = self.nearbyStreams[indexPath.item];
-            
-            //NSString *isMember = self.nearbyStreams[indexPath.item][@"userIsMember"];
-            //NSString *spotCode = self.nearbyStreams[indexPath.item][@"spotCode"];
-            //NSString *spotId = self.nearbyStreams[indexPath.item][@"spotId"];
-            
+           
             [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:streamInfo];
-            
-            /*if (isMember) {
-                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
-            }else if([spotCode isEqualToString:@"NONE"]){
-                
-                // This album is public and user is not a member, so we add user to this stream
-                [[User currentlyActiveUser] joinSpot:spotId completion:^(id results, NSError *error) {
-                    if (!error){
-                        DLog(@"Stream is public so joining spot");
-                        if ([results[STATUS] isEqualToString:ALRIGHT]){
-                            
-                            [[NSNotificationCenter defaultCenter] postNotificationName:kUserReloadStreamNotification object:nil];
-                            
-                            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:photos];
-                        }else{
-                            DLog(@"Server error - %@",error);
-                        }
-                        
-                    }else{
-                        DLog(@"Error - %@",error);
-                    }
-                }];
-            }else{
-                
-                //if ([isMember isEqualToString:@"NO"] && ![spotCode isEqualToString:@"N/A"])
-                UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"Join Stream" message:@"Enter code for the album you want to join" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Join", nil];
-                
-                alertView.alertViewStyle = UIAlertViewStyleSecureTextInput;
-                alertView.tag = 10;
-                [alertView show];
-            }*/
-
-        }
+    }
 }
 
 
@@ -1878,9 +1832,9 @@ static NSInteger selectedButton = 10;
                 
             }else if([sender isKindOfClass:[NSDictionary class]]){
                 //NSDictionary *streamInfo = sender;
-                DLog(@"Stream Info: %@",sender);
+                //DLog(@"Stream Info: %@",sender);
                 if (sender[@"photoURLs"]){
-                    DLog(@"Is user a member: %@",sender[@"userIsMember"]);
+                    //DLog(@"Is user a member: %@",sender[@"userIsMember"]);
                     // The stream info contains info as to whether user is a member or not
                     NSArray *photos = sender[@"photoURLs"];
                     photosVC.photos = [NSMutableArray arrayWithArray:
@@ -2034,6 +1988,16 @@ static NSInteger selectedButton = 10;
     }];
 }*/
 
+
+-(void)dropdownNotificationTopButtonTapped {
+    
+    NSLog(@"Top button tapped");
+}
+
+-(void)dropdownNotificationBottomButtonTapped {
+    
+    NSLog(@"Bottom button tapped");
+}
 
 
 

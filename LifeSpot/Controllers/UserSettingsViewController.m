@@ -12,6 +12,7 @@
 #import "CleverInvitesViewController.h"
 #import "TermsViewController.h"
 #import <MessageUI/MessageUI.h>
+#import <WhatsAppKit.h>
 
 @interface UserSettingsViewController()<MFMailComposeViewControllerDelegate,UIActionSheetDelegate>
 
@@ -60,6 +61,8 @@
     self.help = @[@"Help",@"Send Feedback",@"Licenses"];
     self.legal = @[@"Privacy Policy",@"Terms of Use"];
 }
+
+
 
 
 -(void)viewDidAppear:(BOOL)animated
@@ -236,7 +239,8 @@
     
     [AppHelper logout];
     
-    AppDelegate *appDelegate = [UIApplication sharedApplication].delegate;
+    
+    id appDelegate = [UIApplication sharedApplication].delegate;
     
     UIViewController *topVC = [appDelegate topViewController];
     
@@ -302,9 +306,9 @@
 #pragma mark - Helpers
 -(void)showActionSheet
 {
-    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Tell a friend about Suba via..."
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:@"Tell a friend about Suba via"
                                                              delegate:self cancelButtonTitle:@"Dismiss"destructiveButtonTitle:nil
-                                                    otherButtonTitles:@"Mail",@"Message",@"Twitter",@"Facebook", nil];
+                                                    otherButtonTitles:@"WhatsApp",@"Mail",@"Message",@"Twitter",@"Facebook", nil];
     
     [actionSheet showInView:self.view];
 }
@@ -316,18 +320,30 @@
     CleverInvitesViewController *cVC = nil;
     UIStoryboard *invitesSb = [UIStoryboard storyboardWithName:@"Invites" bundle:[NSBundle mainBundle]];
     cVC = [invitesSb instantiateViewControllerWithIdentifier:@"CleverInvitation"];
-    if (buttonIndex == 0){
+    
+    if (buttonIndex == 0) {
+        // We want to invite via whatsapp
+        if ([WhatsAppKit isWhatsAppInstalled]){
+           
+                // We already have the URL
+                
+            NSString *message = [NSString stringWithFormat:@"Use Suba app to capture cherished memories with friends: Download at http://subaapp.com/download"];
+                
+            [WhatsAppKit launchWhatsAppWithMessage:message];
+        }
+        
+    }else if (buttonIndex == 1){
         // We want to email
         cVC.inviteType = kEmail;
         [self presentViewController:cVC animated:YES completion:nil];
-    }else if(buttonIndex == 1){
+    }else if(buttonIndex == 2){
         // Send Message
         cVC.inviteType = kContacts;
         [self presentViewController:cVC animated:YES completion:nil];
-    }else if (buttonIndex == 2){
+    }else if (buttonIndex == 3){
         cVC.inviteType = kTwitter;
         [self shareViaServiceType:SLServiceTypeTwitter];
-    }else if(buttonIndex == 3){
+    }else if(buttonIndex == 4){
         cVC.inviteType = kFacebook;
         [self shareViaServiceType:SLServiceTypeFacebook];
     }else{
@@ -360,17 +376,17 @@
         
         
         if (serviceType == SLServiceTypeTwitter){
-            NSString *initalTextString = [NSString stringWithFormat:@"%@",@"I'm using this awesome photo app @SubaPhotoApp"];
+            NSString *initalTextString = [NSString stringWithFormat:@"%@",@"Use @SubaPhotoApp to capture shared memories with friends.Download Suba:"];
             
             [composeViewController setInitialText:initalTextString];
             
-            [composeViewController addURL:[NSURL URLWithString:@"http://bit.ly/suba_t"]];
+            [composeViewController addURL:[NSURL URLWithString:DOWNLOAD_LINK]];
         }else if (serviceType == SLServiceTypeFacebook){
             
-            NSString *initalTextString = [NSString stringWithFormat:@"%@\n%@",@"Ever been to a party or event and wished you got all those nice photos others took without waiting a decade for them?",@" Don't miss out again. Download Suba @ "];
+            NSString *initalTextString = [NSString stringWithFormat:@"%@\n%@",@"Ever been to a party or event and wished you got all those nice photos others took without waiting a decade for them?",@" Don't miss out again. Download Suba: "];
             
             [composeViewController setInitialText:initalTextString];
-            [composeViewController addURL:[NSURL URLWithString:@"http://bit.ly/suba_fb"]];
+            [composeViewController addURL:[NSURL URLWithString:DOWNLOAD_LINK]];
         }
         
         

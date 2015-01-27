@@ -50,7 +50,7 @@
 - (IBAction)dismissKeypadOnBackgroundClick:(id)sender;
 - (IBAction)deleteStreamAction:(id)sender;
 
-- (void)updateViewWithSpotInfo;
+- (void)fetchStreamInfo;
 - (void)disableViews;
 - (void)saveAlbumInfo:(NSMutableDictionary *)spotInfo indicator:(id)indicator;
 - (BOOL)canUserDeleteStream;
@@ -58,12 +58,13 @@
 
 @implementation StreamSettingsViewController
 static CLLocationManager *locationManager;
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
 	
-    self.streamCreator = self.spotInfo[@"userName"];
-    DLog(@"Stream creator - %@",self.streamCreator);
+    //self.streamCreator = self.spotInfo;
+    //DLog(@"Stream creator - %@",self.spotInfo);
     self.streamNameField.adjustsFontSizeToFitWidth = YES;
     self.streamCodeField.adjustsFontSizeToFitWidth = YES;
     self.locationNameButton.titleLabel.adjustsFontSizeToFitWidth = YES;
@@ -71,7 +72,13 @@ static CLLocationManager *locationManager;
     self.saveAlbumSettingsBarItem.enabled = NO;
     // self.navigationItem.title = self.spotName
     
-    [self updateViewWithSpotInfo];
+    
+    if (self.spotInfo){
+        [self updateViewWithStreamInfo];
+    }else{
+        [self fetchStreamInfo];
+    }
+    
     
     /*if (!self.addPrivacySwitch.isOn) {
         self.viewPrivacySwitch.on = YES;
@@ -79,11 +86,8 @@ static CLLocationManager *locationManager;
     }*/
     
     self.leaveAlbumButton.enabled = NO;
-    //self.deleteButton.enabled = NO;
-    //DLog(@"Stream info - %@",self.spotInfo);
     
-    if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]) {
-      //  DLog(@"Stream creator - %@\nUser name - %@",self.spotInfo[@"userName"],[AppHelper userName]);
+    if (![self.spotInfo[@"creatorId"] isEqualToString:[AppHelper userID]]) {
         
         // User did not create this album so disable stuff that he should not do
         [self disableViews];
@@ -151,7 +155,38 @@ static CLLocationManager *locationManager;
 }
 
 
--(void)updateViewWithSpotInfo
+- (void)updateViewWithStreamInfo
+{
+    //DLog(@"SpotInfo: %@",self.spotInfo);
+    self.spotName =  self.streamNameField.text = self.spotInfo[@"spotName"];
+    self.streamCodeField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
+    ? @"" : self.spotInfo[@"spotCode"];
+    
+    [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
+    [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateDisabled];
+    self.makeStreamPrivateSwitch.on=([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE])?NO:YES;
+    
+    
+    if (![self.spotInfo[@"creatorId"] isEqualToString:[AppHelper userID]]){
+        
+        // User did not create this album so disable stuff that he should not do
+        [self disableViews];
+        self.leaveAlbumButton.hidden = NO;
+        [self.view viewWithTag:100].hidden = NO;
+        
+    }else{ // If user is creator
+        self.leaveAlbumButton.hidden = YES;
+        [self.view viewWithTag:100].hidden = YES;
+        
+        if ([self canUserDeleteStream]) {
+            self.deleteButton.hidden = NO;
+        }else{
+            self.deleteButton.hidden = YES;
+        }
+    }
+}
+
+-(void)fetchStreamInfo
 {
     // Show activity indicator
     [AppHelper showLoadingDataView:self.loadStreamSettingsIndicatorView
@@ -165,50 +200,19 @@ static CLLocationManager *locationManager;
                  if (!error){
                      if([results[STATUS] isEqualToString:ALRIGHT]) {
                        self.spotInfo = (NSDictionary *)results;
-                       DLog(@"SpotInfo: %@",self.spotInfo);
-                       self.spotName =  self.streamNameField.text = self.spotInfo[@"spotName"];
-                       self.streamCodeField.text = ([self.spotInfo[@"spotCode"] isEqualToString:@"NONE"])
-                         ? @"" : self.spotInfo[@"spotCode"];
-                
-                [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateNormal];
-                [self.locationNameButton setTitle:self.spotInfo[@"venue"] forState:UIControlStateDisabled];
-                self.makeStreamPrivateSwitch.on=([self.spotInfo[@"addPrivacy"] isEqualToString:sANYONE])?NO:YES;
-                         
-                //self.spotDescription.text = (self.spotInfo[@"spotDescription"]) ? self.spotInfo[@"spotDescription"] : @"";
-                         
-                /*self.viewPrivacySwitch.on = ([self.spotInfo[@"viewPrivacy"] isEqualToString:sANYONE]) ? YES : NO;
-                                self.memberInviteSwitch.on = ([self.spotInfo[@"memberInvitePrivacy"]
-                                               isEqualToString:sANYONE]) ? YES : NO;*/
-                         
-                if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
-                    
-                    // User did not create this album so disable stuff that he should not do
-                        [self disableViews];
-                        self.leaveAlbumButton.hidden = NO;
-                        [self.view viewWithTag:100].hidden = NO;
-                             
-                         }else{ // If user is creator
-                             self.leaveAlbumButton.hidden = YES;
-                             [self.view viewWithTag:100].hidden = YES;
-                             
-                             if ([self canUserDeleteStream]) {
-                                  self.deleteButton.hidden = NO;
-                                }else{
-                                 self.deleteButton.hidden = YES;
-                             }
-                           }
+                         [self updateViewWithStreamInfo];
                         }
                      
-                            self.leaveAlbumButton.enabled = YES;
+                    self.leaveAlbumButton.enabled = YES;
+                    
                  }else{
                      
-                     [AppHelper showAlert:@"Stream Settings Error"
-                                  message:error.localizedDescription
-                                  buttons:@[@"OK"]
-                                 delegate:nil];
+                     [AppHelper showAlert:@"Oops!"
+                                  message:@"Something went wrong. Try again?"
+                                  buttons:@[@"OK"] delegate:nil];
                  }
                  
-             }];
+        }];
  }
 
 
@@ -305,10 +309,10 @@ static CLLocationManager *locationManager;
 
 -(BOOL)canUserDeleteStream
 {
-    NSArray *members = self.spotInfo[@"members"];
-    NSInteger photos = [self.spotInfo[@"numberOfPhotos"] integerValue];
+    NSInteger members = [self.spotInfo[@"members"] integerValue];
+    NSInteger photos = [self.spotInfo[@"photos"] integerValue];
     
-    if ([members count] == 1 || photos == 0){ // There are no members in this stream
+    if (members == 1 || photos == 0){ // There are no members in this stream
         return YES;
         // Show delete stream button
     }
@@ -394,6 +398,7 @@ static CLLocationManager *locationManager;
     [self.streamCodeField resignFirstResponder];
     //[self.spotDescription resignFirstResponder];
 }
+
 
 - (IBAction)deleteStreamAction:(id)sender {
     // This is a destructive action. Prompt the user later before finally deleting the album

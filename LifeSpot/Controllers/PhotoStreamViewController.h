@@ -29,6 +29,9 @@ typedef enum{
 @property (strong,nonatomic) NSMutableArray *photos;
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,nonatomic) NSString *spotName;
+@property (strong,nonatomic) NSString *streamVenue;
+@property (strong,nonatomic) NSString *timestamp;
+
 @property (strong,nonatomic) NSString *spotID;
 @property (strong,nonatomic) NSString *photoToShow;
 @property BOOL isLaunchingFromNotification;

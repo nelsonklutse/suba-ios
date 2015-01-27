@@ -10,8 +10,6 @@
 
 @interface PlacesWatchingStreamCell : UICollectionViewCell
 
-@property (retain,nonatomic) UIPhotoGalleryView *pGallery;
-
 @property (weak, nonatomic) IBOutlet UIView *photoGalleryView;
 @property (weak, nonatomic) IBOutlet UIImageView *userNameView;
 @property (weak, nonatomic) IBOutlet UILabel *userNameLabel;
@@ -20,5 +18,5 @@
 @property (weak, nonatomic) IBOutlet UILabel *photosLabel;
 @property (weak, nonatomic) IBOutlet UIImageView *privateStreamImageView;
 
-- (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath*)indexPath;
+//- (void)prepareForGallery:(NSDictionary *)spotInfo index:(NSIndexPath*)indexPath;
 @end

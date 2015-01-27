@@ -10,7 +10,8 @@
 #import "DACircularProgressView.h"
 #import "S3PhotoFetcher.h"
 
-@interface PlacesWatchingStreamCell()<UIPhotoGalleryDataSource,UIPhotoGalleryDelegate,UIPhotoItemDelegate>
+@interface PlacesWatchingStreamCell()
+
 @property (strong,nonatomic) NSDictionary *spotInfo;
 @property (strong,nonatomic) NSArray *gImages;
 @end
@@ -27,7 +28,7 @@
 }
 
 
-#pragma UIPhotoGalleryDataSource methods
+/*#pragma UIPhotoGalleryDataSource methods
 - (NSInteger)numberOfViewsInPhotoGallery:(UIPhotoGalleryView *)photoGallery {
     //DLog(@"Number of Images - %lu",(unsigned long)[self.gImages count]);
     if ([self.gImages count] >= 3) {
@@ -36,10 +37,7 @@
     return [self.gImages count];
 }
 
-/*-(UIImage*)photoGallery:(UIPhotoGalleryView*)photoGallery localImageAtIndex:(NSInteger)index {
- DLog();
- return [UIImage imageNamed:[NSString stringWithFormat:@"sample%d.jpg", index % 10]];
- }*/
+
 
 - (NSURL*)photoGallery:(UIPhotoGalleryView *)photoGallery remoteImageURLAtIndex:(NSInteger)index {
     NSString *imageURL = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,self.gImages[index][@"s3name"]];
@@ -175,7 +173,7 @@
     }
 
     
-}
+}*/
 
 
 

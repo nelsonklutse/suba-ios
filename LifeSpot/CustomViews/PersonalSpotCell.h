@@ -10,9 +10,11 @@
 
 @interface PersonalSpotCell : UICollectionViewCell
 
-@property (retain,nonatomic) UIPhotoGalleryView *pGallery;
+//@property (retain,nonatomic) UIPhotoGalleryView *pGallery;
+@property (weak, nonatomic) IBOutlet UIImageView *firstPhotoImageView;
 
 @property (weak, nonatomic) IBOutlet UIView *photoGalleryView;
+
 @property (weak, nonatomic) IBOutlet UILabel *streamVenueLabel;
 
 @property (weak, nonatomic) IBOutlet UIView *userNameView;
@@ -34,4 +36,5 @@
 
 - (void)fillView:(UIView *)view WithImage:(NSString *)imageURL;
 - (void)setUpBorderWithColor:(CGColorRef)colorRef AndThickness:(CGFloat)height;
+- (void)setImageURL:(NSDictionary *)spotInfo index:(NSIndexPath *)indexPath;
 @end

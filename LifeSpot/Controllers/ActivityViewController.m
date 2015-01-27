@@ -14,12 +14,14 @@
 
 @interface ActivityViewController ()<UITableViewDataSource,UITableViewDelegate>
 @property (strong,nonatomic) NSArray *notifications;
+
+
 @property (weak, nonatomic) IBOutlet UIView *notRegisteredForRemoteNotificationsView;
 @property (weak, nonatomic) IBOutlet UIView *noRemoteNotificationsView;
 @property (weak, nonatomic) IBOutlet UITableView *notificationsTableView;
 @property (weak, nonatomic) IBOutlet UIView *loadingActivityIndicatorView;
-
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *loadingActivityIndicator;
+
 - (IBAction)turnOnNotifications:(id)sender;
 
 - (void)userRegisteredForPushNotification:(NSNotification *)aNotification;
@@ -41,7 +43,6 @@
     
     self.navigationItem.titleView = navImageView;
     
-    DLog();
     DLog(@"System ios version: %f",[[[UIDevice currentDevice] systemVersion] floatValue]);
     if (IS_OS_8_OR_LATER){
         //DLog(@"We're using ios 8");
@@ -50,7 +51,7 @@
         
         UIUserNotificationSettings *notificationSettings = [[UIApplication sharedApplication] currentUserNotificationSettings];
         
-        //DLog(@"User Notification Settings: %u",[notificationSettings types]);
+        DLog(@"User Notification Settings: %u",[notificationSettings types]);
         if (notificationSettings == 0) {
             // Show give us notifications
             self.notRegisteredForRemoteNotificationsView.alpha = 1;
@@ -84,32 +85,51 @@
 
     }
     
-
-
+    [self.tabBarItem setBadgeValue:@"1"];
+    self.tabBarItem.badgeValue = @"1";
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(userRegisteredForPushNotification:) name:kUserRegisterForPushNotification object:nil];
     
+}
+
+
+
+-(void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    __weak typeof(self) weakSelf = self;
+    
+    // Set up PullToRefresh for User activity
+    [self.notificationsTableView addPullToRefreshActionHandler:^{
+        [weakSelf updateData];
+    }];
+    
+    [self.notificationsTableView.pullToRefreshView setImageIcon:[UIImage imageNamed:@"icon-72"]];
+    //[self.notificationsTableView.pullToRefreshView
+    [self.notificationsTableView.pullToRefreshView setTintColor:kSUBA_APP_COLOR];
+    [self.notificationsTableView.pullToRefreshView setBorderWidth:6];
+    
+   
     
 }
 
 
--(void)viewDidAppear:(BOOL)animated
+-(void)updateData
 {
-    /*NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
-    if (remoteNotificationType == 0) {
-        // Show give us notifications
-        self.notRegisteredForRemoteNotificationsView.alpha = 1;
-        self.noRemoteNotificationsView.alpha = 0;
-        self.notificationsTableView.alpha = 0;
-    }else{
-        self.notRegisteredForRemoteNotificationsView.alpha = 0;
-        self.noRemoteNotificationsView.alpha = 0;
-        self.notificationsTableView.alpha = 1;
-        [self.notificationsTableView reloadData];
-        [self fetchNotificationsFromProvider];
-    }*/
+    DLog();
+    __weak typeof(self) weakSelf = self;
+    
+    int64_t delayInSeconds = 1.2;
+    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+    
+    dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+        [weakSelf fetchNotificationsFromProvider];
+    });
 
 }
+
+
 
 - (void)didReceiveMemoryWarning
 {
@@ -137,9 +157,13 @@
                 if ([attachments count] > 0) {
                     DLog(@"Notifications - %@",attachments); 
                                                   
-                    NSString *badgeValue = ([[responseObject[@"badgeCount"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badgeCount"] stringValue] ;
+                    /*NSString *badgeValue = ([[responseObject[@"badge"] stringValue] isEqualToString:@"0"]) ? nil : [responseObject[@"badge"] stringValue] ;
                    
-                      [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];
+                    if ([badgeValue integerValue] > 0){
+                        DLog(@"badge value: %@",badgeValue);
+                       [self.tabBarController.tabBar.items[2] setBadgeValue:badgeValue];
+                    }*/
+                    
                       self.noRemoteNotificationsView.alpha = 0;
                       self.notificationsTableView.alpha = 1;
                       [self.notificationsTableView reloadData];
@@ -150,7 +174,8 @@
                         self.notificationsTableView.alpha = 0;
                     }
                                               
-                } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                } failure:^(NSURLSessionDataTask *task, NSError *error){
+                    [AppHelper showLoadingDataView:self.loadingActivityIndicatorView indicator:self.loadingActivityIndicator flag:NO];
                     DLog(@"Error - %@",error);
                     self.noRemoteNotificationsView.alpha = 1;
                     self.notificationsTableView.alpha = 0;
@@ -158,46 +183,42 @@
 }
 
 
-
-
 #pragma mark - TableView Datasource
--(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    return 80;
+    return 70;
 }
 
--(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     return [self.notifications count];
 }
 
 
 
--(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *cellIdentifier = nil;
     NotificationCell *cell = nil;
-    
-    if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]){
-       cellIdentifier = @"ACTIVITY_CELL_COLORED";
-    }else{
-        cellIdentifier = @"ACTIVITY_CELL";
-    }
+    NSInteger row = (([self.notifications count] - 1) - indexPath.row ) % [self.notifications count];
+    //if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]){
+      // cellIdentifier = @"ACTIVITY_CELL_COLORED";
+    //}else{
+       cellIdentifier = @"ACTIVITY_CELL";
+    //}
     
     cell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     
     cell.senderImageView.clipsToBounds = YES;
-    cell.senderImageView.layer.cornerRadius = 25;
+    cell.senderImageView.layer.cornerRadius = 15;
     cell.senderImageView.layer.borderWidth = 1;
     cell.senderImageView.layer.borderColor = [UIColor lightGrayColor].CGColor;
-    //cell.senderImageView.image = nil;
-    cell.notificationMessage.text = self.notifications[indexPath.row][@"message"];
-    [cell.notificationMessage sizeToFit];
+    cell.notificationMessage.text = self.notifications[row][@"message"];
+    //[cell.notificationMessage sizeToFit];
     
-    DLog(@"Notification Message: %@",cell.notificationMessage.text);
-    
-    if (self.notifications[indexPath.row][@"senderPhoto"]){
-        NSString *senderPhoto = self.notifications[indexPath.row][@"senderPhoto"];
+    if (self.notifications[row][@"senderPhoto"]){
+        NSString *senderPhoto = self.notifications[row][@"senderPhoto"];
         NSURL *senderPhotoURL = [NSURL URLWithString:senderPhoto];
         
         [cell.senderImageView setImageWithURL:senderPhotoURL
@@ -205,21 +226,29 @@
     }else{
         [cell.senderImageView setImage:[UIImage imageNamed:@"anonymousUser"]];
     }
-
-    return cell;
+    
+    [cell.photoImageView setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,self.notifications[row][@"photoURL"]]]];
+    
+    cell.notificationTimestamp.text = self.notifications[row][@"howLong"];
+    
+    return cell; 
 }
 
 
 #pragma mark - TableView Delegate methods
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    [self.tabBarItem setBadgeValue:nil];
+
     NotificationCell *selectedCell = (NotificationCell *)[tableView cellForRowAtIndexPath:indexPath];
     selectedCell.backgroundView.backgroundColor = [UIColor whiteColor];
     selectedCell.backgroundColor = [UIColor whiteColor];
     
-    NSString *streamID = self.notifications[indexPath.row][@"streamId"];
+    NSInteger row = (([self.notifications count] - 1) - indexPath.row ) % [self.notifications count];
+    NSString *streamID = self.notifications[row][@"streamId"];
+    NSString *photourl = self.notifications[row][@"photoURL"];
     
-    if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]) {
+    /*if ([self.notifications[indexPath.row][@"status"] isEqualToString:@"UNREAD"]) {
         
         [[SubaAPIClient sharedInstance] POST:@"user/notification/update"
                                   parameters:@{@"userId": [AppHelper userID], @"notificationId" : self.notifications[indexPath.row][@"id"]}
@@ -233,10 +262,15 @@
             DLog(@"Error - %@",error);
         }];
 
-    }
+    }*/
     
-    [self performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId":streamID}];
- 
+    if ([self.notifications[row][@"type"] isEqualToString:@"PHOTO_DOODLED"]) {
+       [self performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM"
+                                 sender:@{@"streamId":streamID, @"photoURL" : photourl,
+                                          @"doodledPhotoURL" : photourl}]; 
+    }else{
+        [self performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId":streamID, @"photoURL" : photourl}];
+    }
 }
 
 
@@ -245,6 +279,9 @@
 {
     if ([segue.identifier isEqualToString:@"ACTIVITY_PHOTO_STREAM"]){
         PhotoStreamViewController *pvc = segue.destinationViewController;
+        
+        
+        DLog(@"Sender: %@",sender);
         
         if(sender[@"photoURL"] && !sender[@"doodledPhotoURL"]){
             pvc.photoToShow = sender[@"photoURL"];
@@ -262,7 +299,7 @@
 
 - (IBAction)turnOnNotifications:(id)sender
 {
-    //DLog(@"Turning on notifications by firing kUserDidSignUpNotification");
+    DLog(@"Turning on notifications by firing kUserDidSignUpNotification");
     [[NSNotificationCenter defaultCenter] postNotificationName:kUserDidSignUpNotification object:nil];
 }
 

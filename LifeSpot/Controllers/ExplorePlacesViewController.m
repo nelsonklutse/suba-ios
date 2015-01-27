@@ -270,7 +270,7 @@ static CLLocationManager *locationManager;
             [self.searchBar resignFirstResponder];
         }else{
            DLog(@"Error: %@", error);
-            [AppHelper showAlert:@"Locations Error" message:@"We could not fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
+            [AppHelper showAlert:@"Location Error" message:@"We could not fetch nearby locations this time" buttons:@[@"Try Later"] delegate:nil];
             
             return;
         }
@@ -429,7 +429,7 @@ static CLLocationManager *locationManager;
                 
                 if (error) {
                     DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Matching Locations Error"
+                    [AppHelper showAlert:@"Oops"
                                  message:@"We could not retrieve matching locations for your search term.If you searched for a specific place ,try adding city name and/or country after your search term for better results"
                                  buttons:@[@"OK"]
                                 delegate:nil];

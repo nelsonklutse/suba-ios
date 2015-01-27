@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6250" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleAspectFit" id="Yg2-c6-wgg" userLabel="Private Stream Small" customClass="SBWelcomePanel">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="450"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Screen4" translatesAutoresizingMaskIntoConstraints="NO" id="BJ9-11-vVy">
+                    <rect key="frame" x="5" y="20" width="310" height="280"/>
+                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </imageView>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" verticalCompressionResistancePriority="751" text="Relive great moments" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsLetterSpacingToFitWidth="YES" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="260" translatesAutoresizingMaskIntoConstraints="NO" id="mBJ-rQ-vfe">
+                    <rect key="frame" x="30" y="305" width="260" height="30"/>
+                    <fontDescription key="fontDescription" name="Helvetica-Bold" family="Helvetica" pointSize="20"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <nil key="highlightedColor"/>
+                    <color key="shadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </label>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="700" text="...or a stream for a large public event, Suba is the best way to collect photo memories." textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="300" translatesAutoresizingMaskIntoConstraints="NO" id="EFO-3C-I4g">
+                    <rect key="frame" x="10" y="327" width="300" height="50"/>
+                    <fontDescription key="fontDescription" name="Helvetica" family="Helvetica" pointSize="15"/>
+                    <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <nil key="highlightedColor"/>
+                    <color key="shadowColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                </label>
+            </subviews>
+            <color key="tintColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <constraints>
+                <constraint firstItem="BJ9-11-vVy" firstAttribute="leading" secondItem="Yg2-c6-wgg" secondAttribute="leading" constant="5" id="A7U-1i-fO7"/>
+                <constraint firstAttribute="trailing" secondItem="BJ9-11-vVy" secondAttribute="trailing" constant="5" id="Fug-7a-WsM"/>
+                <constraint firstItem="BJ9-11-vVy" firstAttribute="top" secondItem="Yg2-c6-wgg" secondAttribute="top" priority="970" constant="20" id="Zou-ec-vWZ"/>
+                <constraint firstAttribute="trailing" secondItem="mBJ-rQ-vfe" secondAttribute="trailing" constant="30" id="efJ-ja-m0a"/>
+                <constraint firstItem="mBJ-rQ-vfe" firstAttribute="top" secondItem="Yg2-c6-wgg" secondAttribute="top" priority="950" constant="305" id="elv-3q-6ob"/>
+                <constraint firstAttribute="bottom" secondItem="BJ9-11-vVy" secondAttribute="bottom" constant="150" id="icP-A3-Zu9"/>
+                <constraint firstItem="EFO-3C-I4g" firstAttribute="top" secondItem="Yg2-c6-wgg" secondAttribute="top" priority="950" constant="327" id="jpz-hB-aUV"/>
+                <constraint firstAttribute="bottom" secondItem="mBJ-rQ-vfe" secondAttribute="bottom" priority="990" constant="115" id="kpl-1K-QXZ"/>
+                <constraint firstItem="mBJ-rQ-vfe" firstAttribute="leading" secondItem="Yg2-c6-wgg" secondAttribute="leading" constant="30" id="olA-HK-sMG"/>
+                <constraint firstItem="EFO-3C-I4g" firstAttribute="leading" secondItem="Yg2-c6-wgg" secondAttribute="leading" constant="10" id="pVi-AL-hge"/>
+                <constraint firstAttribute="trailing" secondItem="EFO-3C-I4g" secondAttribute="trailing" constant="10" id="rs7-MV-5OX"/>
+                <constraint firstAttribute="bottom" secondItem="EFO-3C-I4g" secondAttribute="bottom" constant="73" id="xHy-uL-hpc"/>
+            </constraints>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="139" y="95"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="Screen4" width="595" height="562"/>
+    </resources>
+</document>

@@ -14,10 +14,11 @@
 #import "CreateStreamViewController.h"
 #import "UserProfileViewController.h"
 #import "ActivityViewController.h"
+#import <Branch.h>
 #import <SDImageCache.h>
 #import <Crashlytics/Crashlytics.h>
-#import "Branch.h"
 #import <GooglePlus/GooglePlus.h>
+
 
 
 @implementation AppDelegate
@@ -59,6 +60,7 @@
         return [SubaAPIClient sharedInstance];
     } 
     
+    
     return _apiBaseURL;
 }
 
@@ -99,7 +101,9 @@
 
 
 // Helper method to wrap logic for handling app links.
-- (void)handleAppLink:(FBAccessTokenData *)appLinkToken {
+- (void)handleAppLink:(FBAccessTokenData *)appLinkToken{
+    
+    
     // Initialize a new blank session instance...
     FBSession *appLinkSession = [[FBSession alloc] initWithAppID:nil
                                                      permissions:nil
@@ -121,6 +125,8 @@
 
 -(BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    
+   
     
     DLog(@"Current App version: %@",[NSString stringWithFormat:@"%@",[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"]]);
     
@@ -159,7 +165,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Set the minimum background fetch interval to minimum
-    [[UIApplication sharedApplication] setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
+    //[[UIApplication sharedApplication] setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
+    
+    //[[UIApplication sharedApplication] unregisterForRemoteNotifications];
     
     // Make call to Appirater
     [Appirater setAppId:kSUBA_APP_ID];
@@ -197,30 +205,8 @@
     }
     
     
-    // Set up Branch metrics
-    Branch *branch = [Branch getInstance:@"55726832636395855"];
-    [branch initUserSessionWithCallback:^(NSDictionary *params){
-        
-        // params are the deep linked params associated with the link that the user clicked before showing up.
-        NSDictionary *referringParams = [branch getReferringParams];
-        
-        if ([referringParams count] > 0 || [[AppHelper getInviteParams] count] > 0) {
-           [AppHelper saveInviteParams:referringParams];
-            [self presentPopUpOnTopMostViewController];
-        }
-        
-        DLog(@"deep link data: %@\nReferring Params: %@\nInstall params: %@",[params description],referringParams ,[branch getInstallReferringParams]);
-        
-    } withLaunchOptions:launchOptions];
-    
-    
-
-    
-    
     // Setting up Flurry SDK
-    //[Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
-    
-    
+    [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
     
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
     
@@ -277,8 +263,6 @@
             ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
             
             [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId" : pVC.spotID}];
-            
-            
         }
     }
 
@@ -291,29 +275,55 @@
             // We register differently on iOS 8
             DLog(@"iOS 8");
             UIUserNotificationType types = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+                
             UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:types categories:nil];
-            
+                
             [[UIApplication sharedApplication] registerForRemoteNotifications];
-            
             [[UIApplication sharedApplication] registerUserNotificationSettings:notificationSettings];
           }
         } else {
             // use registerForRemoteNotifications
-            DLog(@"iOS 7");
+            DLog(@"Remote notifications --- iOS 7");
             [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
         }
     }];
    
-    //[Crashlytics startWithAPIKey:@"a27bd05e578d1948fcca30313c3abd84d390d0f1"];
+    // Set up Branch metrics
+    Branch *branch = [Branch getInstance:kBRANCH_API_KEY];
+    
+    [branch initSessionWithLaunchOptions:launchOptions andRegisterDeepLinkHandler:^(NSDictionary *params, NSError *error) {
+        if (!error) {
+            // params are the deep linked params associated with the link that the user clicked before showing up.
+            //NSDictionary *referringParams = [branch getFirstReferringParams];
+            
+            if ([params count] > 0 || [[AppHelper getInviteParams] count] > 0) {
+                [AppHelper saveInviteParams:params];
+                [self presentPopUpOnTopMostViewController];
+            }
+            
+            DLog(@"deep link data: %@\nReferring Params: %@\nInstall params: %@",[params description],params ,[branch getFirstReferringParams]);
+            
+        }else DLog(@"Branch error: %@",error.debugDescription);
+    }];
+
+    
+    
+    [Crashlytics startWithAPIKey:@"a27bd05e578d1948fcca30313c3abd84d390d0f1"];
+    
+    [self.window makeKeyAndVisible];
     
     // Check whether we have an update
     [[Harpy sharedInstance] setAppID:kSUBA_APP_ID];
     [[Harpy sharedInstance] setAppName:kSUBA_APP_NAME];
     
+    [[Harpy sharedInstance] setAlertControllerTintColor:kSUBA_APP_COLOR];
+    //[[Harpy sharedInstance] setAlertType:HarpyAlertTypeForce];
+    [[Harpy sharedInstance] setPresentingViewController:_window.rootViewController];
+    
     // Perform check for new version of app
     [[Harpy sharedInstance] checkVersion];
+
     
-    //();
     return YES;
 }
 
@@ -351,9 +361,9 @@
 -(void)applicationWillEnterForeground:(UIApplication *)application
 {
     Branch *branch = [Branch getInstance:@"55726832636395855"];
-    DLog(@"Referring params: %@",[branch getReferringParams]);
+    DLog(@"Referring params: %@",[branch getLatestReferringParams]);
     
-    NSDictionary *referringParams = [branch getReferringParams];
+    NSDictionary *referringParams = [branch getLatestReferringParams];
     if ([referringParams count] > 0) {
         [AppHelper saveInviteParams:referringParams];
         [self presentPopUpOnTopMostViewController];
@@ -427,11 +437,13 @@
 
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
-    
+    DLog();
     [FBSettings setDefaultAppID:@"563203563717054"];
     [FBAppEvents activateApp];
     
     [FBAppCall handleDidBecomeActive];
+    
+    
     
     [application setApplicationIconBadgeNumber:0];
     
@@ -446,13 +458,13 @@
                                                   success:^(NSURLSessionDataTask *task, id responseObject){
             
             // Handle all notifications
-            NSString *notifications = [responseObject[@"badgeCount"] stringValue];
+           /* NSString *notifications = [responseObject[@"badgeCount"] stringValue];
                                                       
             if ([notifications isEqualToString:@"0"]) {
                 [self.mainTabBarController.tabBar.items[2] setBadgeValue:nil];
             }else{
                 [self.mainTabBarController.tabBar.items[2] setBadgeValue:notifications];
-            }
+            }*/
 
         }failure:^(NSURLSessionDataTask *task, NSError *error){
             
@@ -492,8 +504,9 @@
     [[SubaAPIClient sharedInstance] POST:REGISTER_DEVICE_TOKEN_URL
                               parameters:@{@"deviceToken": sendThis,
                                            @"userId":[AppHelper userID],
-                                           @"deviceType": @"iOS"
-                                           } success:^(NSURLSessionDataTask *task, id responseObject){
+                                           @"deviceType": @"ios"
+                                           }
+                                success:^(NSURLSessionDataTask *task, id responseObject){
                                                
         [Flurry logEvent:@"User_Turned_On_Push_Notification" withParameters:@{@"user": userName}];
         
@@ -509,17 +522,37 @@
 }
 
 
--(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
     
-     DLog(@"Notification Info: %@",userInfo);
-    
-     //NSString *notifications = [userInfo[@"aps"][@"badge"] stringValue];
-    
-    if (application.applicationState == UIApplicationStateBackground
+    DLog(@" User info: %@",userInfo);
+    if (application.applicationState == UIApplicationStateActive) {
+        // We'll later show a notification here
+        UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
+        ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+        
+        
+       /* DLog(@"nvc - %@",[nVC childViewControllers]);
+        
+        _notification = [[AFDropdownNotification alloc] init];
+        _notification.notificationDelegate = self;
+        
+        _notification.titleText = @"Update available";
+        _notification.subtitleText = @"Do you want to download the update of this file?";
+        //notification.image = [UIImage imageNamed:@"update"];
+        _notification.topButtonText = @"Accept";
+        _notification.bottomButtonText = @"Cancel";
+        
+        //[notification presentInView:<#(UIView *)#> withGravityAnimation:<#(BOOL)#>]
+        
+        [_notification presentInView:aVC.view withGravityAnimation:YES];*/
+        
+        [aVC.tabBarItem setBadgeValue:@"1"];
+    }else if (application.applicationState == UIApplicationStateBackground
         || application.applicationState == UIApplicationStateInactive){
        
         if (userInfo[@"streamId"] && userInfo[@"photoURL"]) {
-          // If user liked photo, let's show the photo
+            // If user liked photo, let's show the photo
           
             [self.mainTabBarController setSelectedIndex:2];
             
@@ -531,6 +564,8 @@
             
             UINavigationController *nVC = (UINavigationController *)[self.mainTabBarController viewControllers][2];
             ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
+            
+            [aVC.tabBarItem setBadgeValue:@"1"];
             
             //DLog(@"Tab Bar Controllers - %@",[[nVC childViewControllers] debugDescription]);
             
@@ -549,6 +584,7 @@
             }
             
         }else if (userInfo[@"streamId"]){
+            
             // This notification contains only the streamId
             [self.mainTabBarController setSelectedIndex:2];
             
@@ -562,12 +598,11 @@
             ActivityViewController *aVC = (ActivityViewController *)nVC.childViewControllers[0];
             
             [aVC performSegueWithIdentifier:@"ACTIVITY_PHOTO_STREAM" sender:@{@"streamId" : pVC.spotID}];
-            
-
+          
         }
-        
     }
 }
+
 
 
 - (void)application:(UIApplication*)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
@@ -623,8 +658,8 @@
                             [self.viewController presentViewController:personalSpotsVC animated:YES completion:nil];
                         }else{
                             DLog(@"Error - %@",error);
-                            [AppHelper showAlert:@"Authentication Error"
-                                         message:@"There was a problem authentication you on our servers. Please wait a minute and try again"
+                            [AppHelper showAlert:@"Oops!"
+                                         message:@"There was a problem logging you in. Try again?"
                                          buttons:@[@"OK"]
                                         delegate:nil];
                            
@@ -792,8 +827,13 @@
 - (UIViewController *)topViewController{
     DLog(@"Root View Controller - %@",[[UIApplication sharedApplication].keyWindow.rootViewController class]);
     
-    return [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
+    UIViewController *topVC = [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
+    
+    //DLog(@"Top VC: %@",topVC.p );
+    
+    return topVC;
 }
+
 
 - (UIViewController *)topViewController:(UIViewController *)rootViewController
 {
@@ -823,7 +863,7 @@
     weakSelf.window.rootViewController = self.rootNavController;
     
     // Set the minimum background fetch interval to never when the user logs out
-    [[UIApplication sharedApplication] setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalNever];
+    //[[UIApplication sharedApplication] setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalNever];
     [self.window makeKeyAndVisible];
 }
 
@@ -853,7 +893,6 @@
 - (void)presentPopUpOnTopMostViewController
 {
     UIView *rootView = nil;
-    
     
     if([UITabBarController class] == [[self topViewController] class]){
         UITabBarController *tabBarController = (UITabBarController *)[self topViewController];
@@ -1001,7 +1040,7 @@
     joiningStreamActivityIndicatorView.hidden = NO;
     
     Branch *branch = [Branch getInstance:@"55726832636395855"];
-    NSDictionary *params = [branch getReferringParams];
+    NSDictionary *params = [branch getLatestReferringParams];
     
     if ([params count] > 0) {
         
@@ -1019,7 +1058,7 @@
             DLog(@"Indicator visibility? %i",joiningStreamActivityIndicatorView.isHidden);
             sender.titleLabel.text = @"Joining stream...";
             [sender sizeToFit];
-            DLog(@"Performing segue from MainStreamViewController");
+            //DLog(@"Performing segue from MainStreamViewController");
             MainStreamViewController *mainViewController = (MainStreamViewController *)_topViewController;
             
             
@@ -1037,8 +1076,8 @@
                     
                 }else{
                     DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Network Error"
-                                 message:error.localizedDescription
+                    [AppHelper showAlert:@"Oops!"
+                                 message:@"Something went wrong. Try again?"
                                  buttons:@[@"OK"] delegate:nil];
                 }
             }];
@@ -1065,8 +1104,8 @@
                     
                 }else{
                     DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Network Error"
-                                 message:error.localizedDescription
+                    [AppHelper showAlert:@"Oops!"
+                                 message:@"Something went wrong. Try again?"
                                  buttons:@[@"OK"] delegate:nil];
                 }
             }];
@@ -1091,8 +1130,8 @@
                     
                 }else{
                     DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Network Error"
-                                 message:error.localizedDescription
+                    [AppHelper showAlert:@"Oops!"
+                                 message:@"Something went wrong. Try again?"
                                  buttons:@[@"OK"] delegate:nil];
                 }
             }];
@@ -1126,7 +1165,7 @@
 {
     // Get the current referring params
     Branch *branch = [Branch getInstance:@"55726832636395855"];
-    NSDictionary *params = [branch getReferringParams];
+    NSDictionary *params = [branch getLatestReferringParams]; 
     
     CGRect newframe = CGRectMake(popUpView.frame.origin.x, popUpView.frame.origin.y+popUpView.frame.size.height, popUpView.frame.size.width,popUpView.frame.size.height);
     
@@ -1148,6 +1187,17 @@
     
     
 }
+
+
+/*-(void)dropdownNotificationTopButtonTapped {
+    
+    NSLog(@"Top button tapped");
+}
+
+-(void)dropdownNotificationBottomButtonTapped {
+    
+    NSLog(@"Bottom button tapped");
+}*/
 
 @end
 

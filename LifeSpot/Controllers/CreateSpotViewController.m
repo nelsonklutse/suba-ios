@@ -159,7 +159,7 @@ static CLPlacemark *placemark;
             
         }else {
             // There is no spot with this code
-            [AppHelper showAlert:@"Couldn't join stream"
+            [AppHelper showAlert:@"Oops!"
                          message:@"Looks like that code is incorrect. Try again?" buttons:@[@"OK"] delegate:nil];
         }
     }];
@@ -176,7 +176,7 @@ static CLPlacemark *placemark;
     // 1. View Privacy  2. Add Privacy 3. Location 4.
     [self.creatingSpotIndicator startAnimating];
     if ([CLLocationManager locationServicesEnabled] && [CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"To create a stream, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }else{
         
     if ([locationManager location]){
@@ -373,7 +373,7 @@ static CLPlacemark *placemark;
     DLog();
     if ([error code] == kCLErrorDenied) {
         //you had denied
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n",@"Suba does not have access to your location."] buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:[NSString stringWithFormat:@"%@\n",@"Suba does not have access to your location."] buttons:@[@"OK"] delegate:nil];
     }
     
 }
@@ -383,7 +383,7 @@ static CLPlacemark *placemark;
 {
     DLog();
     if (status == kCLAuthorizationStatusDenied){
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+        [AppHelper showAlert:@"Oops!" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"Please go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
     }
 }
 

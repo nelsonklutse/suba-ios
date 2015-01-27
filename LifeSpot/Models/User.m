@@ -328,7 +328,7 @@
             completion(responseObject,nil);
 
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
-        DLog(@"Back from server - %@",error.debugDescription);
+        //DLog(@"Back from server - %@",error.debugDescription);
         completion(nil,error);
     }];
 
@@ -341,16 +341,15 @@
     [[SubaAPIClient sharedInstance] GET:@"spot/join"
                                    parameters:@{ @"userId":self.userID, @"spotId": spotId}
                                       success:^(NSURLSessionDataTask *task, id responseObject){
-                                          DLog(@"Joined user to stream");
-                                          DLog(@"Back from server - %@",responseObject);
+                                          //DLog(@"Joined user to stream");
+                                          //DLog(@"Back from server - %@",responseObject);
                                           
                                           [AppHelper updateNumberOfAlbums:1];
                                           completion(responseObject,nil);
                                           
                                       } failure:^(NSURLSessionDataTask *task, NSError *error) {
                                           completion(nil,error);
-                                          
-                                      }];
+                            }];
     
 }
 

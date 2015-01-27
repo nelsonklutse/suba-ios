@@ -1,11 +1,11 @@
 PODS:
   - AFNetworking (2.4.1):
-    - AFNetworking/NSURLConnection
-    - AFNetworking/NSURLSession
-    - AFNetworking/Reachability
-    - AFNetworking/Security
-    - AFNetworking/Serialization
-    - AFNetworking/UIKit
+    - AFNetworking/NSURLConnection (= 2.4.1)
+    - AFNetworking/NSURLSession (= 2.4.1)
+    - AFNetworking/Reachability (= 2.4.1)
+    - AFNetworking/Security (= 2.4.1)
+    - AFNetworking/Serialization (= 2.4.1)
+    - AFNetworking/UIKit (= 2.4.1)
   - AFNetworking/NSURLConnection (2.4.1):
     - AFNetworking/Reachability
     - AFNetworking/Security
@@ -25,28 +25,33 @@ PODS:
   - Appirater (2.0.2)
   - BDKNotifyHUD (1.1.0)
   - Bolts (1.1.3)
+  - Branch (0.3.96)
   - CSNotificationView (0.5.1)
   - DACircularProgress (2.1.0)
   - Facebook-iOS-SDK (3.20.0):
     - Bolts (~> 1.0)
-  - Harpy (2.5.2)
+  - Harpy (3.3.1)
+  - HTKDynamicResizingCell (0.0.2)
   - IDMPhotoBrowser (1.4):
     - AFNetworking
     - DACircularProgress
     - pop
   - ImageMagick (6.8.8-9):
-    - ImageMagick/jpeg
-    - ImageMagick/png
-    - ImageMagick/tiff
-    - ImageMagick/wand
+    - ImageMagick/jpeg (= 6.8.8-9)
+    - ImageMagick/png (= 6.8.8-9)
+    - ImageMagick/tiff (= 6.8.8-9)
+    - ImageMagick/wand (= 6.8.8-9)
   - ImageMagick/jpeg (6.8.8-9)
   - ImageMagick/png (6.8.8-9)
   - ImageMagick/tiff (6.8.8-9)
   - ImageMagick/wand (6.8.8-9)
   - ionicons (1.1)
+  - PHFComposeBarView (2.0.1):
+    - PHFDelegateChain (~> 1.0)
+  - PHFDelegateChain (1.0.1)
   - pop (1.0.7)
   - SDWebImage (3.7.1):
-    - SDWebImage/Core
+    - SDWebImage/Core (= 3.7.1)
   - SDWebImage/Core (3.7.1)
   - UzysCircularProgressPullToRefresh (1.0.8)
 
@@ -56,13 +61,16 @@ DEPENDENCIES:
   - AMScrollingNavbar
   - Appirater
   - BDKNotifyHUD (~> 1.1.0)
+  - Branch
   - CSNotificationView (~> 0.5.1)
   - DACircularProgress (~> 2.1.0)
   - Facebook-iOS-SDK (~> 3.20.0)
-  - Harpy
+  - Harpy (~> 3.3.1)
+  - HTKDynamicResizingCell (~> 0.0.1)
   - IDMPhotoBrowser (~> 1.4)
   - ImageMagick (~> 6.8.8-9)
   - ionicons
+  - PHFComposeBarView (~> 2.0.1)
   - SDWebImage (~> 3.7.1)
   - UzysCircularProgressPullToRefresh (~> 1.0.8)
 
@@ -73,15 +81,19 @@ SPEC CHECKSUMS:
   Appirater: a5e00fb01d47a9a6acf4b2f22323b4ccf4f23fbb
   BDKNotifyHUD: dd7c23043da457c72056fb4a0c8bae9967acff28
   Bolts: 3db0a875235e0c9042b013af13af0f00f79b102c
+  Branch: 105efe5123166a549cbe8074ac2d0f5975c6f1fb
   CSNotificationView: 647c524da966e21d082263f5146e5ba62f67c2b4
   DACircularProgress: 4dfac2cc9efe2e352cabe32a2b243fd9768a3b6c
   Facebook-iOS-SDK: 5854404b4b651f612a8ef79ca06d766858f4cb8e
-  Harpy: 686f775c4793b532952f38918baf2099e58a222d
+  Harpy: 289cafd8e69ff94e787a1aa2847e70c4326d5d66
+  HTKDynamicResizingCell: ef19a37818f634a165a408d8f65a7596ba17b002
   IDMPhotoBrowser: da2110d99ea8735ad9a0ba52f2d184e756104a71
   ImageMagick: 69968e0a19a4407abaae92c09a13e9a7fd0d2ba3
   ionicons: 83f9b09405311133e7c5118819150f1cbf2c3d64
+  PHFComposeBarView: 0fa52137ecb23725d219dc90cf77c4c95aa29d05
+  PHFDelegateChain: f4d5a2847960b3dd16fc2f2196833f3a66704745
   pop: 2f14a1ea61339767af9e66741b418c831b3844df
   SDWebImage: 116e88633b5b416ea0ca4b334a4ac59cf72dd38d
   UzysCircularProgressPullToRefresh: 8bf470411b06d8c4a8a9e966b64649ab230452fe
 
-COCOAPODS: 0.34.4
+COCOAPODS: 0.35.0

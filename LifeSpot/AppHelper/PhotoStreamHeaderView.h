@@ -14,6 +14,7 @@
 @property (weak, nonatomic) IBOutlet UILabel *streamNameLabel;
 
 @property (weak, nonatomic) IBOutlet UILabel *streamLocationLabel;
+@property (weak, nonatomic) IBOutlet UILabel *timeCreatedLabel;
 
 @property (weak, nonatomic) IBOutlet UILabel *numberOfPhotosLabel;
 

@@ -72,14 +72,9 @@ static CLLocationManager *locationManager;
                        }else if(IS_OS_8_OR_LATER){
                            [locationManager requestWhenInUseAuthorization];
                        }
-                       
-                       
-
-        }
-
-        
-      }
+             }
     }
+}
 
 
 -(void)viewWillDisappear:(BOOL)animated{

@@ -112,7 +112,7 @@
                [self performSegueWithIdentifier:@"InviteCodeSegue" sender:results];
                 
             }else{
-                [AppHelper showAlert:@"Incorrect Code" message:@"Looks like that invite code is incorrect. Try again?" buttons:@[@"Try again"] delegate:nil];
+                [AppHelper showAlert:@"Oops!" message:@"Looks like that invite code is incorrect. Try again?" buttons:@[@"Try again"] delegate:nil];
             }
         }
     }];
