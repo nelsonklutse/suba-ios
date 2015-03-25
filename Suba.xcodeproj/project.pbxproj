@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		2A028B211A43B059001A0AF9 /* DropDownCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A028B201A43B059001A0AF9 /* DropDownCell.m */; };
 		2A0301F9193F12C500D29CBE /* EmailInvitesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A0301F8193F12C500D29CBE /* EmailInvitesViewController.m */; };
-		2A0398C91A5EBCE4008C9118 /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2A0398C81A5EBCE4008C9118 /* Launch Screen.xib */; };
 		2A1BD29A19F338200023B139 /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1BD29919F338200023B139 /* CoreData.framework */; };
 		2A1BD29D19F338460023B139 /* libsqlite3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1BD29C19F338460023B139 /* libsqlite3.0.dylib */; };
 		2A1BD29F19F338520023B139 /* libz.1.2.5.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A1BD29E19F338520023B139 /* libz.1.2.5.dylib */; };
@@ -98,7 +97,10 @@
 		2ACAE5F7188705F90076A665 /* InvitesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5F6188705F90076A665 /* InvitesViewController.m */; };
 		2ACAE5FA18870CF80076A665 /* UserProfileViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACAE5F918870CF80076A665 /* UserProfileViewController.m */; };
 		2ACBF06419392432005CAA9C /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ACBF06319392432005CAA9C /* MapKit.framework */; };
+		2ACEABA51A8D0FF00043FF95 /* PhotoBrowserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACEABA41A8D0FF00043FF95 /* PhotoBrowserViewController.m */; };
+		2ACEABA81A8D35520043FF95 /* SBTransitionAnimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACEABA71A8D35520043FF95 /* SBTransitionAnimator.m */; };
 		2ACF59C91931168F001F68B0 /* StreamTypeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2ACF59C81931168F001F68B0 /* StreamTypeViewController.m */; };
+		2AD165231AB9C980009808DB /* TagCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AD165221AB9C980009808DB /* TagCell.m */; };
 		2AD347C31A1553A700C29EAE /* NSString+WhatsAppKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AD347C01A1553A700C29EAE /* NSString+WhatsAppKit.m */; };
 		2AD347C41A1553A700C29EAE /* WhatsAppKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AD347C21A1553A700C29EAE /* WhatsAppKit.m */; };
 		2AD370321A3F95A9007C23F3 /* PhotoTakersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AD370311A3F95A9007C23F3 /* PhotoTakersViewController.m */; };
@@ -155,7 +157,6 @@
 		2A028B201A43B059001A0AF9 /* DropDownCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DropDownCell.m; sourceTree = "<group>"; };
 		2A0301F7193F12C500D29CBE /* EmailInvitesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmailInvitesViewController.h; sourceTree = "<group>"; };
 		2A0301F8193F12C500D29CBE /* EmailInvitesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EmailInvitesViewController.m; sourceTree = "<group>"; };
-		2A0398C81A5EBCE4008C9118 /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
 		2A1BD29919F338200023B139 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		2A1BD29C19F338460023B139 /* libsqlite3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.0.dylib; path = usr/lib/libsqlite3.0.dylib; sourceTree = SDKROOT; };
 		2A1BD29E19F338520023B139 /* libz.1.2.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.2.5.dylib; path = usr/lib/libz.1.2.5.dylib; sourceTree = SDKROOT; };
@@ -301,8 +302,14 @@
 		2ACAE5F818870CF80076A665 /* UserProfileViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UserProfileViewController.h; sourceTree = "<group>"; };
 		2ACAE5F918870CF80076A665 /* UserProfileViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UserProfileViewController.m; sourceTree = "<group>"; };
 		2ACBF06319392432005CAA9C /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		2ACEABA31A8D0FF00043FF95 /* PhotoBrowserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PhotoBrowserViewController.h; sourceTree = "<group>"; };
+		2ACEABA41A8D0FF00043FF95 /* PhotoBrowserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PhotoBrowserViewController.m; sourceTree = "<group>"; };
+		2ACEABA61A8D35520043FF95 /* SBTransitionAnimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SBTransitionAnimator.h; sourceTree = "<group>"; };
+		2ACEABA71A8D35520043FF95 /* SBTransitionAnimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SBTransitionAnimator.m; sourceTree = "<group>"; };
 		2ACF59C71931168F001F68B0 /* StreamTypeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamTypeViewController.h; path = ../StreamTypeViewController.h; sourceTree = "<group>"; };
 		2ACF59C81931168F001F68B0 /* StreamTypeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = StreamTypeViewController.m; path = ../StreamTypeViewController.m; sourceTree = "<group>"; };
+		2AD165211AB9C980009808DB /* TagCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TagCell.h; sourceTree = "<group>"; };
+		2AD165221AB9C980009808DB /* TagCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TagCell.m; sourceTree = "<group>"; };
 		2AD347BF1A1553A700C29EAE /* NSString+WhatsAppKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+WhatsAppKit.h"; sourceTree = "<group>"; };
 		2AD347C01A1553A700C29EAE /* NSString+WhatsAppKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+WhatsAppKit.m"; sourceTree = "<group>"; };
 		2AD347C11A1553A700C29EAE /* WhatsAppKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WhatsAppKit.h; sourceTree = "<group>"; };
@@ -448,7 +455,6 @@
 				2A756ECD1A2E765E00DC3A7E /* FriendsIntro.xib */,
 				2AD900371A03935F00C8BD90 /* InviteView.xib */,
 				2A756EC51A2E540700DC3A7E /* Welcome.xib */,
-				2A0398C81A5EBCE4008C9118 /* Launch Screen.xib */,
 			);
 			name = XIBs;
 			sourceTree = "<group>";
@@ -481,6 +487,8 @@
 		2AB0FA52187AD286000AB276 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				2ACEABA31A8D0FF00043FF95 /* PhotoBrowserViewController.h */,
+				2ACEABA41A8D0FF00043FF95 /* PhotoBrowserViewController.m */,
 				2AD370301A3F95A9007C23F3 /* PhotoTakersViewController.h */,
 				2AD370311A3F95A9007C23F3 /* PhotoTakersViewController.m */,
 				2A756ECA1A2E578700DC3A7E /* SBWelcomeController.h */,
@@ -617,6 +625,8 @@
 				2A756EC81A2E54C000DC3A7E /* SBWelcomePanel.m */,
 				2A028B1F1A43B059001A0AF9 /* DropDownCell.h */,
 				2A028B201A43B059001A0AF9 /* DropDownCell.m */,
+				2AD165211AB9C980009808DB /* TagCell.h */,
+				2AD165221AB9C980009808DB /* TagCell.m */,
 			);
 			path = CustomViews;
 			sourceTree = "<group>";
@@ -734,6 +744,8 @@
 				2AB0FA53187AD286000AB276 /* Models */,
 				2AB0FA54187AD286000AB276 /* CustomViews */,
 				89E3DC6C18604E9D00D193F4 /* Supporting Files */,
+				2ACEABA61A8D35520043FF95 /* SBTransitionAnimator.h */,
+				2ACEABA71A8D35520043FF95 /* SBTransitionAnimator.m */,
 			);
 			path = LifeSpot;
 			sourceTree = "<group>";
@@ -886,7 +898,6 @@
 				2A756ECE1A2E765F00DC3A7E /* FriendsIntro.xib in Resources */,
 				89E3DC7018604E9D00D193F4 /* InfoPlist.strings in Resources */,
 				2A4F79331A6809B70000E402 /* PrivateStreamSmall.xib in Resources */,
-				2A0398C91A5EBCE4008C9118 /* Launch Screen.xib in Resources */,
 				2A74F90E18A56C6800889227 /* Images.xcassets in Resources */,
 				2A756ED71A2E7B4B00DC3A7E /* PublicStreamIntro.xib in Resources */,
 				2A756EC61A2E540700DC3A7E /* Welcome.xib in Resources */,
@@ -984,11 +995,13 @@
 				2AB0FA90187C3DAF000AB276 /* MainStreamViewController.m in Sources */,
 				2AEBB6301890DC2300EAA879 /* InviteFriendsViewController.m in Sources */,
 				2A756EC91A2E54C000DC3A7E /* SBWelcomePanel.m in Sources */,
+				2AD165231AB9C980009808DB /* TagCell.m in Sources */,
 				2ACF59C91931168F001F68B0 /* StreamTypeViewController.m in Sources */,
 				2AD370321A3F95A9007C23F3 /* PhotoTakersViewController.m in Sources */,
 				2A028B211A43B059001A0AF9 /* DropDownCell.m in Sources */,
 				2AB0FA8A187C372A000AB276 /* FoursquareLocationsViewController.m in Sources */,
 				2A504B1D189AB359008E3C40 /* PlacesWatchingViewController.m in Sources */,
+				2ACEABA51A8D0FF00043FF95 /* PhotoBrowserViewController.m in Sources */,
 				2AA4F94F195132A8006EDD03 /* UserProfileCell.m in Sources */,
 				2AD9003C1A039A9000C8BD90 /* InviteView.m in Sources */,
 				2ACAE5E518869A530076A665 /* StreamSettingsViewController.m in Sources */,
@@ -1006,6 +1019,7 @@
 				89E3DC7618604E9D00D193F4 /* AppDelegate.m in Sources */,
 				2ACAE5E81886F4830076A665 /* AlbumMembersCell.m in Sources */,
 				2A756ED11A2E771200DC3A7E /* FriendsPanel.m in Sources */,
+				2ACEABA81A8D35520043FF95 /* SBTransitionAnimator.m in Sources */,
 				2ACAE5F4188705E40076A665 /* AlbumMembersViewController.m in Sources */,
 				2A756EE21A2E820600DC3A7E /* FinalPanel.m in Sources */,
 				2A756EC11A2E43DE00DC3A7E /* MYIntroductionPanel.m in Sources */,

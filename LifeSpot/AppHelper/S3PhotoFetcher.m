@@ -114,6 +114,8 @@
         __weak UIImageView *mainImageView = imgView;
         NSURL *photoSrc = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",self.s3BucketURL,photoURL]];
         
+        DLog(@"photo src: %@",photoSrc); 
+        
         dispatch_async(dispatch_get_main_queue(),^{
          
      [imgView sd_setImageWithURL:photoSrc placeholderImage:img options:option progress:^(NSInteger receivedSize, NSInteger expectedSize) {

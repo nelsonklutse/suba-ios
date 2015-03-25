@@ -145,8 +145,8 @@ static CLLocationManager *locationManager;
     /*currentuser createSpot:<#(Spot *)#> completion:^(id results, NSError *error) {
         <#code#>
     }];*/
-    NSDictionary *info = @{@"venue": self.venueForCurrentLocation,@"name":self.streamName};
-    DLog(@"Info - %@",info);
+    //NSDictionary *info = @{@"venue": self.venueForCurrentLocation,@"name":self.streamName};
+    //DLog(@"Info - %@",info);
     
     // Create stream and then go to PhotoStreamVC
     // Log this event with Flurry
@@ -202,7 +202,7 @@ static CLLocationManager *locationManager;
                     
                 }else{
                    // DLog(@"Error - %@",error);
-                    [AppHelper showAlert:@"Error" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+                    [AppHelper showAlert:@"Error" message:@"Something went wrong. Try again?" buttons:@[@"OK"] delegate:nil];
                 }
                 
             }];

@@ -50,6 +50,7 @@ install_resource()
           install_resource "Harpy/Harpy/Harpy.bundle"
                     install_resource "IDMPhotoBrowser/Classes/IDMPhotoBrowser.bundle"
                     install_resource "IDMPhotoBrowser/Classes/IDMPBLocalizations.bundle"
+                    install_resource "MWPhotoBrowser/MWPhotoBrowser/MWPhotoBrowser.bundle"
                     install_resource "UzysCircularProgressPullToRefresh/UzysCircularProgressPullToRefresh/UzysCircularProgressPullToRefresh/Library/centerIcon@2x.png"
                     install_resource "ionicons/ionicons/ionicons.ttf"
                     install_resource "${BUILT_PRODUCTS_DIR}/Appirater.bundle"

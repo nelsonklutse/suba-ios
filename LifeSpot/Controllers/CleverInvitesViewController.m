@@ -375,10 +375,7 @@ static void readAddressBookContacts(ABAddressBookRef addressBook, InviteType inv
             NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
             NSArray *sortedContacts = [contacts sortedArrayUsingDescriptors:sortDescriptors];
             self.phoneContacts = sortedContacts;
-            
-            /*for (NSDictionary *contact in self.phoneContacts) {
-                [self.messageRecipients addObject:contact[@"phoneNumber"]];
-            }*/
+           
             //[self updateNumberOfInvitesLabel:[self.messageRecipients count]];
             [self.cleverInvitesTableView reloadData];
             

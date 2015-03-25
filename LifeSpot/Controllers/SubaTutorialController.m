@@ -37,6 +37,8 @@
 - (void)checkLocation;
 - (void)prepareGoogleSignIn;
 //- (void)handleInviteToStream:(NSNotification *)notification;
+
+- (void)loadFacebookFriends;
 @end
 
 @implementation SubaTutorialController
@@ -116,8 +118,9 @@ static CLLocationManager *locationManager;
     //[self.fbLoginIndicator startAnimating];
     
     
-    [FBSession openActiveSessionWithReadPermissions:@[@"public_profile",@"email"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
-        
+    [FBSession openActiveSessionWithReadPermissions:@[@"public_profile",@"email",@"user_friends"]
+                                       allowLoginUI:YES
+                                  completionHandler:^(FBSession *session, FBSessionState status, NSError *error){
         
         DLog(@"Opening FB Session with token - %@\nSession - %@",session.accessTokenData.expirationDate,[session debugDescription]);
         
@@ -128,13 +131,14 @@ static CLLocationManager *locationManager;
             //[self.fbLoginIndicator stopAnimating];
             
             
-            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,email,picture.type(large)" forKey:@"fields"];
+            NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,email,birthday,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
                 DLog(@"FB Auth Result - %@\nError - %@",result,error);
                 if (!error) {
                     NSDictionary<FBGraphUser> *user = result;
                     
+                    //DLog(@"Birthday: %@",[user birthday]);
                     NSString *userEmail = [user valueForKey:@"email"];
                     if (userEmail == NULL) {
                         [AppHelper showAlert:@"Oops!"
@@ -170,7 +174,9 @@ static CLLocationManager *locationManager;
                         self.facebookButton.enabled = YES;
                         
                         if (!error) {
-                            //DLog(@"Response - %@",result);
+                            
+                            //[self loadFacebookFriends];
+                            
                             if([AppHelper inviteCodeDetails]){
                             [self performSegueWithIdentifier:@"HomeScreenToPhotoStreamSegue" sender:[AppHelper inviteCodeDetails]];
                             }else{
@@ -390,6 +396,8 @@ static CLLocationManager *locationManager;
         }else{
             // We have the user info
             
+            DLog(@"User birthday : %@",person.birthday);
+            
             NSString *googleUserEmail = googleSignIn.authentication.userEmail;
             NSString *googleUserId = person.identifier;
             NSString *googleUserFirstName = person.name.givenName;
@@ -462,6 +470,58 @@ static CLLocationManager *locationManager;
     }else{
         [AppHelper showAlert:@"Oops!" message:@"We encountered problems authenticating with Google. Please try again?" buttons:@[@"Try Again"] delegate:nil];
     }
+}
+
+
+
+- (void)loadFacebookFriends
+{
+    NSString *fbID = [AppHelper facebookID];
+    NSString *grapthPath = [NSString stringWithFormat:@"%@/friends",fbID];
+    //NSLog(@"FBID - %@",fbID);
+    
+    NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"name,first_name,last_name,middle_name" forKey:@"fields"];
+    
+    [FBRequestConnection startWithGraphPath:grapthPath parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error){
+        if (!error) {
+            NSArray *FBfriends = [result valueForKey:@"data"];
+            NSSortDescriptor *firstNameDescriptor = [[NSSortDescriptor alloc] initWithKey:@"first_name" ascending:YES];
+            NSArray *sortDescriptors = [NSArray arrayWithObject:firstNameDescriptor];
+            NSArray *sortedFriends = [FBfriends sortedArrayUsingDescriptors:sortDescriptors];
+            
+            /*NSMutableArray *cleanedFriends = [NSMutableArray array];
+            
+            for (NSDictionary *friend in sortedFriends) {
+                
+                NSDictionary *cleanedFriend = @{ @"first_name" : friend[@"first_name"],
+                                                 @"last_name" : friend[@"last_name"],
+                                                 @"facebookId" : friend[@"id"]};
+                
+                [cleanedFriends addObject:cleanedFriend];
+                
+            }*/
+            
+            AFJSONRequestSerializer *JSONSerializer = [AFJSONRequestSerializer serializer];
+            [JSONSerializer setValue:@"com.suba.subaapp-ios" forHTTPHeaderField:@"x-suba-api-token"];
+             
+            
+            [[SubaAPIClient sharedInstance] POST:@"user/fbfriends"
+                                      parameters:@{@"user_friends" : [sortedFriends description]}
+                                         success:^(NSURLSessionDataTask *task, id responseObject) {
+                                        
+            } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                
+            }];
+            
+            DLog(@"FB friends - %lu\nsorted friends: %lu",(unsigned long)[sortedFriends count],(unsigned long)[FBfriends count]); 
+            
+        }else{
+            DLog(@"Loading Facebook friends error %@",[error debugDescription]);
+            [AppHelper showAlert:@"Oops!"
+                         message:@"Something went wrong. Try again?"
+                         buttons:@[@"OK"] delegate:nil];
+        }
+    }];
 }
 
 

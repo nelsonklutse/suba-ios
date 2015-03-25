@@ -204,6 +204,7 @@ typedef enum {
             
             //DLog(@"Yes whatsapp is installed so we show the whatsapp");
             [WhatsAppKit launchWhatsAppWithMessage:message];
+            
         }else{
             
             NSString *senderName = nil;
@@ -211,43 +212,49 @@ typedef enum {
             if ([AppHelper firstName].length > 0 && [AppHelper lastName].length > 0) {
                 senderName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
                 
+            }else if([AppHelper firstName].length > 0 && ([AppHelper lastName] == NULL | [[AppHelper lastName] class]== [NSNull class] | [AppHelper lastName].length == 0)){
+                
+                senderName = [AppHelper firstName];
             }else{
                 senderName = [AppHelper userName];
             }
-           
             
             if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
                 [AppHelper setProfilePhotoURL:@"-1"];
             }
-            NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/share",
-                                   @"streamId":self.spotInfo[@"spotId"],
-                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
-                                   @"streamName":self.spotInfo[@"spotName"],
-                                   @"sender": senderName,
-                                   @"streamCode" : self.spotInfo[@"spotCode"],
-                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
-            
-            
-            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
-            
-            [branch getShortURLWithParams:streamDetails andChannel:@"whatsapp_message" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error) {
-                if (!error) {
-                    branchURL = url;
-                    DLog(@"URL from Branch: %@",url);
-                    NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba : %@",self.spotInfo[@"spotName"],branchURL];
-                    
-                    //DLog(@"Yes whatsapp is installed so we show the whatsapp");
-                    [WhatsAppKit launchWhatsAppWithMessage:message];
- 
-                }else{
-                    DLog(@"Branch link error: %@",error.debugDescription);
-                }
-            }];
-         }
+        
+            if (self.spotInfo && senderName){
+                
+                NSDictionary *dict = @{
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"streamId":self.spotInfo[@"spotId"],
+                                       @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                       @"streamName":self.spotInfo[@"spotName"],
+                                       @"sender": senderName,
+                                       @"streamCode" : self.spotInfo[@"spotCode"],
+                                       @"senderPhoto" : [AppHelper profilePhotoURL]};
+                
+                NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                
+                [branch getShortURLWithParams:streamDetails andChannel:@"whatsapp_message" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error) {
+                    if (!error) {
+                        branchURL = url;
+                        NSString *message = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba : %@",self.spotInfo[@"spotName"],branchURL];
+                        
+                        [WhatsAppKit launchWhatsAppWithMessage:message];
+                        
+                    }else{
+                        DLog(@"Branch link error: %@",error.debugDescription);
+                    }
+                }];
+
+            }
+        }
+        
     }else{
-        [AppHelper showAlert:@"Invite via WhatsApp" message:@"WhatsApp is not installed on your device" buttons:@[@"OK"] delegate:nil];
+        
+        [AppHelper showAlert:@"Invite via WhatsApp" message:@"WhatsApp is not installed on your device." buttons:@[@"OK"] delegate:nil];
     }
 
 }
@@ -261,22 +268,18 @@ typedef enum {
         [AppHelper showLoadingDataView:self.loadingMembersIndicatorView indicator:self.loadingMembersIndicator flag:NO];
         
         if (!error) {
-            //DLog(@"Results - %@",results);
             self.spotInfo = results;
-            //DLog(@"Spot Info - %@",self.spotInfo);
             
             if (![self.spotInfo[@"userName"] isEqualToString:[AppHelper userName]]){
                 // If user is not creator,we need to check whether he/she can invite users
-                BOOL canUserAddMembers = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:@"ONLY_MEMBERS"])?NO:YES;
-                if (canUserAddMembers) {
+                BOOL canUserAddMembers = ([self.spotInfo[@"memberInvitePrivacy"] isEqualToString:@"ONLY_MEMBERS"])? NO:YES;
+                if(canUserAddMembers) {
                     [self showAddMembersButton:YES];
                 }else [self showAddMembersButton:NO];
                 
             }else [self showAddMembersButton:YES];
-            //[self showAddMembersButton:YES];
             self.members = results[@"members"];
             [self.memberTableView reloadData];
-            
         }
     }];
 }
@@ -353,60 +356,45 @@ typedef enum {
             }else if([AppHelper firstName].length > 0 && ([AppHelper lastName] == NULL | [[AppHelper lastName] class]== [NSNull class] | [AppHelper lastName].length == 0)){
                 
                 senderName = [AppHelper firstName];
+            }else{
+                senderName = [AppHelper userName];
             }
+            
             if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
                 [AppHelper setProfilePhotoURL:@"-1"];
             }
-            NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/share",
-                                   @"streamId":self.spotID,
-                                   @"photos" : self.spotInfo[@"numberOfPhotos"],
-                                   @"streamName":self.spotInfo[@"spotName"],
-                                   @"sender": senderName,
-                                   @"streamCode" : self.spotInfo[@"spotCode"],
-                                   @"senderPhoto" : [AppHelper profilePhotoURL]};
             
-            
-            NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
-            
-            [branch getShortURLWithParams:streamDetails andChannel:@"email" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error){
-                if (!error) {
-                    branchURL = url;
-                    DLog(@"URL from Branch: %@",url);
-                    
-                    NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the %@ photo stream on Suba : %@</p>",self.spotInfo[@"spotName"],branchURL];
-                    
-                    
-                    [mailComposer setMessageBody:shareText isHTML:YES];
-                    [Flurry logEvent:@"Share_Stream_Email_Done"];
-                    if (!self.presentedViewController) {
-                        [self presentViewController:mailComposer animated:YES completion:nil];
-                    }
-                }else DLog(@"Branch error: %@",error.debugDescription);
-            }];
-            
-            
-            /*[branch getShortURLWithParams:streamDetails
-             
-                               andChannel:@"email"
-                               andFeature:BRANCH_FEATURE_TAG_SHARE
-                                 andStage:nil
-                              andCallback:^(NSString *url){
-                                  branchURL = url;
-                                  DLog(@"URL from Branch: %@",url);
-                                  
-                                  NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the %@ photo stream on Suba : %@</p>",self.spotInfo[@"spotName"],branchURL];
-                                  
-                                  
-                                  [mailComposer setMessageBody:shareText isHTML:YES];
-                                  [Flurry logEvent:@"Share_Stream_Email_Done"];
-                                  if (!self.presentedViewController) {
-                                    [self presentViewController:mailComposer animated:YES completion:nil];
-                                  }
-                                  
-                                  
-                              }];*/
+            if (self.spotInfo && senderName){
+                NSDictionary *dict = @{
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"streamId":self.spotID,
+                                       @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                       @"streamName":self.spotInfo[@"spotName"],
+                                       @"sender": senderName,
+                                       @"streamCode" : self.spotInfo[@"spotCode"],
+                                       @"senderPhoto" : [AppHelper profilePhotoURL]};
+                
+                
+                NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                
+                [branch getShortURLWithParams:streamDetails andChannel:@"email" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error){
+                    if (!error) {
+                        branchURL = url;
+                        DLog(@"URL from Branch: %@",url);
+                        
+                        NSString *shareText = [NSString stringWithFormat:@"<p>See and add photos to the %@ photo stream on Suba : %@</p>",self.spotInfo[@"spotName"],branchURL];
+                        
+                        
+                        [mailComposer setMessageBody:shareText isHTML:YES];
+                        [Flurry logEvent:@"Share_Stream_Email_Done"];
+                        if (!self.presentedViewController) {
+                            [self presentViewController:mailComposer animated:YES completion:nil];
+                        }
+                    }else DLog(@"Branch error: %@",error.debugDescription);
+                }];
+
+            }
         }
     }else{
         [AppHelper showAlert:@"Configure email" message:@"Hey there:) Do you mind configuring your Mail app to send email" buttons:@[@"OK"] delegate:nil];
@@ -431,9 +419,6 @@ typedef enum {
     static NSString *cellIdentifier = @"AlbumMembersCell";
     AlbumMembersCell *memberCell = [tableView dequeueReusableCellWithIdentifier:cellIdentifier forIndexPath:indexPath];
     
-    //memberCell.memberImageView.image = [UIImage imageNamed:@"anonymousUser"];
-    
-    
     memberCell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     
     if (self.members[indexPath.row][@"photoURL"] != nil) {
@@ -454,7 +439,7 @@ typedef enum {
             if (self.members[indexPath.item][@"firstName"] && self.members[indexPath.item][@"lastName"]){
                 NSString *firstName = self.members[indexPath.item][@"firstName"];
                 NSString *lastName = self.members[indexPath.item][@"lastName"];
-                NSString *personString = [NSString stringWithFormat:@"%@<>%@",firstName,lastName];
+                NSString *personString = [NSString stringWithFormat:@"%@ %@",firstName,lastName];
                 memberCell.memberUserNameLabel.text = personString;
                 [memberCell makeInitialPlaceholderView:memberCell.memberImageView name:personString];
                 
@@ -538,36 +523,40 @@ typedef enum {
                 if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
                     [AppHelper setProfilePhotoURL:@"-1"];
                 }
-                NSDictionary *dict = @{
-                                       @"always_deeplink" : @"true",
-                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
-                                       @"streamId":self.spotInfo[@"spotId"],
-                                       @"photos" : self.spotInfo[@"numberOfPhotos"],
-                                       @"streamName":self.spotInfo[@"spotName"],
-                                       @"sender": senderName,
-                                       @"streamCode" : self.spotInfo[@"spotCode"],
-                                       @"senderPhoto" : [AppHelper profilePhotoURL]};
                 
-                
-                NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
-                
-                
-                
-                
-                [branch getShortURLWithParams:streamDetails andChannel:@"text_message" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error) {
-                    if (!error) {
-                        branchURL = url;
-                        //DLog(@"URL from Branch: %@",url);
-                        smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba : %@",self.spotInfo[@"spotName"],branchURL];
-                        
-                        [smsComposer.navigationBar setTranslucent:NO];
-                        
-                        if (!self.presentedViewController){
-                            [self presentViewController:smsComposer animated:YES completion:nil];
-                        }
-                    }else DLog(@"Branch error: %@",error.debugDescription);
+                if (senderName && self.spotInfo) {
+                    NSDictionary *dict = @{
+                                           @"$always_deeplink" : @"true",
+                                           @"$desktop_url" : @"http://app.subaapp.com/streams/share",
+                                           @"streamId":self.spotInfo[@"spotId"],
+                                           @"photos" : self.spotInfo[@"numberOfPhotos"],
+                                           @"streamName":self.spotInfo[@"spotName"],
+                                           @"sender": senderName,
+                                           @"streamCode" : self.spotInfo[@"spotCode"],
+                                           @"senderPhoto" : [AppHelper profilePhotoURL]};
                     
-                }];
+                    
+                    NSMutableDictionary *streamDetails = [NSMutableDictionary dictionaryWithDictionary:dict];
+                    
+                    
+                    
+                    
+                    [branch getShortURLWithParams:streamDetails andChannel:@"text_message" andFeature:BRANCH_FEATURE_TAG_INVITE andCallback:^(NSString *url, NSError *error) {
+                        if (!error) {
+                            branchURL = url;
+                            //DLog(@"URL from Branch: %@",url);
+                            smsComposer.body = [NSString stringWithFormat:@"See and add photos to the \"%@\" photo stream on Suba : %@",self.spotInfo[@"spotName"],branchURL];
+                            
+                            [smsComposer.navigationBar setTranslucent:NO];
+                            
+                            if (!self.presentedViewController){
+                                [self presentViewController:smsComposer animated:YES completion:nil];
+                            }
+                        }else DLog(@"Branch error: %@",error.debugDescription);
+                        
+                    }];
+ 
+                }
                 
             }
             
@@ -795,8 +784,8 @@ typedef enum {
         [AppHelper setProfilePhotoURL:@"-1"];
     }
     NSDictionary *dict = @{
-                           @"always_deeplink" : @"true",
-                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                           @"$always_deeplink" : @"true",
+                           @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                            @"streamId":self.spotInfo[@"spotId"],
                            @"photos" : self.spotInfo[@"photos"],
                            @"streamName":self.spotInfo[@"spotName"],

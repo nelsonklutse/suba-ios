@@ -128,6 +128,10 @@ typedef void (^NotificationCompletion) ();
 + (NSMutableArray *)getInviteParams;
 + (BOOL)inviteParamsExists:(NSDictionary *)referringParams;
 + (void)clearPendingInvites:(NSDictionary *)referringParams;
++ (NSDictionary *)getiOSVersionAndPhoneModelForCurrentUser
+;
+
++ (void)sendAppVersionAndDeviceModel;
 @end
 
 

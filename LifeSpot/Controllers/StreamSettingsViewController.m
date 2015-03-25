@@ -85,7 +85,7 @@ static CLLocationManager *locationManager;
         self.viewPrivacySwitch.enabled = NO;
     }*/
     
-    self.leaveAlbumButton.enabled = NO;
+    self.leaveAlbumButton.enabled = YES;
     
     if (![self.spotInfo[@"creatorId"] isEqualToString:[AppHelper userID]]) {
         
@@ -382,7 +382,7 @@ static CLLocationManager *locationManager;
     // This is a destructive action. Prompt the user before he leaves the album
     
     UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Leave Stream"
-                                                    message:@"Are you sure you want to leave this stream? It will no longer display in the My Streams view."
+                                                    message:@"Are you sure you want to leave this stream? It will no longer show in your streams."
                                                    delegate:self
                                           cancelButtonTitle:@"Cancel"
                                           otherButtonTitles:@"I'm sure", nil];

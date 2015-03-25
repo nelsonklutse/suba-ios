@@ -206,7 +206,7 @@
     
     
     // Setting up Flurry SDK
-    [Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
+    //[Flurry startSession:@"RVRXFGG5VQ34NSWMXHFZ"];
     
     //Configure the network indicator to listen for when we make network requests and show/hide the Network Activity Indicator appropriately
     
@@ -296,7 +296,7 @@
             // params are the deep linked params associated with the link that the user clicked before showing up.
             //NSDictionary *referringParams = [branch getFirstReferringParams];
             
-            if ([params count] > 0 || [[AppHelper getInviteParams] count] > 0) {
+            if ([params count] > 0 || [ [[AppHelper getInviteParams] lastObject] count] > 0) {
                 [AppHelper saveInviteParams:params];
                 [self presentPopUpOnTopMostViewController];
             }
@@ -475,7 +475,8 @@
    }
     
     [Flurry logEvent:@"App_Started_From_Background"];
-    //DLog();
+    
+    //DLog(@"App - %@",[AppHelper getiOSVersionAndPho]);
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application
@@ -950,13 +951,12 @@
 
 - (void)setUpPopView:(UIView *)rootView
 {
-    
     DLog(@"Root view has pop up view %@",[rootView viewWithTag:4]);
     
     if (![rootView viewWithTag:4]) { // Only add this view if there's no view showing
         // Do we have some referring params stored?
         NSMutableArray *pendingStreamInvites = [AppHelper getInviteParams];
-        DLog(@"Pending stream Invite :%lu",(unsigned long)[pendingStreamInvites count]);
+        DLog(@"Pending stream Invite :%lu",(unsigned long)[[pendingStreamInvites lastObject] count]);
     
       if ([pendingStreamInvites count] > 0) {
         // There is only one pending streams invite so let's show the popUpView
@@ -1034,6 +1034,7 @@
 
 -(IBAction)joinStream:(UIButton *)sender
 {
+    DLog();
     sender.enabled = NO;
     UIView *view = [[[NSBundle mainBundle] loadNibNamed:@"InviteView" owner:nil options:nil] objectAtIndex:0];
     UIActivityIndicatorView *joiningStreamActivityIndicatorView = (UIActivityIndicatorView *)[view viewWithTag:50];
@@ -1041,6 +1042,8 @@
     
     Branch *branch = [Branch getInstance:@"55726832636395855"];
     NSDictionary *params = [branch getLatestReferringParams];
+    
+    DLog(@"params to join - %@",params);
     
     if ([params count] > 0) {
         
@@ -1166,6 +1169,8 @@
     // Get the current referring params
     Branch *branch = [Branch getInstance:@"55726832636395855"];
     NSDictionary *params = [branch getLatestReferringParams]; 
+    
+    
     
     CGRect newframe = CGRectMake(popUpView.frame.origin.x, popUpView.frame.origin.y+popUpView.frame.size.height, popUpView.frame.size.width,popUpView.frame.size.height);
     

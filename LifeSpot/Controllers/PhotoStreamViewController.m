@@ -40,6 +40,10 @@
 #import "WhatsAppKit.h"
 #import "CommentsViewController.h"
 #import "PhotoTakersViewController.h"
+#import "PhotoBrowserViewController.h"
+#import "SBTransitionAnimator.h"
+#import <MBProgressHUD/MBProgressHUD.h>
+#import "MRProgress.h"
 
 typedef enum{
     kActionLike = 0,
@@ -55,7 +59,7 @@ typedef void (^SBFlipDoodleCompletionHandler) (BOOL didFlipDoodle);
 #define SpotIdKey @"SpotIdKey"
 #define SpotPhotosKey @"SpotPhotosKey"
 
-@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate,AVYPhotoEditorControllerDelegate>
+@interface PhotoStreamViewController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIActionSheetDelegate,UIGestureRecognizerDelegate,MFMessageComposeViewControllerDelegate,UITextFieldDelegate,UIAlertViewDelegate,MFMailComposeViewControllerDelegate,AVYPhotoEditorControllerDelegate,UIViewControllerTransitioningDelegate>
 
 {
     UIImage *selectedPhoto;
@@ -69,12 +73,14 @@ typedef void (^SBFlipDoodleCompletionHandler) (BOOL didFlipDoodle);
     BOOL didImageFinishUploading;
     BOOL isDoodling;
     BOOL isFiltered;
+    BOOL shouldReplacePhoto;
     NSString *branchURLforInviteToStream;
     NSString *branchURLforShareStream;
     NSMutableArray *filteredPhotos;
     NSDictionary *selectedPicTaker;
     NSArray *_menuItems;
     NSURL *uploadingImageAssetURL;
+    NSMutableArray *mwPhotos;
 }
 
 
@@ -203,6 +209,8 @@ typedef void (^SBFlipDoodleCompletionHandler) (BOOL didFlipDoodle);
 - (void)executePendingAction:(ActionPending)pendingAction;
 - (void)doodlePhoto:(PhotoStreamCell *)cell;
 - (void)findAndShowPhoto:(NSString *)photoToShow;
+- (NSMutableArray *)prepareMWPhotos:(NSMutableArray *)photoInfo;
+
 @end 
 
 @implementation PhotoStreamViewController
@@ -455,7 +463,7 @@ int toggler;
                    //[self setUpTitleView];
                    // Also find photo
                    if (self.photoToShow) {
-                       DLog(@"Just when we are about to pass photo to show - %@",self.photoToShow);
+                       //DLog(@"Just when we are about to pass photo to show - %@",self.photoToShow);
                        [self findAndShowPhoto:self.photoToShow];
                    }
                    
@@ -536,7 +544,7 @@ int toggler;
 {
     isFiltered = NO;
     
-    [self.photoCollectionView reloadData];
+    //[self.photoCollectionView reloadData];
     
     [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
 }
@@ -570,8 +578,7 @@ int toggler;
 -(void)reportPhoto:(NSDictionary *)reportInfo
 {
     [User reportPhoto:reportInfo completion:^(id results, NSError *error) {
-        BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:[UIImage imageNamed:@"Checkmark"]
-                                                       text:@"Photo Reported!"];
+        BDKNotifyHUD *hud = [BDKNotifyHUD notifyHUDWithImage:nil text:@"Photo Reported!"];
         
         hud.center = CGPointMake(self.view.center.x, self.view.center.y - 100);
         
@@ -734,18 +741,41 @@ int toggler;
     [photoCardCell.remixedImageView setMultipleTouchEnabled:YES];
     [photoCardCell.remixedImageView addGestureRecognizer:oneTapRecognizer1];
     
+    DLog(@"AssetURL id: %@",photoInfo[indexPath.item][@"id"]);
+    // check what kind of url we're loading
+    if ([photoInfo[indexPath.item][@"id"] intValue] == 0){
+        
+        DLog(@"AssetURL: %@",photoInfo[indexPath.item][@"s3name"]);
+        // s3name is an asset URL
+        [self showLocalPhoto:photoCardCell.photoCardImage withURL:photoInfo[indexPath.item][@"s3name"]];
+        
+    }else{
+        // Download photo card image
+        if (shouldReplacePhoto) {
+            DLog(@"We're replacing a photo with: %@",[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoURLstring]);
+            
+            [self downloadPhoto:photoCardCell.photoCardImage
+                        withURL:photoURLstring
+                 downloadOption:SDWebImageContinueInBackground placeholder:[UIImage imageWithData:imageToUpload]];
+            
+            [photoCardCell.photoCardImage sd_setImageWithURL:
+             [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoURLstring]]];
+            
+        }else{
+            [self downloadPhoto:photoCardCell.photoCardImage
+                        withURL:photoURLstring
+                 downloadOption:SDWebImageProgressiveDownload placeholder:[UIImage imageNamed:@"newOverlay"]];
+        }
+        
+    }
     
-    // Download photo card image
-    [self downloadPhoto:photoCardCell.photoCardImage
-                withURL:photoURLstring
-         downloadOption:SDWebImageProgressiveDownload];
     
     if (photoRemixURLString){
         
        
         [self downloadPhoto:photoCardCell.remixedImageView
                     withURL:photoRemixURLString
-             downloadOption:SDWebImageRefreshCached];
+             downloadOption:SDWebImageRefreshCached placeholder:[UIImage imageNamed:@"newOverlay"]];
         
      }else{
         photoCardCell.remixedImageView.image = nil;
@@ -926,7 +956,7 @@ int toggler;
                 photoCardCell.numberOfLikesLabel.text = results[@"likes"];
             }
             
-            [AppHelper showLikeImage:self.likeImage imageNamed:@"like-button"];
+            [AppHelper showLikeImage:self.likeImage imageNamed:@"likeIcon_active"];
             
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10000), dispatch_get_main_queue(),^{
                 [UIView animateWithDuration:0.8 animations:^{
@@ -1127,7 +1157,7 @@ int toggler;
 {
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    self.photoInView = self.photos[indexpath.row];
+    self.photoInView = (isFiltered) ? filteredPhotos[indexpath.item] : self.photos[indexpath.item];
     selectedPhoto = cell.photoCardImage.image;
     
     @try {
@@ -1791,7 +1821,6 @@ int toggler;
     // Here we animate the stream to the beginning and then start uploading the photo
     // prepare
     
-    
     @try{
         NSString *userId = [User currentlyActiveUser].userID;
         NSString *spotId = self.spotID;
@@ -1812,9 +1841,25 @@ int toggler;
             // Anything can happen here so lets just catch the exception
             @try{
                 self.imageUploadProgressView.progress = (float)totalBytesWritten/totalBytesExpectedToWrite;
+                
+                /*MBProgressHUD *imageUploadHUD = [MBProgressHUD showHUDAddedTo:selectedPhotoCell.photoCardImage animated:YES];
+                imageUploadHUD.progress = (float)totalBytesWritten/totalBytesExpectedToWrite;
+                
+                MRProgressOverlayView *imageUploadHUD = [MRProgressOverlayView showOverlayAddedTo:selectedPhotoCell.photoCardImage title:@"Uploading photo..." mode:MRProgressOverlayViewModeDeterminateHorizontalBar animated:NO];
+               
+                //DLog(@"imageUploadHUD frame: %@",NSStringFromCGRect(imageUploadHUD.frame));
+                //imageUploadHUD setFrame:<#(CGRect)#>
+                
+                [imageUploadHUD setProgress:(float)totalBytesWritten/totalBytesExpectedToWrite
+                                              animated:NO];*/
+                
                 if(self.imageUploadProgressView.progress == 1.0f){
                     didImageFinishUploading = YES;
                     self.imageUploadProgressView.hidden = YES; // or remove from superview
+                    //[imageUploadHUD removeFromSuperview];
+                    
+                    /*[MRProgressOverlayView showOverlayAddedTo:selectedPhotoCell.photoCardImage title:@"Success" mode:MRProgressOverlayViewModeCheckmark animated:YES];*/
+                    
                 }
             }@catch(NSException *exception){}
         }];
@@ -1841,7 +1886,7 @@ int toggler;
                      if (!self.photos){
                          self.photos = [NSMutableArray arrayWithObject:photoInfo];
                      }else{
-                         [self.photos insertObject:photoInfo atIndex:0];
+                         [self.photos replaceObjectAtIndex:0 withObject:photoInfo];
                      }
                  
                      [self upDateCollectionViewWithCapturedPhoto:photoInfo];
@@ -1885,11 +1930,16 @@ int toggler;
 
 -(void)upDateCollectionViewWithCapturedPhoto:(NSDictionary *)photoInfo{
     
-        [self.photoCollectionView performBatchUpdates:^{
+    
+    [self.photoCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:0 inSection:0]]];
+    
+       /* [self.photoCollectionView performBatchUpdates:^{
             @try {
             [self.photoCollectionView
              insertItemsAtIndexPaths:@[
                                        [NSIndexPath indexPathForItem:0 inSection:0]]];
+                
+            [self.photoCollectionView ]
             }@catch (NSException *exception) {
                 // What to do when we have an exception
             }
@@ -1899,7 +1949,7 @@ int toggler;
             }@catch (NSException *exception) {
                 // What to do when we have an exception
             }
-        }];
+        }];*/
 }
 
 
@@ -1999,7 +2049,16 @@ int toggler;
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
-    if ([segue.identifier isEqualToString:@"SpotSettingsSegue"]) {
+    if ([segue.identifier isEqualToString:@"FullScreenPhotoBrowserSegue"]){
+        if ([segue.destinationViewController isKindOfClass:[PhotoBrowserViewController class]]) {
+            // Set delegate for custom View controller Transition
+            PhotoBrowserViewController *fullScreenBrowser = segue.destinationViewController;
+            fullScreenBrowser.transitioningDelegate = self;
+            fullScreenBrowser.modalPresentationStyle = UIModalPresentationCustom;
+            
+            DLog("Animated full screen transition in progress");
+        }
+    }else if ([segue.identifier isEqualToString:@"SpotSettingsSegue"]) {
         if ([segue.destinationViewController isKindOfClass:[StreamSettingsViewController class]]) {
             StreamSettingsViewController *albumVC = segue.destinationViewController;
             albumVC.spotID = (NSString *)sender;
@@ -2055,6 +2114,13 @@ int toggler;
 #pragma mark - handle gesture recognizer
 - (void)photoCardTapped:(UITapGestureRecognizer *)sender
 {
+    //NSMutableArray *mwphotos = [NSMutableArray array];
+    if(isFiltered){
+       mwPhotos = [self prepareMWPhotos:filteredPhotos];
+    }else{
+       mwPhotos = [self prepareMWPhotos:self.photos];
+    }
+    
     
     if (sender.state == UIGestureRecognizerStateEnded)
     {
@@ -2068,7 +2134,7 @@ int toggler;
                 [self unlikePhotoWithID:photoId atIndexPath:selectedPhotoIndexPath];
         }*/
         PhotoStreamCell *photoCardCell = (PhotoStreamCell *)sender.view.superview.superview;
-        DLog(@"Show photo full screen from view - %@ - %@",[sender.view class],[sender.view.superview.superview class]);
+        
         /*UIImageView *imgView = (UIImageView *)sender.view;
         if(imgView.image){
             NSArray *photos = [IDMPhoto photosWithImages:@[imgView.image]];
@@ -2078,12 +2144,28 @@ int toggler;
             [self presentViewController:photoBrowser animated:YES completion:nil];
         }*/
         
-        
+        selectedPhotoCell = photoCardCell;
        // @try {
             if (photoCardCell.photoCardImage.alpha == 1) {
-                if (photoCardCell.photoCardImage.image){
+                if(photoCardCell.photoCardImage.image){
                     
-                    NSArray *photos = [IDMPhoto photosWithImages:@[photoCardCell.photoCardImage.image]];
+                    // Call MWPhotoBrowser here
+                    MWPhotoBrowser *browser = [[MWPhotoBrowser alloc] initWithDelegate:self];
+                    browser.displayActionButton = NO;
+                    browser.displayNavArrows = NO;
+                    browser.zoomPhotosToFill = NO;
+                    browser.enableSwipeToDismiss = YES;
+                    [browser setCurrentPhotoIndex:[self.photoCollectionView indexPathForCell:photoCardCell].item];
+                    
+        DLog(@"current photo info: %@",self.photos[[self.photoCollectionView
+                                                    indexPathForCell:photoCardCell].item]);
+                    
+                    // Modal
+                    UINavigationController *nc = [[UINavigationController alloc] initWithRootViewController:browser];
+                    nc.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+                    [self presentViewController:nc animated:YES completion:nil];
+                    
+                    /*NSArray *photos = [IDMPhoto photosWithImages:@[photoCardCell.photoCardImage.image]];
                     
                     IDMPhotoBrowser *photoBrowser = [[IDMPhotoBrowser alloc] initWithPhotos:photos animatedFromView:photoCardCell.photoCardImage];
                     photoBrowser.displayActionButton = NO;
@@ -2091,6 +2173,16 @@ int toggler;
                     photoBrowser.displayDoneButton= YES;
                     
                     [self presentViewController:photoBrowser animated:YES completion:nil];
+                    DLog("Animated full screen transition in progress");
+                    
+                    selectedPhotoCell = photoCardCell;
+                    PhotoBrowserViewController *pVC = [self.storyboard instantiateViewControllerWithIdentifier:@"PhotoBrowserScene"];
+                    
+                    pVC.transitioningDelegate = self;
+                    pVC.modalPresentationStyle = UIModalPresentationCustom;
+                    
+                    [self presentViewController:pVC animated:YES completion:nil];*/
+                    
                 }
             }else if (photoCardCell.remixedImageView.alpha == 1) {
                 // If the doodle is showing
@@ -2102,7 +2194,19 @@ int toggler;
                     photoBrowser.displayActionButton = NO;
                     photoBrowser.displayToolbar = NO;
                     photoBrowser.displayDoneButton= YES;
-                    [self presentViewController:photoBrowser animated:YES completion:nil];                }
+                    
+                    [self presentViewController:photoBrowser animated:YES completion:nil];
+                    
+                    /*DLog("Animated full screen transition in progress");
+                    PhotoBrowserViewController *pVC = [self.storyboard instantiateViewControllerWithIdentifier:@"PhotoBrowserScene"];
+                    
+                    pVC.transitioningDelegate = self;
+                    pVC.modalPresentationStyle = UIModalPresentationCustom;
+                    [self presentViewController:pVC animated:YES completion:nil];
+
+                    [self performSegueWithIdentifier:@"FullScreenPhotoBrowserSegue" sender:nil];*/
+                
+                }
             }
         }
      
@@ -2378,8 +2482,8 @@ int toggler;
                 [AppHelper setProfilePhotoURL:@"-1"];
             }
             NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                                   @"$always_deeplink" : @"true",
+                                   @"$desktop_url" : @"http://app.subaapp.com/streams/invite",
                                    @"streamId":self.spotInfo[@"spotId"],
                                    @"photos" : self.spotInfo[@"numberOfPhotos"],
                                    @"streamName":self.spotInfo[@"spotName"],
@@ -2475,8 +2579,8 @@ int toggler;
             [AppHelper setProfilePhotoURL:@"-1"];
         }
         NSDictionary *dict = @{
-                               @"always_deeplink" : @"true",
-                               @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                               @"$always_deeplink" : @"true",
+                               @"$desktop_url" : @"http://app.subaapp.com/streams/invite",
                                @"streamId":self.spotID,
                                @"photos" : self.spotInfo[@"numberOfPhotos"],
                                @"streamName":self.spotInfo[@"spotName"],
@@ -2548,8 +2652,8 @@ int toggler;
             }
             
             NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                                   @"$always_deeplink" : @"true",
+                                   @"$desktop_url" : @"http://app.subaapp.com/streams/invite",
                                    @"streamId":self.spotInfo[@"spotId"],
                                    @"photos" : self.spotInfo[@"numberOfPhotos"],
                                    @"streamName":self.spotInfo[@"spotName"],
@@ -3189,9 +3293,12 @@ int toggler;
                         imageToUpload = UIImageJPEGRepresentation(image, .8);
                         nameOfImageToUpload = trimmedString;
                         DLog(@"Size of image - %fKB",[imageToUpload length]/1024.0f);
-                        [self uploadPhoto:imageToUpload WithName:trimmedString];
-                    //}else DLog(@"Image resize error :%@",error);
-                //}];
+        
+                        // Update collection view with local photo
+                        [self upDateCollectionViewWithLocalInfo:[self prepareLocalPhotoInfo]];
+        
+                        //[self uploadPhoto:imageToUpload WithName:trimmedString];
+        
         }
 
     }];
@@ -3230,7 +3337,38 @@ int toggler;
     
 }
 
-- (void)downloadPhoto:(UIImageView *)destination withURL:(NSString *)imgURL downloadOption:(SDWebImageOptions)option
+
+- (void)showLocalPhoto:(UIImageView *)destination withURL:(NSString *)imgURL
+{
+    if ([destination.subviews count] == 1) {
+        // Lets remove all subviews
+        [[destination subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    }
+    
+    // Load the UIImage from an asset URL
+    NSURL* aURL = [NSURL URLWithString:imgURL];
+    
+    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+    [library assetForURL:aURL resultBlock:^(ALAsset *asset)
+     {
+         UIImage  *copyOfOriginalImage = [UIImage imageWithCGImage:[[asset defaultRepresentation] fullScreenImage] scale:0.5 orientation:UIImageOrientationUp];
+         
+         destination.image = copyOfOriginalImage;
+     }
+            failureBlock:^(NSError *error)
+     {
+         // error handling
+         DLog(@"failure-----");
+     }];
+    
+   
+    
+    
+}
+
+
+- (void)downloadPhoto:(UIImageView *)destination withURL:(NSString *)imgURL
+       downloadOption:(SDWebImageOptions)option placeholder:(UIImage *)placeholder
 {
     if ([destination.subviews count] == 1) {
         // Lets remove all subviews
@@ -3247,8 +3385,8 @@ int toggler;
         
         [[S3PhotoFetcher s3FetcherWithBaseURL]
          downloadPhoto:imgURL to:destination
-         placeholderImage:[UIImage imageNamed:@"newOverlay"]
-         progressView:progressView
+         placeholderImage:placeholder
+         progressView:progressView 
          downloadOption:option
          completion:^(id results, NSError *error){
              
@@ -3259,21 +3397,20 @@ int toggler;
                  DLog(@"error - %@",error.userInfo);
                  
                  NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:imgURL]];
-                 [destination setImageWithURLRequest:request placeholderImage:[UIImage imageNamed:@"newOverlay"] success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                 [destination setImageWithURLRequest:request placeholderImage:placeholder success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
                      
                      [progressView removeFromSuperview];
+                     
                      if (!error) {
                          self.albumSharePhoto = image;
+                         shouldReplacePhoto = NO;
                      }
                  } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
                      DLog(@"Error: %@",error.userInfo);
                  }];
             }
          }];
-
-    //}
-    
-}
+  }
 
 
 - (void)executePendingAction:(ActionPending)pendingAction
@@ -3290,7 +3427,7 @@ int toggler;
 - (void)doodlePhoto:(PhotoStreamCell *)cell
 {
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    self.photoInView = self.photos[indexpath.row];
+    self.photoInView = (isFiltered) ? filteredPhotos[indexpath.item] : self.photos[indexpath.item];
     
     if (cell.remixedImageView.image){
         if (cell.photoCardImage.alpha == 1){
@@ -3371,7 +3508,7 @@ int toggler;
 {
     PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
     NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
-    self.photoInView = self.photos[indexpath.row];
+    self.photoInView = (isFiltered) ? filteredPhotos[indexpath.item] : self.photos[indexpath.item];
 
     //DLog(@"Photo selected: %@",self.photoInView);
     [self performSegueWithIdentifier:@"CommentsSegue" sender:nil];
@@ -3502,7 +3639,7 @@ int toggler;
         }
         
         
-        DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
+       // DLog(@"Stream code: - %@\n Sender: %@\nProfile photo: %@",self.spotInfo,senderName,[[AppHelper profilePhotoURL] class]);
         
         if ([AppHelper profilePhotoURL] == NULL | [[AppHelper profilePhotoURL] class] == [NSNull class]) {
             [AppHelper setProfilePhotoURL:@"-1"];
@@ -3510,8 +3647,8 @@ int toggler;
     
     
         NSDictionary *dict = @{
-                               @"always_deeplink" : @"true",
-                               @"desktop_url" : @"http://app.subaapp.com/streams/invite",
+                               @"$always_deeplink" : @"true",
+                               @"$desktop_url" : @"http://app.subaapp.com/streams/invite",
                                @"streamId":self.spotInfo[@"spotId"],
                                @"photos" : self.spotInfo[@"photos"],
                                @"streamName":self.spotInfo[@"spotName"],
@@ -3553,8 +3690,8 @@ int toggler;
     }
     
     NSDictionary *dict = @{
-                           @"always_deeplink" : @"true",
-                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                           @"$always_deeplink" : @"true",
+                           @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                            @"streamId":self.spotInfo[@"spotId"],
                            @"photos" : self.spotInfo[@"photos"],
                            @"streamName":self.spotInfo[@"spotName"],
@@ -3683,7 +3820,7 @@ int toggler;
 
 
 
-- (void)prepareForPhotoUpload
+/*- (void)prepareForPhotoUpload
 {
     NSString *fullName = nil;
     if ([AppHelper firstName].length > 0  && [AppHelper lastName].length > 0) {
@@ -3699,7 +3836,7 @@ int toggler;
     
     NSDictionary *photoInfo = @{
                                 @"howLong" : @"now",
-                                @"id": @(1),
+                                @"id": @(0),
                                 @"likes" : @(0),
                                 @"pictureTaker" : fullName,
                                 @"pictureTakerId" : [AppHelper userID],
@@ -3724,7 +3861,7 @@ int toggler;
     
     [self upDateCollectionViewWithCapturedPhoto:photoInfo];
  
-}
+}*/
 
 
 
@@ -3783,9 +3920,10 @@ int toggler;
                     [AppHelper setProfilePhotoURL:@"-1"];
                 }
                 
+                
                 NSDictionary *dict = @{
-                                       @"always_deeplink" : @"true",
-                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                        @"streamId":self.spotInfo[@"spotId"],
                                        @"photos" : self.spotInfo[@"photos"],
                                        @"streamName":self.spotInfo[@"spotName"],
@@ -3922,8 +4060,8 @@ int toggler;
                 }
                 
                 NSDictionary *dict = @{
-                                       @"always_deeplink" : @"true",
-                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                        @"streamId":self.spotInfo[@"spotId"],
                                        @"photos" : self.spotInfo[@"photos"],
                                        @"streamName":self.spotInfo[@"spotName"],
@@ -4021,8 +4159,8 @@ int toggler;
             }
             
             NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                   @"$always_deeplink" : @"true",
+                                   @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                    @"streamId":self.spotInfo[@"spotId"],
                                    @"photos" : self.spotInfo[@"photos"],
                                    @"streamName":self.spotInfo[@"spotName"],
@@ -4125,8 +4263,8 @@ int toggler;
                     }
                     
                     NSDictionary *dict = @{
-                                           @"always_deeplink" : @"true",
-                                           @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                           @"$always_deeplink" : @"true",
+                                           @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                            @"streamId":self.spotInfo[@"spotId"],
                                            @"photos" : self.spotInfo[@"photos"],
                                            @"streamName":self.spotInfo[@"spotName"],
@@ -4237,8 +4375,8 @@ int toggler;
                 }
                 
                 NSDictionary *dict = @{
-                                       @"always_deeplink" : @"true",
-                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                        @"streamId":self.spotInfo[@"spotId"],
                                        @"photos" : self.spotInfo[@"photos"],
                                        @"streamName":self.spotInfo[@"spotName"],
@@ -4351,8 +4489,8 @@ int toggler;
                 }
                 
                 NSDictionary *dict = @{
-                                       @"always_deeplink" : @"true",
-                                       @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                       @"$always_deeplink" : @"true",
+                                       @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                        @"streamId":self.spotInfo[@"spotId"],
                                        @"photos" : self.spotInfo[@"photos"],
                                        @"streamName":self.spotInfo[@"spotName"],
@@ -4450,8 +4588,8 @@ int toggler;
             }
             
             NSDictionary *dict = @{
-                                   @"always_deeplink" : @"true",
-                                   @"desktop_url" : @"http://app.subaapp.com/streams/share",
+                                   @"$always_deeplink" : @"true",
+                                   @"$desktop_url" : @"http://app.subaapp.com/streams/share",
                                    @"streamId":self.spotInfo[@"spotId"],
                                    @"photos" : self.spotInfo[@"photos"],
                                    @"streamName":self.spotInfo[@"spotName"],
@@ -4494,6 +4632,94 @@ int toggler;
 }
 
 
+- (void)upDateCollectionViewWithLocalInfo:(NSDictionary *)newPhotoInfo
+{
+    
+    self.noPhotosView.hidden = YES;
+    self.photoCollectionView.hidden = NO;
+    
+    if (!self.photos){
+        self.photos = [NSMutableArray arrayWithObject:newPhotoInfo];
+    }else{
+        [self.photos insertObject:newPhotoInfo atIndex:0];
+    }
+    
+    
+    [self.photoCollectionView performBatchUpdates:^{
+     @try {
+         [self.photoCollectionView insertItemsAtIndexPaths:@[[NSIndexPath indexPathForItem:0 inSection:0]]];
+         
+     }@catch (NSException *exception) {
+         // What to do when we have an exception
+     }
+        
+     } completion:^(BOOL finished){
+     @try{
+         [self.photoCollectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UICollectionViewScrollPositionLeft animated:YES];
+         
+         shouldReplacePhoto = YES;
+         selectedPhotoCell = (PhotoStreamCell *)[self.photoCollectionView
+                                                                         cellForItemAtIndexPath:[NSIndexPath indexPathForItem:selectedPhotoIndexPath.item inSection:0]];
+         [self uploadPhoto:imageToUpload WithName:nameOfImageToUpload];
+         
+     }@catch (NSException *exception) {
+         // What to do when we have an exception
+        }
+     }];
+}
+
+
+- (NSDictionary *)prepareLocalPhotoInfo
+{
+    NSString *fullName = nil;
+    if ([AppHelper firstName].length > 0  && [AppHelper lastName].length > 0) {
+        fullName = [NSString stringWithFormat:@"%@ %@",[AppHelper firstName],[AppHelper lastName]];
+    }else{
+        fullName = [AppHelper userName];
+    }
+    
+    
+    //NSString *assetURL = [assetURL absoluteString];
+    DLog(@"Uploading photo assetURL: %@",[uploadingImageAssetURL absoluteString]);
+    
+    //: Prepare photo info here
+    NSDictionary *newLocalPhotoInfo = @{@"comments" : @(0), @"id" : @(0), @"likes" : @(0),
+                                        @"pictureTaker" : fullName,
+                                        @"pictureTakerId" : [AppHelper userID],
+                                        @"pictureTakerPhoto" : [AppHelper profilePhotoURL],
+                                        @"remixers" : @(0),
+                                        @"s3name" : [uploadingImageAssetURL absoluteString],
+                                        @"spot" : self.spotName,
+                                        @"spotId" : @([self.spotID integerValue]),
+                                        @"timestamp" : nameOfImageToUpload,
+                                        @"userLikedPhoto" : @"NO",
+                                        @"howLong" : @"now"};
+    
+    return newLocalPhotoInfo;
+}
+
+
+
+- (NSMutableArray *)prepareMWPhotos:(NSMutableArray *)photoInfo
+{
+    NSMutableArray *photos = [[NSMutableArray alloc] init];
+    MWPhoto *photo;
+    if ([photoInfo count] > 0) { // Do we have some photos to show
+        
+        for (NSDictionary *info in photoInfo){
+            
+            DLog(@"This photo: %@",[info debugDescription]);
+            NSString *photoURL = info[@"s3name"];
+            NSURL *photoSrc = [NSURL URLWithString:[NSString stringWithFormat:@"%@%@",kS3_BASE_URL,photoURL]];
+            photo  = [MWPhoto photoWithURL:photoSrc];
+            
+            [photos addObject:photo];
+            
+        }
+    }
+    
+    return photos;
+}
 
 
 - (void)showFbWebDialog:(NSDictionary *)params
@@ -4533,8 +4759,6 @@ int toggler;
                  }
              }
          }
-         
-         
      }];
 }
 
@@ -4557,11 +4781,85 @@ int toggler;
 }
 
 
+#pragma mark - Custom view controller transitions
+-(id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
+{
+    SBTransitionAnimator *transitioningAnimator = [SBTransitionAnimator new];
+    transitioningAnimator.presenting = YES;
+    CGRect frame = self.view.frame;
+    transitioningAnimator.beginTransitionFrame = CGRectMake(frame.size.width/2, frame.size.height/2, 0, 0);
+    transitioningAnimator.endTransitionFrame = frame;
+    
+    DLog(@"transtioning animator: %@",NSStringFromCGRect(transitioningAnimator.beginTransitionFrame));
+    return transitioningAnimator;
+}
 
 
+-(id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed
+{
+    SBTransitionAnimator *transitioningAnimator = [SBTransitionAnimator new];
+    CGRect frame = self.view.frame;
+    transitioningAnimator.beginTransitionFrame = CGRectMake(frame.size.width/2, frame.size.height/2, 0, 0);
+    transitioningAnimator.endTransitionFrame = frame;
+    
+    DLog(@"transtioning animator: %@",NSStringFromCGRect(transitioningAnimator.beginTransitionFrame));
+    return transitioningAnimator;
+}
 
 
+#pragma mark - MWPhotoBrowser Delegate methods
+- (NSUInteger)numberOfPhotosInPhotoBrowser:(MWPhotoBrowser *)photoBrowser
+{
+    DLog();
+    return (isFiltered) ? [filteredPhotos count] : [self.photos count];
+}
 
 
+- (id <MWPhoto>)photoBrowser:(MWPhotoBrowser *)photoBrowser photoAtIndex:(NSUInteger)index
+{
+    if (mwPhotos) {
+        if (index < [mwPhotos count]){
+            DLog(@" Photo object: %@ ",[mwPhotos objectAtIndex:index]);
+            
+            return [mwPhotos objectAtIndex:index];
+        }
+        
+
+    }
+    
+    return nil;
+}
+
+
+- (void)photoBrowser:(MWPhotoBrowser *)photoBrowser didDisplayPhotoAtIndex:(NSUInteger)index {
+    DLog(@"Did start viewing photo at index %lu", (unsigned long)index);
+}
+
+
+- (void)photoBrowserDidFinishModalPresentation:(MWPhotoBrowser *)photoBrowser {
+    // If we subscribe to this method we must dismiss the view controller ourselves
+    DLog(@"Did finish modal presentation");
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (IBAction)tagPhoto:(UIButton *)sender
+{
+    PhotoBrowserViewController *pVC = [self.storyboard instantiateViewControllerWithIdentifier:@"PhotoBrowserScene"];
+    
+    PhotoStreamCell *cell = (PhotoStreamCell *)sender.superview.superview.superview;
+    NSIndexPath *indexpath = [self.photoCollectionView indexPathForCell:cell];
+    //self.photoInView = self.photos[indexpath.row];
+    
+    pVC.transitioningDelegate = self;
+    pVC.modalPresentationStyle = UIModalPresentationCustom;
+    
+    NSString *s3name = (isFiltered) ? filteredPhotos[indexpath.item][@"s3name"] :
+                                  self.photos[indexpath.item][@"s3name"];
+    
+    pVC.imageURL = [NSString stringWithFormat:@"%@%@",kS3_BASE_URL,s3name];
+    pVC.streamId = self.spotID;
+    
+    [self presentViewController:pVC animated:YES completion:nil];
+}
 
 @end

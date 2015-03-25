@@ -294,6 +294,7 @@
     return initials;
 }
 
+
 -(void)fillView:(UIView *)view WithImage:(NSString *)imageURL
 {
     [[view subviews]

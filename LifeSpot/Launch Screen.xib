@@ -11,11 +11,17 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="newSplash" translatesAutoresizingMaskIntoConstraints="NO" id="egE-Ai-qgq" userLabel="Launch Image">
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="newSplash" translatesAutoresizingMaskIntoConstraints="NO" id="egE-Ai-qgq" userLabel="Launch Image">
                     <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                 </imageView>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="egE-Ai-qgq" secondAttribute="bottom" id="Fcu-ou-QvE"/>
+                <constraint firstAttribute="trailing" secondItem="egE-Ai-qgq" secondAttribute="trailing" id="TFG-dj-VcQ"/>
+                <constraint firstItem="egE-Ai-qgq" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="g4g-wL-6PK"/>
+                <constraint firstItem="egE-Ai-qgq" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="rpt-U2-6RI"/>
+            </constraints>
             <nil key="simulatedStatusBarMetrics"/>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina4"/>
             <point key="canvasLocation" x="404" y="445"/>

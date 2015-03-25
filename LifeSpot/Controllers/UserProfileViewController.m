@@ -423,7 +423,7 @@ int counter;
                                         // Update user info
                                         [self fetchUserStreams:[AppHelper userID]];
                                     }else{
-                                        [AppHelper showAlert:results[STATUS] message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
+                                        [AppHelper showAlert:results[STATUS] message:@"Something went wrong. Try again?" buttons:@[@"I'll check again"] delegate:nil];
                                     }
                                     
                                     
@@ -577,7 +577,6 @@ int counter;
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 
@@ -588,12 +587,11 @@ int counter;
                               flag:YES];
     
     User *user = [User userWithID:userId];
+    
     [user loadPersonalSpotsWithCompletion:^(id results, NSError *error) {
         
         [AppHelper showLoadingDataView:self.loadingUserStreamsIndicatorView
                              indicator:self.loadingUserStreamsIndicator flag:NO];
-        
-        //DLog(@"Results - %@",results);
         
         if (error) {
             DLog(@"Error - %@",error);
@@ -619,9 +617,9 @@ int counter;
                     }
                     self.userSpots = [NSMutableArray arrayWithArray:sortedSpots];
                     
-                    [self figureOutWhichCollectionViewToShow];
-                    
                 }
+                
+                [self figureOutWhichCollectionViewToShow];
             }
         }
     }];
@@ -662,11 +660,13 @@ int counter;
             if ([results[STATUS] isEqualToString:ALRIGHT]) {
                 self.userProfileInfo = (NSDictionary *)results;
                 if (results[@"profilePicURL"]) {
-                    [AppHelper setProfilePhotoURL:results[@"profilePicURL"]];
+                    //Is this the currently logged in user
+                    if ([results[@"userName"] isEqualToString:[AppHelper userName]]) {
+                        [AppHelper setProfilePhotoURL:results[@"profilePicURL"]];
+                    }
                 }
+                
                 [self figureOutWhichCollectionViewToShow];
-
-                //[self.normalUserStreamCollectionView reloadData];
             }else{
                 // There was a problem on the server
                 DLog(@"Issues on the server - %@",results);
@@ -1132,7 +1132,16 @@ int counter;
             
             if (sender[@"photoURLs"]) {
                 
-                photosVC.photos = [NSMutableArray arrayWithArray:(NSArray *) sender[@"photoURLs"]];
+                NSArray *photos = sender[@"photoURLs"];
+                
+                NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+                NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+                
+                NSArray *thePhotos = [NSMutableArray arrayWithArray:[photos sortedArrayUsingDescriptors:sortDescriptors]];
+                
+                photosVC.photos = [NSMutableArray arrayWithArray:
+                                   [NSOrderedSet orderedSetWithArray:(NSArray *) thePhotos].array];
+                
                 photosVC.spotInfo = (NSDictionary *)sender;
             }
             
@@ -1143,17 +1152,14 @@ int counter;
             photosVC.spotID = sender[@"spotId"];
             photosVC.numberOfPhotos = [sender[@"photos"] integerValue];
             photosVC.isUserMemberOfStream = @"YES";
-            
-            DLog(@"UserProfile Sender - %@",[sender description]);
         }
+        
     }else if ([segue.identifier isEqualToString:@"UserProfileToMainSettingsSegue"]){
         
         if ([sender  isEqual: @(1)]) {
             UserSettingsViewController *userSettingsVC = segue.destinationViewController;
             userSettingsVC.autoInvite = YES;
         }
-        
-        
     }
 }
 
@@ -1179,7 +1185,7 @@ int counter;
             NSDictionary *parameters = [NSDictionary dictionaryWithObject:@"first_name,last_name,username,email,picture.type(large)" forKey:@"fields"];
             
             [FBRequestConnection startWithGraphPath:@"me" parameters:parameters HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
-                DLog(@"FB Auth Result - %@\nError - %@",result,error);
+                //DLog(@"FB Auth Result - %@\nError - %@",result,error);
                 if (!error) {
                     NSDictionary<FBGraphUser> *user = result;
                     
@@ -1346,7 +1352,7 @@ int counter;
                             // Update user info
                             [self fetchUserStreams:[AppHelper userID]];
                         }else{
-                            [AppHelper showAlert:results[STATUS] message:results[@"message"] buttons:@[@"I'll check again"] delegate:nil];
+                            [AppHelper showAlert:results[STATUS] message:@"Something went wrong. Try again?" buttons:@[@"I'll check again"] delegate:nil];
                         }
                     }];
                    
@@ -1447,7 +1453,7 @@ int counter;
                                 // Update user info
                                 [self fetchUserStreams:[AppHelper userID]];
                             }else{
-                                [AppHelper showAlert:results[STATUS] message:results[@"message"]
+                                [AppHelper showAlert:results[STATUS] message:@"Something went wrong. Try again?"
                                              buttons:@[@"I'll check again"] delegate:nil];
                             }
                         }];

@@ -423,25 +423,8 @@
     
     NSInteger signCorrection = -1;
     
-    /*if ([self.comments count] > 0) {
-        if ( (startFrame.origin.y - endFrame.origin.y) > 0 ){
-            
-            [self.commentsTableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:[self.comments count]-1 inSection:0] atScrollPosition:UITableViewScrollPositionNone animated:NO];
-            
-            DLog(@"scroll up");
-        }else{
-            [self.commentsTableView scrollToRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] atScrollPosition:UITableViewScrollPositionTop animated:NO];
-            
-            DLog(@"scroll down");
-        }
-    }*/
-    
-    
-
     
     CGFloat sizeChange = (startFrame.origin.y - endFrame.origin.y) * signCorrection;
-    
-    DLog(@"Whats the size change: %f",sizeChange);
     
     //CGFloat sizeChange = UIInterfaceOrientationIsLandscape([self interfaceOrientation]) ? widthChange : heightChange;
     

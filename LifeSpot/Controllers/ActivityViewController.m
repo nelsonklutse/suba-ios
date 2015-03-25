@@ -70,6 +70,8 @@
         DLog(@"We're using ios 7");
         NSInteger remoteNotificationType = [[UIApplication sharedApplication] enabledRemoteNotificationTypes];
         
+        DLog(@"Remote Notification types - %i",remoteNotificationType); 
+        
         if (remoteNotificationType == 0) {
             // Show give us notifications
             self.notRegisteredForRemoteNotificationsView.alpha = 1;

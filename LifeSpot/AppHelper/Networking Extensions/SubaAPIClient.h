@@ -10,4 +10,5 @@
 @interface SubaAPIClient : AFHTTPSessionManager
 + (instancetype)sharedInstance;
 + (NSURL *)subaAPIBaseURL;
+//+ (AFJSONRequestSerializer *)jsonrequestserializer;
 @end

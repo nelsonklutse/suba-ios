@@ -34,3 +34,9 @@ pod 'HTKDynamicResizingCell', '~> 0.0.1'
 pod 'PHFComposeBarView', '~> 2.0.1'
 
 pod "Branch"
+
+pod "ADTransitionController"
+
+pod "MWPhotoBrowser", "~>1.4.1" 
+
+pod "MRProgress"

@@ -8,14 +8,15 @@
 
 #import "SubaAPIClient.h"
 
-static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
+//static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com/";
 
-//static NSString * const SubaAPIBaseURLString   =  @"http://54.201.118.129/";
+static NSString * const SubaAPIBaseURLString   =  @"http://suba-dev.subaapp.com/";
 //static NSString * const SubaAPIBaseURLString   =  @"http://192.168.8.102:8080/";
-//static NSString * const SubaAPIBaseURLString   =    @"http://127.0.0.1:8080/";
-//static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.71:8080/";
-//static NSString * const SubaAPIBaseURLString     =  @"http://172.20.10.3:8080/";
 
+//static NSString * const SubaAPIBaseURLString   =    @"http://127.0.0.1:8080/";
+
+//static NSString * const  SubaAPIBaseURLString  =  @"http://10.1.0.71:8080/";
+//static NSString * const SubaAPIBaseURLString     =  @"http://172.20.10.4:8080/";
 //static NSString * const SubaAPIBaseURLString =  @"http://api-dev.subaapp.com/";
 
 
@@ -24,8 +25,8 @@ static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
 + (instancetype)sharedInstance
 {
     static SubaAPIClient *__sharedInstance;
-    
     static dispatch_once_t onceToken;
+    
     dispatch_once(&onceToken, ^{
  
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
@@ -36,6 +37,7 @@ static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
     });
     
     [__sharedInstance.requestSerializer setValue:@"com.suba.subaapp-ios" forHTTPHeaderField:@"x-suba-api-token"];
+    [__sharedInstance.requestSerializer setValue:[AppHelper userID] forHTTPHeaderField:@"com.suba.subaapp-token"];
     
     return __sharedInstance;
 }
@@ -45,6 +47,10 @@ static NSString *const SubaAPIBaseURLString    =  @"http://api.subaapp.com";
 {
     return [NSURL URLWithString:SubaAPIBaseURLString];
 }
+
+
+
+
 
 
 @end

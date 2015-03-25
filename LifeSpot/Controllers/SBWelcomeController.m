@@ -155,7 +155,7 @@
     SBWelcomePanel *welcomePanel;FriendsPanel *friendsPanel;PrivatePanel *privatePanel;PublicPanel *publicPanel;
     
     if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
-        CGRect panelFrame = CGRectMake(0, 0,self.view.frame.size.width,420);
+        CGRect panelFrame = CGRectMake(0, 0,self.view.frame.size.width,360);
         //Create custom panel with events
         welcomePanel = [[SBWelcomePanel alloc] initWithFrame:panelFrame nibNamed:@"WelcomeSmall"];
         
@@ -166,7 +166,7 @@
         publicPanel = [[PublicPanel alloc] initWithFrame:panelFrame nibNamed:@"PublicStreamSmall"];
         
         //Create the introduction view and set its delegate
-        _introductionView = [[MYBlurIntroductionView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width,450)];
+        _introductionView = [[MYBlurIntroductionView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width,430)];
         
         _introductionView.clipsToBounds = YES;
         
@@ -182,6 +182,8 @@
         
         //Create the introduction view and set its delegate
         _introductionView = [[MYBlurIntroductionView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width,450)];
+        
+        _introductionView.clipsToBounds = YES;
     }
     
     _introductionView.delegate = self;
@@ -192,7 +194,7 @@
     
     if ([[AppHelper kindOfDeviceScreen] isEqualToString:kIPHONE_4_SCREEN]){
         
-      CGRect newPageControl = CGRectMake(oldPageControlFrame.origin.x, oldPageControlFrame.origin.y-40,oldPageControlFrame.size.width, oldPageControlFrame.size.height);
+      CGRect newPageControl = CGRectMake(oldPageControlFrame.origin.x, oldPageControlFrame.origin.y-35,oldPageControlFrame.size.width, oldPageControlFrame.size.height);
         
         _introductionView.PageControl.frame = newPageControl;
         

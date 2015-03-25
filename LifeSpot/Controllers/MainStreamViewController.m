@@ -230,10 +230,13 @@ static NSInteger selectedButton = 10;
 #pragma mark - View life cycle
 - (void)canWeJoinStreamFromInvite
 {    // Get the current referring params if we still have one
-    Branch *branch = [Branch getInstance:kBRANCH_API_KEY];
-    NSDictionary *params = [branch getLatestReferringParams];
-    //DLog();
-    if (![self.view viewWithTag:4]) {
+    //Branch *branch = [Branch getInstance:kBRANCH_API_KEY];
+    NSMutableArray *pendingStreamInvites = [AppHelper getInviteParams];
+    
+    if ([pendingStreamInvites count] > 0) {
+         NSDictionary *params = [[AppHelper getInviteParams] lastObject];
+    
+        if (![self.view viewWithTag:4]) {
         
         DLog(@"Referring params: %@",params);
         
@@ -261,17 +264,20 @@ static NSInteger selectedButton = 10;
                     
                 }];
             }
-            
-            
         }
+      }
     }
-    
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     
+    
+    //if (![[AppHelper userID] isEqualToString:@"-1"]){
+        DLog(@"Sending app version");
+        [AppHelper sendAppVersionAndDeviceModel];
+    //}
     
     //[self.plusicon setImage:[UIImage imageNamed:@"PlusIconWhite"]];
     [self.searchBarButton setImage:[IonIcons imageWithIcon:icon_ios7_search size:48 color:[UIColor whiteColor]]];
@@ -329,7 +335,7 @@ static NSInteger selectedButton = 10;
     }
      
         
-    if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
+    /*if ([CLLocationManager authorizationStatus] == kCLAuthorizationStatusDenied) {
         // Suba does not have access to location
         DLog(@"Showing No Location collection view");
         self.nearbySpotsCollectionView.alpha = 0;
@@ -359,18 +365,13 @@ static NSInteger selectedButton = 10;
                 [AppHelper setUserSession:@"login"];
                 NSString *latitude  =  [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
                 NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
-                DLog(@"We've got location so fetching nearby locations");
+                DLog(@"We've got location so fetching nearby locations. This happens in view Did Load");
                 [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]} completion:nil];
              }
         }
       }
-    }
-    
-    /*else{
-        DLog(@"give access to location");
-        //[self checkForLocation];
     }*/
-
+    
 }
 
 
@@ -695,7 +696,7 @@ static NSInteger selectedButton = 10;
     DLog(@"User details to send to the server - %@ :  %@",firstName,lastName);
     [User updateFullName:requestData completion:^(id results, NSError *error) {
         if (error) {
-            [[[UIAlertView alloc] initWithTitle:@"Update Info Error" message:error.localizedDescription delegate:nil cancelButtonTitle:@"Try again" otherButtonTitles:nil] show];
+            [[[UIAlertView alloc] initWithTitle:@"Update Info Error" message:@"Something went wrong. Try again?" delegate:nil cancelButtonTitle:@"Try again" otherButtonTitles:nil] show];
             DLog(@"Error - %@",error); 
         }else{
             [Flurry logEvent:@"Full_Name_Updated"];
@@ -860,7 +861,7 @@ static NSInteger selectedButton = 10;
         [self dataLoadingView:NO];
         if (error) {
             DLog(@"Error - %@",error);
-            [AppHelper showAlert:@"Oops!" message:error.localizedDescription buttons:@[@"OK"] delegate:nil];
+            [AppHelper showAlert:@"Oops!" message:@"Something went wrong. Try again?" buttons:@[@"OK"] delegate:nil];
             if (completionHandler) {
                completionHandler(NO);
             }
@@ -880,30 +881,30 @@ static NSInteger selectedButton = 10;
                     NSArray *sortedSpots = [nearby sortedArrayUsingDescriptors:sortDescriptors];
                     
                     self.nearbyStreams = [NSMutableArray arrayWithArray:sortedSpots];
-                    if ([self areNearbyStreamsAvailable]) {
+                    //if ([self areNearbyStreamsAvailable]) {
                         self.nearbySpotsCollectionView.alpha = 1;
                         self.noLocationCollectionView.alpha = 0;
                         self.noNearbyStreamsCollectionView.alpha = 0;
                         [self.nearbySpotsCollectionView reloadData];
-                        if (completionHandler) {
+                        /*if (completionHandler) {
                             completionHandler(YES);
-                        }
+                        }*/
 
                     }else{
                         self.nearbySpotsCollectionView.alpha = 0;
                         self.noLocationCollectionView.alpha = 0;
                         self.noNearbyStreamsCollectionView.alpha = 1;
                         [self.noNearbyStreamsCollectionView reloadData];
-                        if (completionHandler) {
+                        /*if (completionHandler) {
                             completionHandler(NO);
-                        }
+                        }*/
 
                     }
                     
                 }
                 
             }
-        }
+        
         
     }];
 }
@@ -1025,7 +1026,7 @@ static NSInteger selectedButton = 10;
                          buttons:@[@"OK"] delegate:nil];
         }*/
     }else{
-        [AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];
+        /*[AppHelper showAlert:@"Location Error" message:[NSString stringWithFormat:@"%@\n%@",@"Suba does not have access to your location.",@"In order to see streams nearby, go to Settings->Privacy->Location Services and enable location for Suba" ] buttons:@[@"OK"] delegate:nil];*/
         
     }
 }
@@ -1266,9 +1267,15 @@ static NSInteger selectedButton = 10;
         if (spotsToDisplay[indexPath.item][@"creatorFirstName"] && spotsToDisplay[indexPath.item][@"creatorLastName"]){
             NSString *firstName = spotsToDisplay[indexPath.item][@"creatorFirstName"];
             NSString *lastName = spotsToDisplay[indexPath.item][@"creatorLastName"];
-            NSString *lastNameInitial = [self initialStringForPersonString:lastName].uppercaseString;
             
-            personalSpotCell.userNameLabel.text = [NSString stringWithFormat:@"%@ %@.",firstName,lastNameInitial];
+            if ([lastName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
+                 NSString *lastNameInitial = [self initialStringForPersonString:lastName].uppercaseString;
+                 personalSpotCell.userNameLabel.text = [NSString stringWithFormat:@"%@ %@.",firstName,lastNameInitial];
+            }else{
+                personalSpotCell.userNameLabel.text = [NSString stringWithFormat:@"%@",firstName];
+            }
+            
+            
         }else{
             NSString *userName = spotsToDisplay[indexPath.row][@"creatorName"];
             personalSpotCell.userNameLabel.text = userName;
@@ -1510,22 +1517,26 @@ static NSInteger selectedButton = 10;
             
             NSString *spotID = spotsToDisplay[indexPath.item][@"spotId"];
             NSString *spotName = spotsToDisplay[indexPath.item][@"spotName"];
-            //NSString *spotCode = spotsToDisplay[indexPath.item][@"spotCode"];
             NSInteger numberOfPhotos = [spotsToDisplay[indexPath.item][@"photos"] integerValue];
-            NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
-            //NSString *isMember = spotsToDisplay[indexPath.item][@"userIsMember"];
-            self.currentSelectedSpot = dataPassed;
             
-            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
-        
+            if (spotID && spotName && numberOfPhotos) {
+                NSDictionary *dataPassed = @{@"spotId": spotID,@"spotName":spotName,@"photos" : @(numberOfPhotos)};
+                self.currentSelectedSpot = dataPassed;
+                
+                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:dataPassed];
+            }
+            
         }else if (numberOfPhotos > 0){
             // User Tapped the name of the stream
             
             // It is the nearby stream
-            self.currentSelectedSpot = self.nearbyStreams[indexPath.item];
-            NSDictionary *streamInfo = self.nearbyStreams[indexPath.item];
-           
-            [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:streamInfo];
+            if (self.nearbyStreams) {
+                self.currentSelectedSpot = self.nearbyStreams[indexPath.item];
+                NSDictionary *streamInfo = self.nearbyStreams[indexPath.item];
+                
+                [self performSegueWithIdentifier:@"PhotosStreamSegue" sender:streamInfo];
+            }
+            
     }
 }
 
@@ -1831,14 +1842,20 @@ static NSInteger selectedButton = 10;
                 photosVC.numberOfPhotos = 1;
                 
             }else if([sender isKindOfClass:[NSDictionary class]]){
-                //NSDictionary *streamInfo = sender;
-                //DLog(@"Stream Info: %@",sender);
+                
                 if (sender[@"photoURLs"]){
-                    //DLog(@"Is user a member: %@",sender[@"userIsMember"]);
-                    // The stream info contains info as to whether user is a member or not
                     NSArray *photos = sender[@"photoURLs"];
+                    
+                    NSSortDescriptor *timestampDescriptor = [[NSSortDescriptor alloc] initWithKey:@"timestamp" ascending:NO];
+                    NSArray *sortDescriptors = [NSArray arrayWithObject:timestampDescriptor];
+                    
+                    NSArray *thePhotos = [NSMutableArray arrayWithArray:[photos sortedArrayUsingDescriptors:sortDescriptors]];
+                    
                     photosVC.photos = [NSMutableArray arrayWithArray:
-                                       [NSOrderedSet orderedSetWithArray:(NSArray *) photos].array];
+                                       [NSOrderedSet orderedSetWithArray:(NSArray *) thePhotos].array];
+                    
+                    
+                    
                     photosVC.spotName = sender[@"spotName"];
                     photosVC.spotID = sender[@"spotId"];
                     photosVC.numberOfPhotos = [photos count];
@@ -1931,11 +1948,11 @@ static NSInteger selectedButton = 10;
     
         self.currentLocation = [locationManager location];
         if (self.currentLocation != nil){
-            DLog("Self.current location is not nil");
+             /*DLog("Self.current location is not nil");
             NSString *latitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.latitude];
             NSString *longitude = [NSString stringWithFormat:@"%.8f",self.currentLocation.coordinate.longitude];
             
-            [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]} completion:nil];
+           [self fetchNearbySpots:@{@"lat": latitude, @"lng" :longitude,@"userId" : [AppHelper userID]} completion:nil];*/
             
         }else if([self.nearbyStreams count] > 0){
            
@@ -1961,15 +1978,8 @@ static NSInteger selectedButton = 10;
 
 -(BOOL)areNearbyStreamsAvailable
 {
-    NSArray *globals = [self filterNearbyStreamsForGlobalStreams:self.nearbyStreams];
-    if ([globals count] < [self.nearbyStreams count]) {
-        // There are some nearby streams
-        return YES;
-    }else if ([self.nearbyStreams count] == [globals count]){
-        self.globalStreams = self.nearbyStreams;
-        return NO;
-    }
-    return NO;
+    DLog(@"Are Nearby streams available: %i",[self.nearbyStreams count] > 0);
+    return ([self.nearbyStreams count] > 0);
 }
 
 

@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MWPhotoBrowser.h>
 
 typedef enum {
     kSpot = 0,
@@ -24,7 +25,7 @@ typedef enum{
 }ReportOptions;
 
 
-@interface PhotoStreamViewController : UIViewController
+@interface PhotoStreamViewController : UIViewController<MWPhotoBrowserDelegate>
 
 @property (strong,nonatomic) NSMutableArray *photos;
 @property (strong,nonatomic) NSDictionary *spotInfo;

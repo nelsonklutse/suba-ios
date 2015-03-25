@@ -304,21 +304,23 @@ static CLPlacemark *placemark;
     [currentLocation showBestMatchingFoursquareVenueCriteria:@"ll" completion:^(id results, NSError *error) {
         
         if (!error) {
-            self.otherVenues = [[results objectForKey:@"response"] objectForKey:@"venues"];
-            NSString *latitude = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"lat"];
-            NSString *longitude = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"lng"];
-            NSString *city = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"city"];
-            NSString *country = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"country"];
-            self.venueForCurrentLocation = [[[results objectForKey:@"response"] objectForKey:@"venues"][0] objectForKey:@"name"];
             
-            //DLog(@"Foursquare Venue Matching User's current Location:\nName - %@\nAll locations - %@\nLat - %@\nLng - %@",self.venueForCurrentLocation,[[results objectForKey:@"response"] objectForKey:@"venues"],latitude,longitude);
-            self.chosenVenueLocation = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.venueForCurrentLocation];
-            self.chosenVenueLocation.city = (city != nil) ? city : nil ;
-            self.chosenVenueLocation.country = (country != nil) ? country : nil;
+            if ([[results objectForKey:@"response"] objectForKey:@"venues"]) {
+                self.otherVenues = [[results objectForKey:@"response"] objectForKey:@"venues"];
+                NSString *latitude = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"lat"];
+                NSString *longitude = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"lng"];
+                NSString *city = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"city"];
+                NSString *country = [[self.otherVenues[0] objectForKey:@"location"] objectForKey:@"country"];
+                
+                self.venueForCurrentLocation = [[[results objectForKey:@"response"] objectForKey:@"venues"][0] objectForKey:@"name"];
+                
+                self.chosenVenueLocation = [[Location alloc] initWithLat:latitude Lng:longitude PrettyName:self.venueForCurrentLocation];
+                self.chosenVenueLocation.city = (city != nil) ? city : nil ;
+                self.chosenVenueLocation.country = (country != nil) ? country : nil;
+                [self.currentLocationButton sizeToFit];
+                self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+            }
             
-            //[self.currentLocationButton setTitle:self.venueForCurrentLocation forState:UIControlStateNormal];
-            [self.currentLocationButton sizeToFit];
-            self.currentLocationButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         }
     }];
 }
