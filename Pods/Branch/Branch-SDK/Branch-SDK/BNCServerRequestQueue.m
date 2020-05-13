@@ -112,6 +112,11 @@
     return [self.queue description];
 }
 
+- (void)clearQueue {
+    [self.queue removeAllObjects];
+    [self persist];
+}
+
 - (BOOL)containsInstallOrOpen {
     for (int i = 0; i < self.queue.count; i++) {
         BNCServerRequest *req = [self.queue objectAtIndex:i];
@@ -188,7 +193,9 @@
         if (encodedRequest) {
             @try {
                 BNCServerRequest *request = [NSKeyedUnarchiver unarchiveObjectWithData:encodedRequest];
-                [queue addObject:request];
+                if (![request.tag isEqualToString:REQ_TAG_REGISTER_CLOSE]) {
+                    [queue addObject:request];
+                }
             }
             @catch (NSException* exception) {
             }

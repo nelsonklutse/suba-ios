@@ -9,20 +9,19 @@
 #include <sys/utsname.h>
 #import "BNCPreferenceHelper.h"
 #import "BNCSystemObserver.h"
+#import "BranchServerInterface.h"
 #import <UIKit/UIDevice.h>
 #import <UIKit/UIScreen.h>
-#import <CoreTelephony/CTCarrier.h>
-#import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <SystemConfiguration/SystemConfiguration.h>
 
 @implementation BNCSystemObserver
 
-+ (NSString *)getUniqueHardwareId:(BOOL *)isReal {
++ (NSString *)getUniqueHardwareId:(BOOL *)isReal andIsDebug:(BOOL)debug {
     NSString *uid = nil;
     *isReal = YES;
     
     Class ASIdentifierManagerClass = NSClassFromString(@"ASIdentifierManager");
-    if (ASIdentifierManagerClass) {
+    if (ASIdentifierManagerClass && !debug) {
         SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
         id sharedManager = ((id (*)(id, SEL))[ASIdentifierManagerClass methodForSelector:sharedManagerSelector])(ASIdentifierManagerClass, sharedManagerSelector);
         SEL advertisingIdentifierSelector = NSSelectorFromString(@"advertisingIdentifier");
@@ -54,33 +53,48 @@
     return YES;
 }
 
-+ (NSString *)getURIScheme {
++ (NSString *)getDefaultUriScheme {
     NSArray *urlTypes = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
-    if (urlTypes) {
-        for (NSDictionary *urlType in urlTypes) {
-            NSArray *urlSchemes = [urlType objectForKey:@"CFBundleURLSchemes"];
-            if (urlSchemes) {
-                for (NSString *urlScheme in urlSchemes) {
-                    if (![[urlScheme substringWithRange:NSMakeRange(0, 2)] isEqualToString:@"fb"] &&
-                        ![[urlScheme substringWithRange:NSMakeRange(0, 2)] isEqualToString:@"db"] &&
-                        ![[urlScheme substringWithRange:NSMakeRange(0, 3)] isEqualToString:@"pin"]) {
-                        return urlScheme;
-                    }
-                }
+
+    for (NSDictionary *urlType in urlTypes) {
+        NSArray *urlSchemes = [urlType objectForKey:@"CFBundleURLSchemes"];
+        for (NSString *urlScheme in urlSchemes) {
+            NSString *firstTwoCharacters = [urlScheme substringWithRange:NSMakeRange(0, 2)];
+            NSString *firstThreeCharacters = [urlScheme substringWithRange:NSMakeRange(0, 3)];
+            BOOL isFBScheme = [firstTwoCharacters isEqualToString:@"fb"];
+            BOOL isDBScheme = [firstTwoCharacters isEqualToString:@"db"];
+            BOOL isPinScheme = [firstThreeCharacters isEqualToString:@"pin"];
+            
+            // Don't use the schemes set aside for other integrations.
+            if (!isFBScheme && !isDBScheme && !isPinScheme) {
+                return urlScheme;
             }
         }
     }
+
     return nil;
 }
 
 + (NSString *)getAppVersion {
-    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
 }
 
 + (NSString *)getCarrier {
-    CTTelephonyNetworkInfo *networkInfo = [[CTTelephonyNetworkInfo alloc] init];
-    CTCarrier *carrier = [networkInfo subscriberCellularProvider];
-    return carrier.carrierName;
+    NSString *carrierName = nil;
+    
+    Class CTTelephonyNetworkInfoClass = NSClassFromString(@"CTTelephonyNetworkInfo");
+    if (CTTelephonyNetworkInfoClass) {
+        id networkInfo = [[CTTelephonyNetworkInfoClass alloc] init];
+        SEL subscriberCellularProviderSelector = NSSelectorFromString(@"subscriberCellularProvider");
+        
+        id carrier = ((id (*)(id, SEL))[networkInfo methodForSelector:subscriberCellularProviderSelector])(networkInfo, subscriberCellularProviderSelector);
+        if (carrier) {
+            SEL carrierNameSelector = NSSelectorFromString(@"carrierName");
+            carrierName = ((NSString* (*)(id, SEL))[carrier methodForSelector:carrierNameSelector])(carrier, carrierNameSelector);
+        }
+    }
+    
+    return carrierName;
 }
 
 + (NSString *)getBrand {
@@ -110,13 +124,46 @@
 }
 
 + (NSNumber *)getUpdateState {
-    NSString *bundleRoot = [[NSBundle mainBundle] bundlePath];    NSFileManager *manager = [NSFileManager defaultManager];
-    NSDictionary* attrs = [manager attributesOfItemAtPath:bundleRoot error:nil];
-    if ((int)([[attrs fileCreationDate] timeIntervalSince1970]/(60*60*24)) == (int)([[attrs fileModificationDate] timeIntervalSince1970]/(60*60*24))) {
-        return nil;
-    } else {
-        return [NSNumber numberWithInt:1];
+    NSString *storedAppVersion = [BNCPreferenceHelper getAppVersion];
+    NSString *currentAppVersion = [BNCSystemObserver getAppVersion];
+    NSFileManager *manager = [NSFileManager defaultManager];
+    
+    // for creation date
+    NSURL *documentsDirRoot = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+    NSDictionary *documentsDirAttributes = [manager attributesOfItemAtPath:documentsDirRoot.path error:nil];
+    NSDate *creationDate = [documentsDirAttributes fileCreationDate];
+    
+    // for modification date
+    NSString *bundleRoot = [[NSBundle mainBundle] bundlePath];
+    NSDictionary *bundleAttributes = [manager attributesOfItemAtPath:bundleRoot error:nil];
+    NSDate *modificationDate = [bundleAttributes fileModificationDate];
+    
+    // No stored version
+    if (!storedAppVersion) {
+        // Modification and Creation date are more than 60 seconds different indicates an update
+        // This would be the case that they were installing a new version of the app that was
+        // adding Branch for the first time, where we don't already have an NSUserDefaults value.
+        if (ABS([modificationDate timeIntervalSinceDate:creationDate]) > 60) {
+            return @2;
+        }
+        
+        // If we don't have one of the previous dates, or they're less than 60 apart,
+        // we understand this to be an install.
+        return @0;
     }
+    // Have a stored version, but it isn't the same as the current value indicates an update
+    else if (![storedAppVersion isEqualToString:currentAppVersion]) {
+        return @2;
+    }
+    
+    // Otherwise, we have a stored version, and it is equal.
+    // Not an update, not an install.
+    return @1;
+}
+
++ (void)setUpdateState {
+    NSString *currentAppVersion = [BNCSystemObserver getAppVersion];
+    [BNCPreferenceHelper setAppVersion:currentAppVersion];
 }
 
 + (NSString *)getOS {
@@ -141,5 +188,36 @@
     CGFloat height = mainScreen.bounds.size.height * scaleFactor;
     return [NSNumber numberWithInteger:(NSInteger)height];
 }
+
++ (NSDictionary *)getListOfApps {
+    NSMutableArray *appsPresent = [[NSMutableArray alloc] init];
+    NSMutableArray *appsNotPresent = [[NSMutableArray alloc] init];
+    NSDictionary *appsData = [NSDictionary dictionaryWithObjects:@[appsPresent, appsNotPresent] forKeys:@[@"canOpen", @"notOpen"]];
+    
+    BNCServerResponse *serverResponse = [[[BranchServerInterface alloc] init] retrieveAppsToCheck];
+    [BNCPreferenceHelper log:FILE_NAME line:LINE_NUM message:@"returned from app check with %@", serverResponse.data];
+    if (serverResponse && serverResponse.data) {
+        NSInteger status = [serverResponse.statusCode integerValue];
+        NSArray *apps = [serverResponse.data objectForKey:@"potential_apps"];
+        UIApplication *application = [UIApplication sharedApplication];
+        if (status == 200 && apps && application) {
+            for (NSString *app in apps) {
+                NSString *uriScheme = app;
+                if ([uriScheme rangeOfString:@"://"].location != NSNotFound) {  // if (![uriScheme containsString:@"://"]) {
+                    uriScheme = [uriScheme stringByAppendingString:@"://"];
+                }
+                NSURL *url = [NSURL URLWithString:uriScheme];
+                if ([application canOpenURL:url]) {
+                    [appsPresent addObject:app];
+                } else {
+                    [appsNotPresent addObject:app];
+                }
+            }
+        }
+    }
+    
+    return appsData;
+}
+
 
 @end

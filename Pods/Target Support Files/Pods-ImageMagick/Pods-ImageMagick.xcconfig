@@ -1,2 +1,0 @@
-PODS_IMAGEMAGICK_LIBRARY_SEARCH_PATHS = "$(PODS_ROOT)/ImageMagick" "$(PODS_ROOT)/ImageMagick" "$(PODS_ROOT)/ImageMagick" "$(PODS_ROOT)/ImageMagick" "$(PODS_ROOT)/ImageMagick"
-PODS_IMAGEMAGICK_OTHER_LDFLAGS = -Dmacintosh=1 -l"MagickCore" -l"MagickWand" -l"bz2" -l"jpeg" -l"png" -l"tiff" -l"xml2" -l"z"

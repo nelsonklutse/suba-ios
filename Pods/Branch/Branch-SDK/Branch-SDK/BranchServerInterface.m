@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Branch Metrics. All rights reserved.
 //
 
+#import "BNCConfig.h"
 #import "BranchServerInterface.h"
 #import "BNCSystemObserver.h"
 #import "BNCPreferenceHelper.h"
@@ -15,9 +16,8 @@
 - (void)registerInstall:(BOOL)debug {
     NSMutableDictionary *post = [[NSMutableDictionary alloc] init];
     
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     BOOL isRealHardwareId;
-    NSString *hardwareId = [BNCSystemObserver getUniqueHardwareId:&isRealHardwareId];
+    NSString *hardwareId = [BNCSystemObserver getUniqueHardwareId:&isRealHardwareId andIsDebug:[BNCPreferenceHelper getDevDebug]];
     if (hardwareId) {
         [post setObject:hardwareId forKey:@"hardware_id"];
         [post setObject:[NSNumber numberWithBool:isRealHardwareId] forKey:@"is_hardware_id_real"];
@@ -36,7 +36,7 @@
     if (screenWidth) [post setObject:screenWidth forKey:@"screen_width"];
     NSNumber *screenHeight = [BNCSystemObserver getScreenHeight];
     if (screenHeight) [post setObject:screenHeight forKey:@"screen_height"];
-    NSString *uriScheme = [BNCSystemObserver getURIScheme];
+    NSString *uriScheme = [BNCSystemObserver getDefaultUriScheme];
     if (uriScheme) [post setObject:uriScheme forKey:@"uri_scheme"];
     NSNumber *updateState = [BNCSystemObserver getUpdateState];
     if (updateState) [post setObject:updateState forKeyedSubscript:@"update"];
@@ -51,10 +51,9 @@
 - (void)registerOpen:(BOOL)debug {
     NSMutableDictionary *post = [[NSMutableDictionary alloc] init];
     
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     if ([[BNCPreferenceHelper getDeviceFingerprintID] isEqualToString:NO_STRING_VALUE]) {
         BOOL isRealHardwareId;
-        NSString *hardwareId = [BNCSystemObserver getUniqueHardwareId:&isRealHardwareId];
+        NSString *hardwareId = [BNCSystemObserver getUniqueHardwareId:&isRealHardwareId andIsDebug:[BNCPreferenceHelper getDevDebug]];
         if (hardwareId) {
             [post setObject:hardwareId forKey:@"hardware_id"];
             [post setObject:[NSNumber numberWithBool:isRealHardwareId] forKey:@"is_hardware_id_real"];
@@ -68,10 +67,12 @@
     if ([BNCSystemObserver getOS]) [post setObject:[BNCSystemObserver getOS] forKey:@"os"];
     NSString *osVersion = [BNCSystemObserver getOSVersion];
     if (osVersion) [post setObject:osVersion forKey:@"os_version"];
-    NSString *uriScheme = [BNCSystemObserver getURIScheme];
+    NSString *uriScheme = [BNCSystemObserver getDefaultUriScheme];
     if (uriScheme) [post setObject:uriScheme forKey:@"uri_scheme"];
     [post setObject:[NSNumber numberWithBool:[BNCSystemObserver adTrackingSafe]] forKey:@"ad_tracking_enabled"];
     [post setObject:[NSNumber numberWithInteger:[BNCPreferenceHelper getIsReferrable]] forKey:@"is_referrable"];
+    NSNumber *updateState = [BNCSystemObserver getUpdateState];
+    if (updateState) [post setObject:updateState forKeyedSubscript:@"update"];
     [post setObject:[NSNumber numberWithBool:debug] forKey:@"debug"];
     if (![[BNCPreferenceHelper getLinkClickIdentifier] isEqualToString:NO_STRING_VALUE]) [post setObject:[BNCPreferenceHelper getLinkClickIdentifier] forKey:@"link_identifier"];
     
@@ -81,7 +82,6 @@
 - (void)registerClose {
     NSMutableDictionary *post = [[NSMutableDictionary alloc] init];
     
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     [post setObject:[BNCPreferenceHelper getIdentityID] forKey:@"identity_id"];
     [post setObject:[BNCPreferenceHelper getSessionID] forKey:@"session_id"];
     [post setObject:[BNCPreferenceHelper getDeviceFingerprintID] forKey:@"device_fingerprint_id"];
@@ -89,16 +89,24 @@
     [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"close"] andTag:REQ_TAG_REGISTER_CLOSE];
 }
 
+- (void)uploadListOfApps:(NSDictionary *)post {
+    [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"applist"] andTag:REQ_TAG_UPLOAD_LIST_OF_APPS];
+}
+
+- (BNCServerResponse *)retrieveAppsToCheck {
+    return [self getRequestSync:nil url:[BNCPreferenceHelper getAPIURL:@"applist"] andTag:REQ_TAG_GET_LIST_OF_APPS];
+}
+
 - (void)userCompletedAction:(NSDictionary *)post {
     [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"event"] andTag:REQ_TAG_COMPLETE_ACTION];
 }
 
 - (void)getReferralCounts {
-    [self getRequestAsync:nil url:[BNCPreferenceHelper getAPIURL:[NSString stringWithFormat:@"%@%@", @"referrals/", [BNCPreferenceHelper getIdentityID]]] andTag:REQ_TAG_GET_REFERRAL_COUNTS];
+    [self getRequestAsync:nil url:[BNCPreferenceHelper getAPIURL:[NSString stringWithFormat:@"%@/%@", @"referrals", [BNCPreferenceHelper getIdentityID]]] andTag:REQ_TAG_GET_REFERRAL_COUNTS];
 }
 
 - (void)getRewards {
-    [self getRequestAsync:nil url:[BNCPreferenceHelper getAPIURL:[NSString stringWithFormat:@"%@%@", @"credits/", [BNCPreferenceHelper getIdentityID]]] andTag:REQ_TAG_GET_REWARDS];
+    [self getRequestAsync:nil url:[BNCPreferenceHelper getAPIURL:[NSString stringWithFormat:@"%@/%@", @"credits", [BNCPreferenceHelper getIdentityID]]] andTag:REQ_TAG_GET_REWARDS];
 }
 
 - (void)redeemRewards:(NSDictionary *)post {
@@ -109,8 +117,12 @@
     [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"credithistory"] andTag:REQ_TAG_GET_REWARD_HISTORY];
 }
 
-- (void)createCustomUrl:(NSDictionary *)post {
-    [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"url"] andTag:REQ_TAG_GET_CUSTOM_URL];
+- (void)createCustomUrl:(BNCServerRequest *)req {
+    [self postRequestAsync:req.postData url:[BNCPreferenceHelper getAPIURL:@"url"] andTag:REQ_TAG_GET_CUSTOM_URL andLinkData:req.linkData];
+}
+
+- (BNCServerResponse *)createCustomUrlSynchronous:(BNCServerRequest *)req {
+    return [self postRequestSync:req.postData url:[BNCPreferenceHelper getAPIURL:@"url"] andTag:REQ_TAG_GET_CUSTOM_URL andLinkData:req.linkData log:YES];
 }
 
 - (void)identifyUser:(NSDictionary *)post {
@@ -151,7 +163,6 @@
 
 - (void)connectToDebug {
     NSMutableDictionary *post = [[NSMutableDictionary alloc] init];
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     [post setObject:[BNCPreferenceHelper getDeviceFingerprintID] forKey:@"device_fingerprint_id"];
     [post setObject:[BNCSystemObserver getDeviceName] forKey:@"device_name"];
     [post setObject:[BNCSystemObserver getOS] forKey:@"os"];
@@ -164,7 +175,6 @@
 
 - (void)disconnectFromDebug {
     NSMutableDictionary *post = [[NSMutableDictionary alloc] init];
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     [post setObject:[BNCPreferenceHelper getDeviceFingerprintID] forKey:@"device_fingerprint_id"];
     
     [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"debug/disconnect"] andTag:REQ_TAG_DEBUG_DISCONNECT log:NO];
@@ -172,7 +182,6 @@
 
 - (void)sendLog:(NSString *)log {
     NSMutableDictionary *post = [NSMutableDictionary dictionaryWithObject:log forKey:@"log"];
-    [post setObject:[BNCPreferenceHelper getAppKey] forKey:@"app_id"];
     [post setObject:[BNCPreferenceHelper getDeviceFingerprintID] forKey:@"device_fingerprint_id"];
     
     [self postRequestAsync:post url:[BNCPreferenceHelper getAPIURL:@"debug/log"] andTag:REQ_TAG_DEBUG_LOG log:NO];
@@ -182,7 +191,7 @@
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     NSString *file = @"BNC_Debug_Screen.png";
     
-    [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@?app_id=%@&device_fingerprint_id=%@", [BNCPreferenceHelper getAPIURL:@"debug/screenshot"], [BNCPreferenceHelper getAppKey], [BNCPreferenceHelper getDeviceFingerprintID]]]];
+    [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@?%@=%@&app_id=%@&sdk=ios%@&device_fingerprint_id=%@", [BNCPreferenceHelper getAPIURL:@"debug/screenshot"], KEY_BRANCH_KEY, [BNCPreferenceHelper getBranchKey], [BNCPreferenceHelper getAppKey], SDK_VERSION, [BNCPreferenceHelper getDeviceFingerprintID]]]];
     [request setHTTPMethod:@"POST"];
     
     NSString *boundary = @"---------------------------Boundary Line---------------------------";
@@ -203,8 +212,8 @@
     
     [request setHTTPBody:body];
     [request addValue:[NSString stringWithFormat:@"%lu", (unsigned long)[body length]] forHTTPHeaderField:@"Content-Length"];
-    NSLog(@"================== Data size: %lu", (unsigned long)[body length]);  //temp
-    [self genericHTTPRequest:request withTag:REQ_TAG_DEBUG_SCREEN];
+
+    [self genericAsyncHTTPRequest:request withTag:REQ_TAG_DEBUG_SCREEN andLinkData:nil];
 }
 
 - (void)getReferralCode:(NSDictionary *)post {

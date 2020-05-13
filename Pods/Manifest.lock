@@ -25,18 +25,19 @@ PODS:
   - AMScrollingNavbar (0.5.4)
   - Appirater (2.0.2)
   - BDKNotifyHUD (1.1.0)
-  - Bolts (1.1.3)
-  - Branch (0.3.96)
+  - Bolts (1.1.5):
+    - Bolts/AppLinks (= 1.1.5)
+    - Bolts/Tasks (= 1.1.5)
+  - Bolts/AppLinks (1.1.5):
+    - Bolts/Tasks
+  - Bolts/Tasks (1.1.5)
+  - Branch (0.6.3)
   - CSNotificationView (0.5.1)
   - DACircularProgress (2.1.0)
   - Facebook-iOS-SDK (3.20.0):
     - Bolts (~> 1.0)
   - Harpy (3.3.1)
   - HTKDynamicResizingCell (0.0.2)
-  - IDMPhotoBrowser (1.4):
-    - AFNetworking
-    - DACircularProgress
-    - pop
   - ImageMagick (6.8.8-9):
     - ImageMagick/jpeg (= 6.8.8-9)
     - ImageMagick/png (= 6.8.8-9)
@@ -47,48 +48,12 @@ PODS:
   - ImageMagick/tiff (6.8.8-9)
   - ImageMagick/wand (6.8.8-9)
   - ionicons (1.1)
-  - MBProgressHUD (0.9.1)
-  - MRProgress (0.8.1):
-    - MRProgress/ActivityIndicator (= 0.8.1)
-    - MRProgress/Blur (= 0.8.1)
-    - MRProgress/Circular (= 0.8.1)
-    - MRProgress/Icons (= 0.8.1)
-    - MRProgress/NavigationBarProgress (= 0.8.1)
-    - MRProgress/Overlay (= 0.8.1)
-  - MRProgress/ActivityIndicator (0.8.1):
-    - MRProgress/Stopable
-  - MRProgress/Blur (0.8.1):
-    - MRProgress/Helper
-  - MRProgress/Circular (0.8.1):
-    - MRProgress/Helper
-    - MRProgress/ProgressBaseClass
-    - MRProgress/Stopable
-  - MRProgress/Helper (0.8.1)
-  - MRProgress/Icons (0.8.1)
-  - MRProgress/NavigationBarProgress (0.8.1):
-    - MRProgress/ProgressBaseClass
-  - MRProgress/Overlay (0.8.1):
-    - MRProgress/ActivityIndicator
-    - MRProgress/Blur
-    - MRProgress/Circular
-    - MRProgress/Helper
-    - MRProgress/Icons
-  - MRProgress/ProgressBaseClass (0.8.1)
-  - MRProgress/Stopable (0.8.1):
-    - MRProgress/Helper
-  - MWPhotoBrowser (1.4.1):
-    - DACircularProgress
-    - MBProgressHUD (~> 0.8)
-    - PSTCollectionView (~> 1.2)
-    - SDWebImage (~> 3.7)
   - PHFComposeBarView (2.0.1):
     - PHFDelegateChain (~> 1.0)
   - PHFDelegateChain (1.0.1)
-  - pop (1.0.7)
-  - PSTCollectionView (1.2.3)
-  - SDWebImage (3.7.1):
-    - SDWebImage/Core (= 3.7.1)
-  - SDWebImage/Core (3.7.1)
+  - SDWebImage (3.7.2):
+    - SDWebImage/Core (= 3.7.2)
+  - SDWebImage/Core (3.7.2)
   - UzysCircularProgressPullToRefresh (1.0.8)
 
 DEPENDENCIES:
@@ -98,46 +63,37 @@ DEPENDENCIES:
   - AMScrollingNavbar
   - Appirater
   - BDKNotifyHUD (~> 1.1.0)
-  - Branch
+  - Branch (~> 0.6.3)
   - CSNotificationView (~> 0.5.1)
   - DACircularProgress (~> 2.1.0)
   - Facebook-iOS-SDK (~> 3.20.0)
   - Harpy (~> 3.3.1)
   - HTKDynamicResizingCell (~> 0.0.1)
-  - IDMPhotoBrowser (~> 1.4)
   - ImageMagick (~> 6.8.8-9)
   - ionicons
-  - MRProgress
-  - MWPhotoBrowser (~> 1.4.1)
   - PHFComposeBarView (~> 2.0.1)
   - SDWebImage (~> 3.7.1)
   - UzysCircularProgressPullToRefresh (~> 1.0.8)
 
 SPEC CHECKSUMS:
-  ADTransitionController: 1ea1af7e5932064c0594b48fbd5fdba2ab2df742
-  AFNetworking: 0aabc6fae66d6e5d039eeb21c315843c7aae51ab
-  ALAssetsLibrary-CustomPhotoAlbum: 785e1852efacd51235dd8dd19a8a467196fdeafa
-  AMScrollingNavbar: 1f89bc7ffbb8c3a674f2fb9080978d3fa3b1acf0
-  Appirater: a5e00fb01d47a9a6acf4b2f22323b4ccf4f23fbb
-  BDKNotifyHUD: dd7c23043da457c72056fb4a0c8bae9967acff28
-  Bolts: 3db0a875235e0c9042b013af13af0f00f79b102c
-  Branch: 105efe5123166a549cbe8074ac2d0f5975c6f1fb
-  CSNotificationView: 647c524da966e21d082263f5146e5ba62f67c2b4
-  DACircularProgress: 4dfac2cc9efe2e352cabe32a2b243fd9768a3b6c
-  Facebook-iOS-SDK: 5854404b4b651f612a8ef79ca06d766858f4cb8e
-  Harpy: 289cafd8e69ff94e787a1aa2847e70c4326d5d66
-  HTKDynamicResizingCell: ef19a37818f634a165a408d8f65a7596ba17b002
-  IDMPhotoBrowser: da2110d99ea8735ad9a0ba52f2d184e756104a71
-  ImageMagick: 69968e0a19a4407abaae92c09a13e9a7fd0d2ba3
-  ionicons: 83f9b09405311133e7c5118819150f1cbf2c3d64
-  MBProgressHUD: f3747dcbd45a9e855a6b0674550651e0b7ed250c
-  MRProgress: cd12726e001ea25dec133322d34cc4754cbc58f8
-  MWPhotoBrowser: be05b3b7521e961382a4ba5579685bf5a00b93d8
-  PHFComposeBarView: 0fa52137ecb23725d219dc90cf77c4c95aa29d05
-  PHFDelegateChain: f4d5a2847960b3dd16fc2f2196833f3a66704745
-  pop: 2f14a1ea61339767af9e66741b418c831b3844df
-  PSTCollectionView: d9f466e4554cc83260ca9bde7beb27f308e8fd76
-  SDWebImage: 116e88633b5b416ea0ca4b334a4ac59cf72dd38d
-  UzysCircularProgressPullToRefresh: 8bf470411b06d8c4a8a9e966b64649ab230452fe
+  ADTransitionController: 72299d31488bcbe59fb87c483a89a637ebc819f8
+  AFNetworking: 41d45d2c14219af0fa5addf3cfd433a002c13c9f
+  ALAssetsLibrary-CustomPhotoAlbum: 35a218c5ec98ae8fee32a488b121e1f0b4377158
+  AMScrollingNavbar: 57e14be76219feb77cfd7544f009e9802f9842cc
+  Appirater: 419030361173ad1e9c937a4b9ce2ca22afdcfd1d
+  BDKNotifyHUD: 6ae3b0e8e93c709af63e31ab5c8c8011ac3efb8a
+  Bolts: aac24961496d504aa56fc267cde95162a71bac39
+  Branch: e3ac25d36c828346680dfe5afd6272d608053673
+  CSNotificationView: 7782a91e27312a1b8a7d9e449ea3de6bf3fd04fe
+  DACircularProgress: b239f36abdacd5b7721373dc6d27b5636874469c
+  Facebook-iOS-SDK: 7f22c5d87e0f5da398f7d2a231bf55149f004585
+  Harpy: 1c3f286473c97db20a19dda87582331e951036bc
+  HTKDynamicResizingCell: 9358514816f0737a8d20329617ee126a1498357c
+  ImageMagick: e8c089d133679d505c98dc97f3dc5be0e706e1df
+  ionicons: ac6e1fb1ae065ea7c8a0a37b9e980e4591a8678b
+  PHFComposeBarView: ceb26dd5a1e9a262c9e0ec3fd1dc12dbfff41c75
+  PHFDelegateChain: 491f9cd8a3fb8761f390ff05f74a0e168d48d285
+  SDWebImage: 71b7cdc1d1721d6a82ed62889030225f2c249e29
+  UzysCircularProgressPullToRefresh: 43fde931f44258dcc729bde99711dcfac40e94ae
 
-COCOAPODS: 0.35.0
+COCOAPODS: 0.37.2
